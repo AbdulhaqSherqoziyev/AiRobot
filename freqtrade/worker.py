@@ -18,6 +18,7 @@ from freqtrade.enums import RPCMessageType, State
 from freqtrade.exceptions import OperationalException, TemporaryError
 from freqtrade.exchange import timeframe_to_next_date
 from freqtrade.freqtradebot import FreqtradeBot
+from freqtrade.islamic import enforce_spot_only
 
 
 logger = logging.getLogger(__name__)
@@ -50,6 +51,9 @@ class Worker:
         if reconfig or self._config is None:
             # Load configuration
             self._config = Configuration(self._args, None).get_config()
+
+        # Islamic platform guard: trading (live and dry-run) is spot-only.
+        enforce_spot_only(self._config)
 
         # Init the instance of the bot
         self.freqtrade = FreqtradeBot(self._config)

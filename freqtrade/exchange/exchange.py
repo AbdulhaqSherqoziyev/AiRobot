@@ -101,6 +101,7 @@ from freqtrade.exchange.exchange_utils_timeframe import (
     timeframe_to_seconds,
 )
 from freqtrade.exchange.exchange_ws import ExchangeWS
+from freqtrade.islamic import assert_spot_operation
 from freqtrade.misc import (
     chunks,
     deep_merge_dicts,
@@ -3768,6 +3769,8 @@ class Exchange:
         Set's the leverage before making a trade, in order to not
         have the same leverage on every trade
         """
+        # Islamic platform guard: unreachable on an armed spot-only bot.
+        assert_spot_operation(self._config, "set_leverage")
         if self._config["dry_run"] or not self.exchange_has("setLeverage"):
             # Some exchanges only support one margin_mode type
             return
@@ -3819,6 +3822,8 @@ class Exchange:
         Set's the margin mode on the exchange to cross or isolated for a specific pair
         :param pair: base/quote currency pair (e.g. "ADA/USDT")
         """
+        # Islamic platform guard: unreachable on an armed spot-only bot.
+        assert_spot_operation(self._config, "set_margin_mode")
         if self._config["dry_run"] or not self.exchange_has("setMarginMode"):
             # Some exchanges only support one margin_mode type
             return

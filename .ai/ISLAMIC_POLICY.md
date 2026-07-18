@@ -1,0 +1,72 @@
+# Islamic Trading Policy — Sharia Compliance
+
+> Binding policy. Derived from the constitution ([SKILLS.md](SKILLS.md)).
+> When any implementation choice conflicts with this document, the implementation is
+> rejected. When compliance is *uncertain*, the trade or feature is rejected.
+
+## 1. Rules
+
+**Forbidden (haram) — must be impossible, not merely disabled:**
+- Futures / perpetual contracts
+- Margin trading
+- Leverage (> 1.0 in any form)
+- Short selling
+- Borrowing of any asset
+- Interest (riba) in any form
+- Funding-rate payments or receipts
+- Leveraged tokens (e.g. `*UP/*DOWN`, `*3L/*3S`, `*BULL/*BEAR`)
+
+**Allowed (halal):**
+- Spot trading of owned assets only
+- Real asset exchange (delivery-settled spot)
+- Risk management (stoploss, position limits, circuit breakers)
+
+**Additionally screened:** the tradable pair universe must exclude instruments that are
+structurally interest-bearing or synthetic (leveraged tokens); a configurable
+asset blacklist supports scholar-guided exclusions.
+
+## 2. Enforcement model — defense in depth
+
+A single config value (`trading_mode: spot`) is *not* sufficient assurance: config can be
+edited, defaulted wrongly, or bypassed by a strategy. Compliance must be enforced at
+every layer, and each layer must assume the others may fail.
+
+| Layer | Enforcement | Where (verified) |
+|---|---|---|
+| **L1 Config** | Reject any config where `trading_mode != "spot"`, `margin_mode` set, or `liquidation_buffer`/futures options present. Fail at startup, loudly. | `configuration/config_validation.py` (`validate_config_consistency`), schema `config_schema/config_schema.py:201` |
+| **L2 Exchange** | Hard guard in the exchange layer: refuse to construct in non-SPOT mode; assert `_lev_prep` (`exchange/exchange.py:1408`) is never invoked with leverage ≠ 1; never call `set_margin_mode`/`_set_leverage`. | `Exchange.__init__` (`exchange.py:208-217`), `validate_trading_mode_and_margin_mode` (`:927`) |
+| **L3 Strategy** | `can_short` must be False (upstream default); `leverage()` callback must return 1.0; loader rejects strategies that declare otherwise. | `strategy/interface.py:88`, `freqtradebot.py:1153-1171` (SPOT already forces 1.0) |
+| **L4 Order gate** | Pre-order compliance validation in `confirm_trade_entry` chain: pair not on haram blacklist, side is long, leverage is 1.0, order is spot. Uncertain ⇒ reject and log why. | `freqtradebot.py:932` (entry veto point) |
+| **L5 Pair universe** | Compliance pairlist filter removes leveraged tokens and blacklisted assets before pairs are ever considered. | `plugins/pairlist/` (`IPairList` filter via resolver) |
+| **L6 Audit** | Every compliance rejection is logged and emitted as an RPC message (Telegram + API) with the reason. | `RPCMessageType` extension, `rpc/` |
+
+Upstream behavior that already supports this (verified):
+- SPOT mode blocks short signals (`strategy/interface.py:1376-1382`).
+- SPOT mode hard-forces leverage 1.0 (`freqtradebot.py:1171`).
+- SPOT mode returns 0.0 funding fees and no liquidation price
+  (`exchange.py:3981`, `:4007`).
+- Margin interest code (`freqtrade/leverage/interest.py`) is unreachable in SPOT mode.
+
+Our work (Roadmap Phase 1+) converts "unreachable by configuration" into
+"impossible by construction", plus screening and audit.
+
+## 3. AI decision rule
+
+AI (FreqAI models or any future LLM/advisor component) **never** places orders.
+AI output is a *recommendation* that must pass, in order:
+
+1. Market validation (data fresh, spread/liquidity sane)
+2. Risk validation (limits, drawdown, cooldowns — see risk section of ROADMAP)
+3. Islamic validation (L4 gate above)
+4. Confidence threshold (below threshold ⇒ no trade)
+
+Only then may the engine execute — through its normal, fully validated entry path.
+
+## 4. Non-negotiables for reviewers
+
+- No PR may add code paths that set leverage, open shorts, call margin/futures ccxt
+  endpoints, or compute interest — even "dead" or "for future use".
+- FreqAI RL action spaces including short actions must not be wired into live trading.
+- Any new exchange integration must be verified spot-capable and delivery-settled.
+- The compliance guard modules themselves require the strictest review + test coverage.
+- When in doubt: **reject**. Escalate to the project owner for scholar consultation.

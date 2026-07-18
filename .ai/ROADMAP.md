@@ -9,7 +9,7 @@
 
 ## Stage A — Foundation & Compliance Hardening
 
-### Phase 0 — Baseline verification — `planned`
+### Phase 0 — Baseline verification — `done`
 - **Goal:** Reproducible dev environment; upstream test suite green locally; record the
   exact baseline (Python version, deps, test results) in `.ai/phases/phase-0.md`.
 - **Reason:** All later "our change broke it" questions need a trusted baseline.

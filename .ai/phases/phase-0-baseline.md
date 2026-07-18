@@ -1,7 +1,7 @@
 # Phase 0 — Baseline verification
 
-Status: in-progress
-Started: 2026-07-18   Finished: —
+Status: done
+Started: 2026-07-18   Finished: 2026-07-19
 
 ## Goal
 Reproducible dev environment; upstream lint/test suite executed and its results
@@ -47,10 +47,28 @@ This record; ROADMAP status flip on completion.
 
 ## Results (filled as executed)
 - Python: 3.13.12 (`.venv`)
-- Dependency install: (pending)
-- ruff: (pending)
-- pytest: (pending)
-- dry-run smoke: (pending)
+- Dependency install: OK (2026-07-19). Two environment findings:
+  - `/tmp` is a 3.6 GB tmpfs — pip needs `TMPDIR` on disk for large wheels.
+  - torch installed as **2.13.0+cpu** (CPU-only index) — the CUDA variant (~2 GB) is
+    unnecessary on this host and overflowed tmpfs. GPU-based RL training would need a
+    separate decision later.
+- ruff: `ruff check .` all passed; `ruff format --check` — 482 files already formatted.
+- pytest (`pytest -n auto -q --timeout=300`, 2026-07-19): **4418 passed, 8 failed,
+  20 skipped** in 155 s. All 8 failures are environment-related, not product code —
+  frozen as known baseline exceptions:
+  - `test_startup_time` — needs `freqtrade` on PATH (venv not activated in test env)
+  - `test_pip_audit_no_vulnerabilities` — pip-audit run failure (network/tooling)
+  - `test_start_list_data`, `test_start_show_config`, `test_hyperopt_list`,
+    `test_text_table_exit_reason`, `test_text_table_strategy`,
+    `test_telegram_profit_long_short_handle` — console/table rendering asserts
+    (terminal/locale sensitive)
+  Rule: future runs must show the same-or-smaller failure set; any new failure is a
+  regression.
+- dry-run smoke: PASS — bot starts with spot dry-run config (SampleStrategy,
+  Binance public data): heartbeat RUNNING, wallets synced, whitelist loaded
+  (BTC/USDT, ETH/USDT), no errors.
+- Repo now under git (`main`, initial commit f10f6bf); remote
+  `origin=github.com/AbdulhaqSherqoziyev/AiRobot` — push pending owner credentials.
 
 ## Review
 - [ ] REVIEW_CHECKLIST.md passed (docs/test items only apply)

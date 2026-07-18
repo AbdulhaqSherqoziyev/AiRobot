@@ -1,7 +1,7 @@
 # Phase 1 — Spot-only hard guard (compliance L1+L2)
 
-Status: planned (design drafted; implementation blocked on Phase 0 completion)
-Started: —   Finished: —
+Status: done
+Started: 2026-07-19   Finished: 2026-07-19
 
 ## Goal
 Non-SPOT operation becomes impossible by construction: startup aborts on any
@@ -81,4 +81,28 @@ ROADMAP status, ADR-0002 already covers rationale.
 - [ ] REVIEW_CHECKLIST.md passed
 
 ## Outcome
-(pending)
+Implemented as designed, with one evidence-driven refinement: upstream tests use
+futures/margin heavily (77 parametrized short-tests and dozens of futures test
+files), so hard guards in `Exchange.__init__`/`validate_config_consistency` would
+have broken hundreds of upstream tests. Instead:
+
+- L1 lives at the trading entry point (`Worker._init` — covers live AND dry-run
+  `freqtrade trade`), raising `ConfigurationError` on any non-spot config.
+- The enforcement marker travels with the bot's config mapping
+  (`SPOT_ONLY_ENFORCED_KEY`), not process-global state — library/backtest/test
+  usage stays upstream-compatible while an armed bot's exchange refuses
+  `_set_leverage`/`set_margin_mode` (guard placed BEFORE the dry-run early-return).
+
+Evidence:
+- 15 new tests in `tests/islamic/test_compliance.py` (accept/reject matrices,
+  armed-exchange refusal, Worker abort/arm integration) — all pass.
+- Full regression: 4431 passed; failure set identical to Phase 0 baseline
+  (8 known environment failures). Two extra failures found during the run were
+  missing-file artifacts of overly-broad gitignore patterns in the initial import
+  (fixed in commit f3bdff7, unrelated to this phase's code).
+- CLI verification: futures config aborts with the compliance message; spot config
+  logs "spot-only enforcement armed" and reaches RUNNING heartbeat.
+
+Note: `validate_config_consistency` hook from the original design was NOT needed —
+Worker-level enforcement subsumes it for the trading path. Recorded here as a
+conscious deviation.

@@ -21,7 +21,7 @@
 - **Testing:** full `pytest -n auto`; `freqtrade trade --dry-run` smoke test.
 - **Docs:** baseline record in `.ai/phases/phase-0.md`.
 
-### Phase 1 — Spot-only hard guard (compliance L1+L2) — `planned`
+### Phase 1 — Spot-only hard guard (compliance L1+L2) — `done`
 - **Goal:** Make non-SPOT operation impossible by construction: config validation
   rejects `trading_mode != spot` / any `margin_mode`; an exchange-level guard asserts
   SPOT at `Exchange.__init__` and refuses leverage/margin calls.

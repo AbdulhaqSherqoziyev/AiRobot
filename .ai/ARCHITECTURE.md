@@ -79,9 +79,11 @@ Triggering writes `PairLock` rows ("*" = all pairs) which gate the entry path ab
   (`:3981`); `get_liquidation_price` returns None for SPOT (`:4007`).
 - Interest calculations exist only in `freqtrade/leverage/interest.py` (margin trading).
 
-**Conclusion:** upstream SPOT mode is already structurally riba-free at runtime; our job
-is to make it *irreversible* (hard guard, not just config) — see ISLAMIC_POLICY.md and
-Phase 1 of ROADMAP.md.
+**Conclusion:** upstream SPOT mode is already structurally riba-free at runtime, and
+since Phase 1 this is *irreversible* for a trading process: `freqtrade/islamic/`
+(`enforce_spot_only` in `Worker._init`; `assert_spot_operation` in `_set_leverage` /
+`set_margin_mode`) aborts non-spot configs at startup and blocks leverage/margin
+operations on an armed bot. See ISLAMIC_POLICY.md enforcement table.
 
 ## 5. Exchange layer
 

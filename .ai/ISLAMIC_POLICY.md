@@ -33,8 +33,8 @@ every layer, and each layer must assume the others may fail.
 
 | Layer | Enforcement | Where (verified) |
 |---|---|---|
-| **L1 Config** | Reject any config where `trading_mode != "spot"`, `margin_mode` set, or `liquidation_buffer`/futures options present. Fail at startup, loudly. | `configuration/config_validation.py` (`validate_config_consistency`), schema `config_schema/config_schema.py:201` |
-| **L2 Exchange** | Hard guard in the exchange layer: refuse to construct in non-SPOT mode; assert `_lev_prep` (`exchange/exchange.py:1408`) is never invoked with leverage ≠ 1; never call `set_margin_mode`/`_set_leverage`. | `Exchange.__init__` (`exchange.py:208-217`), `validate_trading_mode_and_margin_mode` (`:927`) |
+| **L1 Config** | **IMPLEMENTED (Phase 1):** `freqtrade.islamic.enforce_spot_only()` called from the trading entry point (`Worker._init`) rejects any non-spot config — live and dry-run — and arms the enforcement marker. | `freqtrade/islamic/compliance.py`, hook in `freqtrade/worker.py` |
+| **L2 Exchange** | **IMPLEMENTED (Phase 1):** `assert_spot_operation()` at the top of `_set_leverage` and `set_margin_mode` raises on an armed bot before any dry-run early-return — those operations are unreachable in a trading process. | `freqtrade/islamic/compliance.py`, hooks in `exchange/exchange.py` |
 | **L3 Strategy** | `can_short` must be False (upstream default); `leverage()` callback must return 1.0; loader rejects strategies that declare otherwise. | `strategy/interface.py:88`, `freqtradebot.py:1153-1171` (SPOT already forces 1.0) |
 | **L4 Order gate** | Pre-order compliance validation in `confirm_trade_entry` chain: pair not on haram blacklist, side is long, leverage is 1.0, order is spot. Uncertain ⇒ reject and log why. | `freqtradebot.py:932` (entry veto point) |
 | **L5 Pair universe** | Compliance pairlist filter removes leveraged tokens and blacklisted assets before pairs are ever considered. | `plugins/pairlist/` (`IPairList` filter via resolver) |

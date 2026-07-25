@@ -9,6 +9,7 @@ from freqtrade.islamic.compliance import (
 )
 from freqtrade.islamic.order_gate import order_compliance_reason
 from freqtrade.islamic.risk_config import validate_risk_config
+from freqtrade.islamic.security import validate_security_config
 from freqtrade.islamic.screening import (
     base_currency,
     leveraged_token_reason,
@@ -27,4 +28,5 @@ __all__ = [
     "screen_pair",
     "spot_only_enforced",
     "validate_risk_config",
+    "validate_security_config",
 ]

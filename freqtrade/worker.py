@@ -18,7 +18,7 @@ from freqtrade.enums import RPCMessageType, State
 from freqtrade.exceptions import OperationalException, TemporaryError
 from freqtrade.exchange import timeframe_to_next_date
 from freqtrade.freqtradebot import FreqtradeBot
-from freqtrade.islamic import enforce_spot_only, validate_risk_config
+from freqtrade.islamic import enforce_spot_only, validate_risk_config, validate_security_config
 
 
 logger = logging.getLogger(__name__)
@@ -56,6 +56,8 @@ class Worker:
         enforce_spot_only(self._config)
         # Risk policy: refuse to start with unbounded exposure.
         validate_risk_config(self._config)
+        # Security: refuse to start with missing live credentials or an exposed API.
+        validate_security_config(self._config)
 
         # Init the instance of the bot
         self.freqtrade = FreqtradeBot(self._config)

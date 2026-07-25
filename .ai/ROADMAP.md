@@ -54,7 +54,7 @@
   test via `PairListManager`.
 - **Docs:** ARCHITECTURE.md §13, config guide entry, ISLAMIC_POLICY.md table.
 
-### Phase 3 — Pre-order compliance gate + audit trail (L4+L6) — `planned`
+### Phase 3 — Pre-order compliance gate + audit trail (L4+L6) — `done`
 - **Goal:** Engine-level pre-order validation (long-only, leverage==1.0, pair passes
   screening, spot market) that cannot be overridden by a strategy; every rejection
   logged + persisted (KeyValueStore/CustomData) + emitted as a new

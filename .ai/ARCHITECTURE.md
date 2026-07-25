@@ -179,7 +179,7 @@ operations on an armed bot. See ISLAMIC_POLICY.md enforcement table.
 
 | Need | Mechanism |
 |---|---|
-| Entry/exit veto (risk, Islamic checks) | `confirm_trade_entry` / `confirm_trade_exit` |
+| Entry/exit veto (risk, Islamic checks) | `confirm_trade_entry` / `confirm_trade_exit` — **implemented:** L4 order gate in `execute_entry` (Phase 3) |
 | Position sizing | `custom_stake_amount`, `Wallets` |
 | Circuit breakers / cooldowns | `IProtection` subclass in `user_data/` via resolver |
 | Pair universe filtering (compliance screening) | `IPairList` handler/filter — **implemented:** `IslamicComplianceFilter` (Phase 2) |

@@ -36,9 +36,9 @@ every layer, and each layer must assume the others may fail.
 | **L1 Config** | **IMPLEMENTED (Phase 1):** `freqtrade.islamic.enforce_spot_only()` called from the trading entry point (`Worker._init`) rejects any non-spot config — live and dry-run — and arms the enforcement marker. | `freqtrade/islamic/compliance.py`, hook in `freqtrade/worker.py` |
 | **L2 Exchange** | **IMPLEMENTED (Phase 1):** `assert_spot_operation()` at the top of `_set_leverage` and `set_margin_mode` raises on an armed bot before any dry-run early-return — those operations are unreachable in a trading process. | `freqtrade/islamic/compliance.py`, hooks in `exchange/exchange.py` |
 | **L3 Strategy** | `can_short` must be False (upstream default); `leverage()` callback must return 1.0; loader rejects strategies that declare otherwise. | `strategy/interface.py:88`, `freqtradebot.py:1153-1171` (SPOT already forces 1.0) |
-| **L4 Order gate** | Pre-order compliance validation in `confirm_trade_entry` chain: pair not on haram blacklist, side is long, leverage is 1.0, order is spot. Uncertain ⇒ reject and log why. | `freqtradebot.py:932` (entry veto point) |
+| **L4 Order gate** | **IMPLEMENTED (Phase 3):** `order_compliance_reason()` in `execute_entry` (before `create_order`, marker-gated, entries only) rejects short / leverage≠1.0 / leveraged-token entries; logs + RPC-notifies the reason. | `freqtrade/islamic/order_gate.py`, hook in `freqtradebot.py` |
 | **L5 Pair universe** | **IMPLEMENTED (Phase 2):** `IslamicComplianceFilter` removes leveraged tokens (`BTCUP`/`BTC3L`/`ETHBULL` …) and blacklisted assets from the whitelist; screening logic in `freqtrade/islamic/screening.py`. | `freqtrade/plugins/pairlist/IslamicComplianceFilter.py` |
-| **L6 Audit** | Every compliance rejection is logged and emitted as an RPC message (Telegram + API) with the reason. | `RPCMessageType` extension, `rpc/` |
+| **L6 Audit** | **IMPLEMENTED (Phase 3, log+RPC):** every L4 rejection is logged (WARNING, with reason) and emitted as an RPC message. Persisted audit table deferred to Phase 12. | `freqtrade/freqtradebot.py` (`notify_status`) |
 
 Upstream behavior that already supports this (verified):
 - SPOT mode blocks short signals (`strategy/interface.py:1376-1382`).

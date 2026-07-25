@@ -166,7 +166,7 @@
 
 - **Phase 10 — Operations runbook & deployment:** docker compose profile for the
   platform, systemd notes, backup/restore of DB + FreqAI models, upgrade procedure.
-- **Phase 11 — Security pass:** secrets handling audit, API server exposure review
+- **Phase 11 — Security pass:** `done` (startup config validation + SECURITY_CHECKLIST.md) — secrets handling audit, API server exposure review
   (JWT/ws_token config), dependency audit, least-privilege exchange API keys
   (spot-only, no-withdrawal) documented and verified at startup.
 - **Phase 12 — Observability:** structured decision log (queryable audit table),

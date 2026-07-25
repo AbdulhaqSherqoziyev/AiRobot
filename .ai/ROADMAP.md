@@ -75,7 +75,7 @@
 
 ## Stage B — Risk Engine
 
-### Phase 4 — Risk limits via protections (daily/weekly loss, drawdown) — `planned`
+### Phase 4 — Risk limits via protections (daily/weekly loss, drawdown) — `done`
 - **Goal:** Implement `MaxDailyLoss` and `MaxWeeklyLoss` protections (custom
   `IProtection` subclasses) complementing upstream `MaxDrawdown`; config-driven,
   global locks.

@@ -60,7 +60,7 @@ free slots: `enter_positions` → scheduler/commit/RPC flush.
 ### Protections (native circuit breakers)
 After stoploss/exit fills, `handle_protections` (`:2449`) runs `stop_per_pair` and
 `global_stop`. Handlers (`freqtrade/plugins/protections/`): **MaxDrawdown** (global),
-**StoplossGuard** (global+pair), **CooldownPeriod** (pair), **LowProfitPairs** (pair).
+**StoplossGuard** (global+pair), **CooldownPeriod** (pair), **LowProfitPairs** (pair). Platform additions (Phase 4): **MaxDailyLoss**, **MaxWeeklyLoss** (calendar-period global loss budgets, `freqtrade/plugins/protections/max_loss_protection.py`).
 Triggering writes `PairLock` rows ("*" = all pairs) which gate the entry path above.
 
 ## 4. Where leverage / short / futures are decided (Sharia-critical)

@@ -5,6 +5,8 @@ config*.json
 *.sqlite-wal
 logfile.txt
 user_data/*
+!user_data/strategies
+!user_data/strategies/IslamicSpotStrategy.py
 !user_data/strategy/sample_strategy.py
 !user_data/notebooks
 !user_data/models

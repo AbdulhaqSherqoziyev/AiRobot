@@ -52,3 +52,18 @@
   the root file wins on divergence. Docs update before or with code, never after.
 - **Consequences:** Documentation discipline is enforced by review checklist; drift is
   tracked as risk P4.
+
+## ADR-0005 — Pairlist compliance filter lives in `plugins/pairlist/`, logic in `islamic/`
+- **Status:** accepted (2026-07-19)
+- **Context:** Phase 2 needs a Sharia screening filter loadable by name in the
+  `pairlists` config chain. Freqtrade's `PairListResolver` discovers handlers in
+  `freqtrade/plugins/pairlist/` and `user_data/pairlists/`, and the config schema
+  validates `method` against `AVAILABLE_PAIRLISTS` (`constants.py`).
+- **Decision:** The thin `IPairList` adapter (`IslamicComplianceFilter`) lives in
+  `freqtrade/plugins/pairlist/` (idiomatic, resolver-discoverable, additive new
+  file). The reusable screening logic lives in `freqtrade/islamic/screening.py`
+  (pure functions, unit-tested, reusable by the Phase 3 pre-order gate). One
+  additive line registers the name in `AVAILABLE_PAIRLISTS` (marked hook).
+- **Consequences:** Compliance logic stays cohesive in `freqtrade/islamic/`; the
+  filter is a first-class, config-selectable handler; only a one-line upstream edit
+  (the enum) is needed, tracked for merges.

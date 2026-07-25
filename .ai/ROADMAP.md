@@ -38,7 +38,7 @@
   rejected; guard exception ⇒ startup abort); full suite regression.
 - **Docs:** ARCHITECTURE.md §4, ISLAMIC_POLICY.md enforcement table, ADR-0002.
 
-### Phase 2 — Haram-instrument pairlist filter (compliance L5) — `planned`
+### Phase 2 — Haram-instrument pairlist filter (compliance L5) — `done`
 - **Goal:** `IslamicComplianceFilter` pairlist filter: removes leveraged tokens
   (pattern-based: UP/DOWN, 3L/3S, BULL/BEAR, etc.) and assets on a configurable
   compliance blacklist.

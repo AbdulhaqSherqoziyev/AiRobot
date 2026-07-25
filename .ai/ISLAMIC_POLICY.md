@@ -37,7 +37,7 @@ every layer, and each layer must assume the others may fail.
 | **L2 Exchange** | **IMPLEMENTED (Phase 1):** `assert_spot_operation()` at the top of `_set_leverage` and `set_margin_mode` raises on an armed bot before any dry-run early-return — those operations are unreachable in a trading process. | `freqtrade/islamic/compliance.py`, hooks in `exchange/exchange.py` |
 | **L3 Strategy** | `can_short` must be False (upstream default); `leverage()` callback must return 1.0; loader rejects strategies that declare otherwise. | `strategy/interface.py:88`, `freqtradebot.py:1153-1171` (SPOT already forces 1.0) |
 | **L4 Order gate** | Pre-order compliance validation in `confirm_trade_entry` chain: pair not on haram blacklist, side is long, leverage is 1.0, order is spot. Uncertain ⇒ reject and log why. | `freqtradebot.py:932` (entry veto point) |
-| **L5 Pair universe** | Compliance pairlist filter removes leveraged tokens and blacklisted assets before pairs are ever considered. | `plugins/pairlist/` (`IPairList` filter via resolver) |
+| **L5 Pair universe** | **IMPLEMENTED (Phase 2):** `IslamicComplianceFilter` removes leveraged tokens (`BTCUP`/`BTC3L`/`ETHBULL` …) and blacklisted assets from the whitelist; screening logic in `freqtrade/islamic/screening.py`. | `freqtrade/plugins/pairlist/IslamicComplianceFilter.py` |
 | **L6 Audit** | Every compliance rejection is logged and emitted as an RPC message (Telegram + API) with the reason. | `RPCMessageType` extension, `rpc/` |
 
 Upstream behavior that already supports this (verified):

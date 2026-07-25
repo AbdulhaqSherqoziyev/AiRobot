@@ -182,7 +182,7 @@ operations on an armed bot. See ISLAMIC_POLICY.md enforcement table.
 | Entry/exit veto (risk, Islamic checks) | `confirm_trade_entry` / `confirm_trade_exit` |
 | Position sizing | `custom_stake_amount`, `Wallets` |
 | Circuit breakers / cooldowns | `IProtection` subclass in `user_data/` via resolver |
-| Pair universe filtering (compliance screening) | `IPairList` handler/filter |
+| Pair universe filtering (compliance screening) | `IPairList` handler/filter — **implemented:** `IslamicComplianceFilter` (Phase 2) |
 | New notification (AI decisions, compliance rejections) | `RPCMessageType` + handler rendering |
 | New RPC channel | `RPCHandler` subclass registered in `RPCManager` |
 | AI models | `IFreqaiModel` subclass via `freqaimodel_resolver` |

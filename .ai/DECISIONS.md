@@ -67,3 +67,16 @@
 - **Consequences:** Compliance logic stays cohesive in `freqtrade/islamic/`; the
   filter is a first-class, config-selectable handler; only a one-line upstream edit
   (the enum) is needed, tracked for merges.
+
+## ADR-0006 — First live path uses a simple rule-based strategy; AI deferred
+- **Status:** accepted (2026-07-26)
+- **Context:** The platform vision is AI-powered, but the first live path needs a
+  transparent, low-risk, quickly-validated strategy. Owner chose "simple rule-based
+  first, AI later".
+- **Decision:** Ship `IslamicSpotStrategy` (user_data/strategies) — a conservative,
+  long-only, trend-following spot strategy (EMA regime + RSI pullback + ADX/volume
+  confirmation; conservative ROI/stoploss/trailing). Roadmap Stage C (FreqAI, P7–P9)
+  is deferred until after the first simple-strategy live pilot. FreqAI RL short
+  action spaces remain out of scope (ISLAMIC_POLICY.md).
+- **Consequences:** Faster, explainable path to a first pilot; the AI advisor layer
+  becomes a later increment layered on the same validated engine + guards.

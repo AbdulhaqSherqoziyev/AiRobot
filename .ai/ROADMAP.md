@@ -120,7 +120,7 @@
 - **Testing:** sizing matrices incl. DCA; dry-run verification.
 - **Docs:** config guide; ARCHITECTURE.md.
 
-## Stage C — AI Advisor Layer
+## Stage C — AI Advisor Layer (DEFERRED per ADR-0006 — first live path uses the simple rule-based IslamicSpotStrategy, Phase 8)
 
 ### Phase 7 — AI recommendation pipeline design (ADR, no code) — `planned`
 - **Goal:** Decide, in an ADR: how FreqAI predictions (and/or an external advisor)

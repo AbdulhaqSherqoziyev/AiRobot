@@ -107,7 +107,7 @@
 - **Testing:** trigger/untrigger, restart persistence, exit-still-works tests.
 - **Docs:** runbook entry (new OPERATIONS doc), config guide.
 
-### Phase 6 — Position sizing & exposure limits — `planned`
+### Phase 6 — Position sizing & exposure limits — `done`
 - **Goal:** Enforce max position size (per pair and % of capital), max total exposure,
   and trade cooldown defaults; conservative defaults in a shipped sample config.
 - **Reason:** Constitution risk requirements; capital preservation first.

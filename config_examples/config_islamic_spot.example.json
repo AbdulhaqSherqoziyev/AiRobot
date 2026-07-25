@@ -44,6 +44,34 @@
             "min_price": 0.001
         }
     ],
+    "protections": [
+        {
+            "method": "MaxDailyLoss",
+            "max_allowed_loss": 0.05
+        },
+        {
+            "method": "MaxWeeklyLoss",
+            "max_allowed_loss": 0.1
+        },
+        {
+            "method": "MaxDrawdown",
+            "lookback_period_candles": 48,
+            "trade_limit": 5,
+            "stop_duration_candles": 12,
+            "max_allowed_drawdown": 0.1
+        },
+        {
+            "method": "StoplossGuard",
+            "lookback_period_candles": 24,
+            "trade_limit": 4,
+            "stop_duration_candles": 12,
+            "only_per_pair": false
+        },
+        {
+            "method": "CooldownPeriod",
+            "stop_duration_candles": 2
+        }
+    ],
     "entry_pricing": {
         "price_side": "same",
         "use_order_book": true,

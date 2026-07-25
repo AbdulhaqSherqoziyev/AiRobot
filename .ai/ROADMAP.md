@@ -91,7 +91,7 @@
   restarts (locks persist via PairLock table).
 - **Docs:** config guide; ARCHITECTURE.md §3 protections list.
 
-### Phase 5 — Emergency stop & circuit breaker — `planned`
+### Phase 5 — Emergency stop & circuit breaker — `done`
 - **Goal:** A kill-switch: one command (Telegram/API) + automatic trigger conditions
   (e.g. N consecutive losses, exchange error storm) that pause entries and optionally
   close positions; state persisted so restarts stay stopped.

@@ -7,6 +7,7 @@ from freqtrade.islamic.compliance import (
     enforce_spot_only,
     spot_only_enforced,
 )
+from freqtrade.islamic.order_gate import order_compliance_reason
 from freqtrade.islamic.screening import (
     base_currency,
     leveraged_token_reason,
@@ -21,6 +22,7 @@ __all__ = [
     "base_currency",
     "enforce_spot_only",
     "leveraged_token_reason",
+    "order_compliance_reason",
     "screen_pair",
     "spot_only_enforced",
 ]

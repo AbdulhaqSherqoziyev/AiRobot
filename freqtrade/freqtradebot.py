@@ -42,6 +42,7 @@ from freqtrade.exchange import (
     timeframe_to_seconds,
 )
 from freqtrade.exchange.exchange_types import CcxtOrder
+from freqtrade.islamic import order_compliance_reason, spot_only_enforced
 from freqtrade.leverage.liquidation_price import update_liquidation_prices
 from freqtrade.misc import safe_value_fallback, safe_value_fallback2
 from freqtrade.mixins import LoggingMixin
@@ -879,7 +880,7 @@ class FreqtradeBot(LoggingMixin):
             logger.info(f"Bids to asks delta for {pair} does not satisfy condition.")
             return False
 
-    def execute_entry(
+    def execute_entry(  # noqa: C901
         self,
         pair: str,
         stake_amount: float,
@@ -912,6 +913,20 @@ class FreqtradeBot(LoggingMixin):
 
         if not stake_amount:
             return False
+
+        # Islamic platform guard: final pre-order compliance gate (L4), entries only.
+        # Active only when spot-only enforcement is armed (see freqtrade.islamic),
+        # so library/backtest/upstream-test usage is unaffected.
+        if spot_only_enforced(self.config):
+            compliance_reason = order_compliance_reason(pair, is_short, leverage)
+            if compliance_reason is not None:
+                message = (
+                    f"Islamic compliance: rejected {trade_side} entry for {pair} "
+                    f"- {compliance_reason}."
+                )
+                logger.warning(message)
+                self.notify_status(message, RPCMessageType.WARNING)
+                return False
 
         msg = (
             f"Position adjust: about to create a new order for {pair} with stake_amount: "

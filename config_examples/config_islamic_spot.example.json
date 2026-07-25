@@ -68,6 +68,12 @@
             "only_per_pair": false
         },
         {
+            "method": "ConsecutiveLossGuard",
+            "trade_limit": 4,
+            "lookback_period_candles": 288,
+            "stop_duration_candles": 24
+        },
+        {
             "method": "CooldownPeriod",
             "stop_duration_candles": 2
         }

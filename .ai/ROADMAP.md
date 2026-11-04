@@ -7,6 +7,10 @@
 > Phases are intentionally small. Later phases are sketched at lower resolution and
 > must be re-planned in detail when they come up — do not implement from this file alone.
 
+> **2026-11-04:** the owner's platform spec is built in `quantlab/` and `web/` (ADR-0007). Status and
+> limits: [phases/phase-quantlab-platform.md](phases/phase-quantlab-platform.md). The Freqtrade
+> phases below remain as written and were not advanced by that work.
+
 ## Stage A — Foundation & Compliance Hardening
 
 ### Phase 0 — Baseline verification — `done`

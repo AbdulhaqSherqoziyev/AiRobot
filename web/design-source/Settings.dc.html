@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/ican-business-design-system-64d11fa8-448a-41b1-9653-97041b289bb2/colors_and_type.css">
+<script src="_ds/ican-business-design-system-64d11fa8-448a-41b1-9653-97041b289bb2/_ds_bundle.js"></script>
+<script src="ql.js"></script>
+</helmet>
+<div style="font-family:var(--font-ui);color:#F1F5F9;display:flex;flex-direction:column;gap:16px">
+  <div>
+    <h1 style="font-family:var(--font-display);font-size:22px;line-height:28px;font-weight:700;letter-spacing:-.01em;margin:0">Sozlamalar</h1>
+    <p style="margin:4px 0 0;font-size:13px;color:#94A3B8">Profil, xavfsizlik, bildirishnomalar, ko'rinish va risk siyosati</p>
+  </div>
+  <sc-if value="{{ v.loading }}" hint-placeholder-val="{{ true }}"><dc-import name="StateBlock" kind="loading" hint-size="100%,520px"></dc-import></sc-if>
+  <sc-if value="{{ v.error }}" hint-placeholder-val="{{ false }}"><dc-import name="StateBlock" kind="error" title="Sozlamalar yuklanmadi" action-label="Qayta urinish" on-action="{{ retry }}" hint-size="100%,300px"></dc-import></sc-if>
+  <sc-if value="{{ v.empty }}" hint-placeholder-val="{{ false }}"><dc-import name="StateBlock" kind="empty" icon="settings" title="Standart sozlamalar ishlatilmoqda" text="Hali hech qanday sozlama o'zgartirilmagan." action-label="Sozlashni boshlash" on-action="{{ retry }}" hint-size="100%,300px"></dc-import></sc-if>
+  <sc-if value="{{ v.ok }}" hint-placeholder-val="{{ false }}">
+  <div style="display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start">
+    <nav style="flex:0 1 230px;min-width:200px;background:#151C2C;border:1px solid #263244;border-radius:12px;padding:8px;display:flex;flex-direction:column;gap:2px">
+      <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="7">
+        <div onClick="{{ t.go }}" style="display:flex;align-items:center;gap:10px;height:36px;padding:0 10px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;background:{{ t.bg }};color:{{ t.fg }}" style-hover="background:#1B2435;color:#F1F5F9"><x-import component-from-global-scope="QL.Icon" icon="{{ t.icon }}" size="16" hint-size="16px,16px"></x-import>{{ t.label }}</div>
+      </sc-for>
+    </nav>
+    <div style="flex:1 1 560px;min-width:0;display:flex;flex-direction:column;gap:16px">
+      <sc-if value="{{ tab.profile }}" hint-placeholder-val="{{ true }}">
+        <section style="background:#151C2C;border:1px solid #263244;border-radius:12px">
+          <div style="padding:14px 16px;border-bottom:1px solid #263244;font-family:var(--font-display);font-size:14px;font-weight:600">Foydalanuvchi profili</div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;padding:16px">
+            <sc-for list="{{ profile }}" as="x" hint-placeholder-count="4"><label style="display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:500;color:#94A3B8">{{ x.label }}<input value="{{ x.value }}" onChange="{{ x.set }}" type="{{ x.type }}" style="height:36px;padding:0 10px;background:#0F1522;border:1px solid #263244;border-radius:8px;color:#F1F5F9;font-size:13px;outline:none" style-focus="border-color:#3B82F6"></label></sc-for>
+            <label style="display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:500;color:#94A3B8">Vaqt mintaqasi<select value="{{ p.tz }}" onChange="{{ setTz }}" style="height:36px;padding:0 8px;background:#0F1522;border:1px solid #263244;border-radius:8px;color:#F1F5F9;font-size:13px;outline:none"><option value="Asia/Tashkent">Asia/Tashkent (UTC+5)</option><option value="UTC">UTC</option><option value="Europe/Moscow">Europe/Moscow (UTC+3)</option></select></label>
+            <label style="display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:500;color:#94A3B8">Interfeys tili<select value="{{ p.lang }}" onChange="{{ setLang }}" style="height:36px;padding:0 8px;background:#0F1522;border:1px solid #263244;border-radius:8px;color:#F1F5F9;font-size:13px;outline:none"><option value="uz">O'zbekcha</option><option value="ru">Русский</option><option value="en">English</option></select></label>
+          </div>
+          <div style="display:flex;justify-content:flex-end;padding:12px 16px;border-top:1px solid #263244"><button onClick="{{ saveProfile }}" style="height:34px;padding:0 14px;border-radius:8px;border:1px solid #3B82F6;background:#3B82F6;color:#fff;font-size:13px;font-weight:600;cursor:pointer" style-hover="background:#2563EB">O'zgarishlarni saqlash</button></div>
+        </section>
+      </sc-if>
+      <sc-if value="{{ tab.security }}" hint-placeholder-val="{{ false }}">
+        <section style="background:#151C2C;border:1px solid #263244;border-radius:12px">
+          <div style="padding:14px 16px;border-bottom:1px solid #263244;font-family:var(--font-display);font-size:14px;font-weight:600">Parolni o'zgartirish</div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;padding:16px">
+            <sc-for list="{{ pwFields }}" as="x" hint-placeholder-count="3"><label style="display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:500;color:#94A3B8">{{ x.label }}<input type="password" value="{{ x.value }}" onChange="{{ x.set }}" autocomplete="new-password" style="height:36px;padding:0 10px;background:#0F1522;border:1px solid {{ pwBorder }};border-radius:8px;color:#F1F5F9;font-size:13px;outline:none"></label></sc-for>
+          </div>
+          <div style="display:flex;flex-wrap:wrap;align-items:center;gap:10px;justify-content:space-between;padding:0 16px 14px"><span style="font-size:12px;color:{{ pwColor }}">{{ pwMsg }}</span><button onClick="{{ savePw }}" style="height:34px;padding:0 14px;border-radius:8px;border:1px solid #263244;background:#1B2435;color:#F1F5F9;font-size:13px;font-weight:600;cursor:pointer" style-hover="background:#222D42">Parolni yangilash</button></div>
+        </section>
+        <section style="background:#151C2C;border:1px solid #263244;border-radius:12px">
+          <div style="display:flex;align-items:center;gap:12px;padding:14px 16px">
+            <div style="width:36px;height:36px;border-radius:9px;background:{{ tfa.bg }};color:{{ tfa.color }};display:flex;align-items:center;justify-content:center"><x-import component-from-global-scope="QL.Icon" icon="smartphone" size="18" hint-size="18px,18px"></x-import></div>
+            <div style="flex:1;min-width:0"><div style="font-size:14px;font-weight:600">Ikki bosqichli autentifikatsiya (2FA)</div><div style="font-size:12px;color:#94A3B8;margin-top:2px">{{ tfa.text }}</div></div>
+            <button onClick="{{ toggle2fa }}" style="height:32px;padding:0 12px;border-radius:8px;border:1px solid {{ tfa.btnBorder }};background:transparent;color:{{ tfa.btnColor }};font-size:12px;font-weight:600;cursor:pointer">{{ tfa.btn }}</button>
+          </div>
+        </section>
+        <section style="background:#151C2C;border:1px solid #263244;border-radius:12px">
+          <div style="padding:14px 16px;border-bottom:1px solid #263244;font-family:var(--font-display);font-size:14px;font-weight:600">Faol seanslar</div>
+          <sc-for list="{{ devices }}" as="d" hint-placeholder-count="3">
+            <div style="display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid #1E2738">
+              <x-import component-from-global-scope="QL.Icon" icon="{{ d.icon }}" size="18" color="#94A3B8" hint-size="18px,18px"></x-import>
+              <div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600">{{ d.name }}</div><div style="font-size:12px;color:#94A3B8;margin-top:2px">{{ d.meta }}</div></div>
+              <sc-if value="{{ d.current }}" hint-placeholder-val="{{ false }}"><span style="font-size:11px;font-weight:700;color:#16C784">Joriy seans</span></sc-if>
+              <sc-if value="{{ d.other }}" hint-placeholder-val="{{ true }}"><button onClick="{{ d.revoke }}" style="height:30px;padding:0 10px;border-radius:7px;border:1px solid rgba(234,57,67,.4);background:transparent;color:#F87171;font-size:12px;font-weight:600;cursor:pointer">Chiqarish</button></sc-if>
+            </div>
+          </sc-for>
+        </section>
+      </sc-if>
+      <sc-if value="{{ tab.keys }}" hint-placeholder-val="{{ false }}">
+        <section style="background:#151C2C;border:1px solid #263244;border-radius:12px">
+          <div style="padding:14px 16px;border-bottom:1px solid #263244;font-family:var(--font-display);font-size:14px;font-weight:600">API kalitlarini boshqarish</div>
+          <sc-for list="{{ keys }}" as="k" hint-placeholder-count="3">
+            <div style="display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid #1E2738">
+              <x-import component-from-global-scope="QL.Icon" icon="{{ k.icon }}" size="17" color="#94A3B8" hint-size="17px,17px"></x-import>
+              <div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600">{{ k.name }}</div><div style="font-size:12px;color:#94A3B8;margin-top:2px">{{ k.meta }}</div></div>
+              <span style="font-size:11px;font-weight:700;color:{{ k.color }}">{{ k.status }}</span>
+            </div>
+          </sc-for>
+          <div style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:12px 16px">
+            <span style="flex:1;min-width:220px;font-size:12px;color:#94A3B8;line-height:17px">Maxfiy kalitlar faqat serverda shifrlangan holda saqlanadi va brauzerga, loglarga yoki eksportlarga hech qachon chiqarilmaydi.</span>
+            <button onClick="{{ goIntegrations }}" style="height:32px;padding:0 12px;border-radius:8px;border:1px solid #263244;background:#1B2435;color:#F1F5F9;font-size:12px;font-weight:600;cursor:pointer">Integratsiyalarga o'tish</button>
+          </div>
+        </section>
+      </sc-if>
+      <sc-if value="{{ tab.notif }}" hint-placeholder-val="{{ false }}">
+        <section style="background:#151C2C;border:1px solid #263244;border-radius:12px;overflow:hidden">
+          <div style="padding:14px 16px;border-bottom:1px solid #263244;font-family:var(--font-display);font-size:14px;font-weight:600">Bildirishnoma kanallari</div>
+          <div style="overflow-x:auto">
+            <table style="width:100%;border-collapse:collapse;font-size:13px">
+              <thead><tr><th style="text-align:left;padding:9px 16px;font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:#94A3B8;border-bottom:1px solid #263244">Hodisa</th><th style="padding:9px 16px;font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:#94A3B8;border-bottom:1px solid #263244">Ilova</th><th style="padding:9px 16px;font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:#94A3B8;border-bottom:1px solid #263244">Telegram</th><th style="padding:9px 16px;font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:#94A3B8;border-bottom:1px solid #263244">Email</th></tr></thead>
+              <tbody>
+                <sc-for list="{{ matrix }}" as="r" hint-placeholder-count="7">
+                  <tr><td style="padding:10px 16px;border-bottom:1px solid #1E2738">{{ r.label }}</td><sc-for list="{{ r.cells }}" as="c" hint-placeholder-count="3"><td style="padding:10px 16px;border-bottom:1px solid #1E2738;text-align:center"><input type="checkbox" checked="{{ c.on }}" onChange="{{ c.toggle }}" style="width:15px;height:15px;cursor:pointer"></td></sc-for></tr>
+                </sc-for>
+              </tbody>
+            </table>
+          </div>
+          <div style="display:flex;flex-wrap:wrap;align-items:center;gap:12px;padding:14px 16px">
+            <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:#CBD5E1">Drawdown ogohlantirish chegarasi<input type="number" min="1" max="50" value="{{ ddAlert }}" onChange="{{ setDd }}" style="width:70px;height:32px;padding:0 8px;background:#0F1522;border:1px solid #263244;border-radius:7px;color:#F1F5F9;font-size:13px;outline:none">%</label>
+            <div style="flex:1"></div>
+            <button onClick="{{ saveNotif }}" style="height:34px;padding:0 14px;border-radius:8px;border:1px solid #3B82F6;background:#3B82F6;color:#fff;font-size:13px;font-weight:600;cursor:pointer">Saqlash</button>
+          </div>
+        </section>
+      </sc-if>
+      <sc-if value="{{ tab.display }}" hint-placeholder-val="{{ false }}">
+        <section style="background:#151C2C;border:1px solid #263244;border-radius:12px">
+          <div style="padding:14px 16px;border-bottom:1px solid #263244;font-family:var(--font-display);font-size:14px;font-weight:600">Ko'rinish va mavzu</div>
+          <div style="padding:6px 16px 14px">
+            <sc-for list="{{ display }}" as="g" hint-placeholder-count="5">
+              <div style="display:flex;flex-wrap:wrap;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid #1E2738">
+                <div style="flex:1;min-width:200px"><div style="font-size:13px;font-weight:600">{{ g.label }}</div><div style="font-size:12px;color:#94A3B8;margin-top:2px">{{ g.hint }}</div></div>
+                <div style="display:inline-flex;gap:2px;padding:2px;background:#0F1522;border:1px solid #263244;border-radius:8px">
+                  <sc-for list="{{ g.opts }}" as="o" hint-placeholder-count="3"><button onClick="{{ o.go }}" style="height:28px;padding:0 11px;border:0;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;background:{{ o.bg }};color:{{ o.fg }}">{{ o.label }}</button></sc-for>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+        </section>
+      </sc-if>
+      <sc-if value="{{ tab.risk }}" hint-placeholder-val="{{ false }}">
+        <section style="background:#151C2C;border:1px solid #263244;border-radius:12px;overflow:hidden">
+          <div style="padding:14px 16px;border-bottom:1px solid #263244">
+            <div style="font-family:var(--font-display);font-size:14px;font-weight:600">Shariat muvofiqligi · himoya qatlamlari</div>
+            <div style="font-size:12px;color:#94A3B8;margin-top:2px">Faqat o'qish uchun. Futures, margin, leverage, short va foiz har bir qatlamda bloklanadi.</div>
+          </div>
+          <sc-for list="{{ layers }}" as="l" hint-placeholder-count="6">
+            <div style="display:flex;gap:12px;align-items:flex-start;padding:12px 16px;border-bottom:1px solid #1E2738">
+              <span style="font-size:12px;font-weight:800;color:#60A5FA;width:26px;padding-top:1px">{{ l.id }}</span>
+              <div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600">{{ l.name }}</div><div style="font-size:12px;color:#94A3B8;margin-top:2px;line-height:17px">{{ l.text }}</div></div>
+              <span style="display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;color:#16C784;white-space:nowrap"><x-import component-from-global-scope="QL.Icon" icon="shield-check" size="13" hint-size="13px,13px"></x-import>Faol</span>
+            </div>
+          </sc-for>
+        </section>
+        <section style="background:#151C2C;border:1px solid #263244;border-radius:12px">
+          <div style="padding:14px 16px;border-bottom:1px solid #263244">
+            <div style="font-family:var(--font-display);font-size:14px;font-weight:600">Standart risk himoyalari</div>
+            <div style="font-size:12px;color:#94A3B8;margin-top:2px">Yangi backtest va paper sessiyalarga qo'llanadi</div>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;padding:16px">
+            <sc-for list="{{ riskFields }}" as="x" hint-placeholder-count="6"><label title="{{ x.tip }}" style="display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:500;color:#94A3B8">{{ x.label }}<input type="number" step="any" value="{{ x.value }}" onChange="{{ x.set }}" style="height:36px;padding:0 10px;background:#0F1522;border:1px solid #263244;border-radius:8px;color:#F1F5F9;font-size:13px;outline:none;font-variant-numeric:tabular-nums"></label></sc-for>
+          </div>
+          <div style="display:flex;justify-content:flex-end;padding:12px 16px;border-top:1px solid #263244"><button onClick="{{ saveRisk }}" style="height:34px;padding:0 14px;border-radius:8px;border:1px solid #3B82F6;background:#3B82F6;color:#fff;font-size:13px;font-weight:600;cursor:pointer">Saqlash</button></div>
+        </section>
+      </sc-if>
+      <sc-if value="{{ tab.account }}" hint-placeholder-val="{{ false }}">
+        <section style="background:#151C2C;border:1px solid #263244;border-radius:12px">
+          <div style="padding:14px 16px;border-bottom:1px solid #263244;font-family:var(--font-display);font-size:14px;font-weight:600">Hisob</div>
+          <div style="display:flex;flex-wrap:wrap;align-items:center;gap:12px;padding:14px 16px;border-bottom:1px solid #1E2738">
+            <div style="flex:1;min-width:220px"><div style="font-size:13px;font-weight:600">Ma'lumotlarni eksport qilish</div><div style="font-size:12px;color:#94A3B8;margin-top:2px">Strategiyalar, backtest natijalari va savdolar (CSV). API kalitlari kiritilmaydi.</div></div>
+            <button onClick="{{ exportAll }}" style="height:32px;padding:0 12px;border-radius:8px;border:1px solid #263244;background:#1B2435;color:#F1F5F9;font-size:12px;font-weight:600;cursor:pointer">Eksport</button>
+          </div>
+          <div style="display:flex;flex-wrap:wrap;align-items:center;gap:12px;padding:14px 16px">
+            <div style="flex:1;min-width:220px"><div style="font-size:13px;font-weight:600;color:#F87171">Hisobni o'chirish</div><div style="font-size:12px;color:#94A3B8;margin-top:2px">Barcha strategiyalar, sessiyalar va kalitlar butunlay o'chiriladi.</div></div>
+            <button onClick="{{ deleteAccount }}" style="height:32px;padding:0 12px;border-radius:8px;border:1px solid rgba(234,57,67,.45);background:rgba(234,57,67,.12);color:#F87171;font-size:12px;font-weight:700;cursor:pointer">Hisobni o'chirish</button>
+          </div>
+        </section>
+      </sc-if>
+    </div>
+  </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;nav&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;function&quot;},&quot;toast&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;function&quot;},&quot;confirm&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;function&quot;},&quot;demoState&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;normal&quot;,&quot;loading&quot;,&quot;empty&quot;,&quot;error&quot;],&quot;default&quot;:&quot;normal&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;params&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;object&quot;}}">
+const TABS = [['profile', 'Profil', 'user'], ['security', 'Xavfsizlik', 'lock'], ['keys', 'API kalitlari', 'key-round'], ['notif', 'Bildirishnomalar', 'bell'], ['display', "Ko'rinish", 'monitor'], ['risk', 'Risk va muvofiqlik', 'shield-check'], ['account', 'Hisob', 'settings']];
+const EVENTS = [['bt', 'Backtest yakunlandi'], ['ps', 'Paper sessiya boshlandi / to\'xtadi'], ['high', 'Strategiya yangi cho\'qqiga chiqdi'], ['dd', 'Maksimal pasayish chegarasi oshdi'], ['ml', "ML o'qitish yakunlandi"], ['sync', "Ma'lumot sinxronizatsiyasi xatosi"], ['opt', 'Optimizatsiya yakunlandi']];
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    const m = {}; EVENTS.forEach(([k]) => { m[k] = [true, ['dd', 'bt', 'ps'].includes(k), k === 'dd']; });
+    this.state = { ready: false, tab: (props.params && props.params.tab) || 'profile', p: { name: 'Abdulhaq Sherqoziyev', email: 'demo@quantlab.uz', phone: '+998 •• ••• •• 47', currency: 'USDT', tz: 'Asia/Tashkent', lang: 'uz' }, pw: ['', '', ''], pwMsg: '', pwOk: null, tfa: true, devices: [['monitor', 'Chrome · macOS', 'Toshkent · hozir faol', true], ['smartphone', 'Safari · iPhone', 'Toshkent · 3 soat oldin', false], ['monitor', 'Firefox · Windows', 'Samarqand · 6 kun oldin', false]], matrix: m, ddAlert: 10, disp: { theme: 'dark', density: 'compact', num: 'en', tf: '1h', start: 'dashboard' }, risk: { daily: 5, weekly: 10, mdd: 10, consec: 4, cool: 2, maxOpen: 3 } };
+  }
+  componentDidMount() { this._t = setInterval(() => { if (window.QL) { clearInterval(this._t); this._r = setTimeout(() => this.setState({ ready: true }), 380); } }, 30); }
+  componentWillUnmount() { clearInterval(this._t); clearTimeout(this._r); }
+  componentDidUpdate(pp) { const a = pp.params && pp.params.tab, b = this.props.params && this.props.params.tab; if (b && a !== b) this.setState({ tab: b }); }
+  view() {
+    const d = this.props.demoState, loading = !this.state.ready || d === 'loading';
+    return { loading, error: !loading && d === 'error', empty: !loading && d === 'empty', ok: !loading && (!d || d === 'normal') };
+  }
+  renderVals() {
+    const v = this.view(), s = this.state, toast = (t, k) => this.props.toast && this.props.toast(t, k), confirm = (o) => this.props.confirm && this.props.confirm(o);
+    const base = { v, retry: () => { this.setState({ ready: false }); setTimeout(() => this.setState({ ready: true }), 500); } };
+    if (!v.ok) return base;
+    const tab = {}; TABS.forEach(([id]) => { tab[id] = s.tab === id; });
+    const setP = (k) => (e) => this.setState(st => ({ p: Object.assign({}, st.p, { [k]: e.target.value }) }));
+    const seg = (label, hint, key, opts) => ({ label, hint, opts: opts.map(([id, l]) => ({ label: l, bg: s.disp[key] === id ? '#263244' : 'transparent', fg: s.disp[key] === id ? '#F1F5F9' : '#94A3B8', go: () => { if (key === 'theme' && id === 'light') { toast("Yorug' mavzu keyingi versiyada qo'shiladi", 'info'); return; } this.setState(st => ({ disp: Object.assign({}, st.disp, { [key]: id }) })); } })) });
+    return Object.assign(base, {
+      tab, tabs: TABS.map(([id, label, icon]) => ({ label, icon, bg: s.tab === id ? 'rgba(59,130,246,.14)' : 'transparent', fg: s.tab === id ? '#F1F5F9' : '#94A3B8', go: () => this.setState({ tab: id }) })),
+      p: s.p, profile: [['To\'liq ism', 'name', 'text'], ['Email', 'email', 'email'], ['Telefon', 'phone', 'text'], ['Asosiy valyuta', 'currency', 'text']].map(([label, k, type]) => ({ label, type, value: s.p[k], set: setP(k) })),
+      setTz: setP('tz'), setLang: (e) => { setP('lang')(e); if (e.target.value !== 'uz') toast("Hozircha faqat o'zbek tili mavjud. Rus va ingliz tillari tayyorlanmoqda.", 'info'); },
+      saveProfile: () => { if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(s.p.email)) { toast("Email manzili noto'g'ri", 'err'); return; } toast('Profil saqlandi', 'ok'); },
+      pwFields: ['Joriy parol', 'Yangi parol', 'Yangi parolni tasdiqlang'].map((label, i) => ({ label, value: s.pw[i], set: (e) => { const pw = s.pw.slice(); pw[i] = e.target.value; this.setState({ pw, pwMsg: '', pwOk: null }); } })),
+      pwBorder: s.pwOk === false ? '#EA3943' : '#263244', pwMsg: s.pwMsg || 'Kamida 10 belgi, harf va raqam', pwColor: s.pwOk === false ? '#F87171' : s.pwOk ? '#16C784' : '#94A3B8',
+      savePw: () => { const [a, b, c] = s.pw; if (!a) return this.setState({ pwMsg: 'Joriy parolni kiriting', pwOk: false }); if (b.length < 10 || !/\d/.test(b) || !/[a-z]/i.test(b)) return this.setState({ pwMsg: "Yangi parol kamida 10 belgi, harf va raqamdan iborat bo'lishi kerak", pwOk: false }); if (b !== c) return this.setState({ pwMsg: 'Parollar mos kelmadi', pwOk: false }); this.setState({ pw: ['', '', ''], pwMsg: 'Parol yangilandi', pwOk: true }); toast('Parol muvaffaqiyatli yangilandi', 'ok'); },
+      tfa: s.tfa ? { bg: 'rgba(22,199,132,.13)', color: '#16C784', text: 'Yoqilgan · Authenticator ilovasi · zaxira kodlari: 8 ta qolgan', btn: "O'chirish", btnBorder: 'rgba(234,57,67,.45)', btnColor: '#F87171' } : { bg: 'rgba(240,185,11,.13)', color: '#F0B90B', text: "O'chirilgan · hisobingiz faqat parol bilan himoyalangan", btn: 'Yoqish', btnBorder: '#3B82F6', btnColor: '#60A5FA' },
+      toggle2fa: () => s.tfa ? confirm({ danger: true, title: '2FA ni o\'chirasizmi?', okLabel: "O'chirish", text: "Hisobingiz xavfsizligi pasayadi. Kirishda faqat parol so'raladi.", onOk: () => { this.setState({ tfa: false }); toast('2FA o\'chirildi', 'warn'); } }) : (this.setState({ tfa: true }), toast('2FA yoqildi', 'ok')),
+      devices: s.devices.map(([icon, name, meta, current], i) => ({ icon, name, meta, current, other: !current, revoke: () => confirm({ title: 'Seansni yakunlaysizmi?', okLabel: 'Chiqarish', text: name + ' qurilmasidan hisobdan chiqariladi.', onOk: () => { this.setState(st => ({ devices: st.devices.filter((_, j) => j !== i) })); toast(name + ' seansi yakunlandi', 'ok'); } }) })),
+      keys: [['database', 'Binance ommaviy bozor ma\'lumotlari', 'Kalit talab qilinmaydi · faqat o\'qish', 'Ulangan', '#16C784'], ['key-round', 'Binance Spot Testnet', 'Ixtiyoriy · faqat test buyurtmalari', 'Sozlanmagan', '#94A3B8'], ['send', 'Telegram bot tokeni', 'Server tomonida · foydalanuvchiga ko\'rsatilmaydi', 'Server', '#94A3B8']].map(([icon, name, meta, status, color]) => ({ icon, name, meta, status, color })),
+      goIntegrations: () => this.props.nav && this.props.nav('integrations'),
+      matrix: EVENTS.map(([k, label]) => ({ label, cells: [0, 1, 2].map(ch => ({ on: s.matrix[k][ch], toggle: () => this.setState(st => { const m = Object.assign({}, st.matrix); m[k] = m[k].slice(); m[k][ch] = !m[k][ch]; return { matrix: m }; }) })) })),
+      ddAlert: s.ddAlert, setDd: (e) => this.setState({ ddAlert: parseFloat(e.target.value) || 10 }), saveNotif: () => toast('Bildirishnoma sozlamalari saqlandi', 'ok'),
+      display: [seg('Mavzu', "Qorong'i mavzu uzoq tahlil uchun optimallashtirilgan", 'theme', [['dark', "Qorong'i"], ['light', "Yorug'"], ['system', 'Tizim']]), seg('Zichlik', 'Jadval va kartochkalardagi bo\'shliqlar', 'density', [['compact', 'Zich'], ['normal', 'Standart']]), seg('Raqam formati', 'Narx va summalar ko\'rinishi', 'num', [['en', '1,234.56'], ['uz', '1 234,56']]), seg('Standart taymfreym', 'Grafiklar ochilganda', 'tf', [['15m', '15m'], ['1h', '1h'], ['4h', '4h'], ['1d', '1d']]), seg('Boshlang\'ich sahifa', 'Kirgandan keyin ochiladi', 'start', [['dashboard', 'Panel'], ['paper', 'Paper'], ['backtest', 'Backtest']])],
+      layers: [['L1', 'Konfiguratsiya', "Savdo jarayoni ishga tushganda spot bo'lmagan har qanday sozlama rad etiladi (enforce_spot_only)."], ['L2', 'Birja qatlami', 'Leverage va margin rejimini o\'rnatish chaqiruvlari bloklangan (assert_spot_operation).'], ['L3', 'Strategiya', "can_short = False, leverage() har doim 1.0 qaytaradi."], ['L4', 'Buyurtma darvozasi', "Har bir kirish buyurtmasi oldidan: long, leverage 1.0, leveraged token emas."], ['L5', 'Juftliklar to\'plami', 'IslamicComplianceFilter: UP/DOWN, 3L/3S, BULL/BEAR tokenlari va qora ro\'yxat chiqariladi.'], ['L6', 'Audit', 'Har bir rad etish sababi bilan loglanadi va bildirishnoma sifatida yuboriladi.']].map(([id, name, text]) => ({ id, name, text })),
+      riskFields: [['Kunlik maks. zarar, %', 'daily', 'MaxDailyLoss'], ['Haftalik maks. zarar, %', 'weekly', 'MaxWeeklyLoss'], ['Maks. pasayish, %', 'mdd', 'MaxDrawdown'], ['Ketma-ket zararlar', 'consec', 'ConsecutiveLossGuard'], ['Cooldown, sham', 'cool', 'CooldownPeriod'], ['Maks. ochiq savdolar', 'maxOpen', 'max_open_trades']].map(([label, k, tip]) => ({ label, tip, value: s.risk[k], set: (e) => this.setState(st => ({ risk: Object.assign({}, st.risk, { [k]: parseFloat(e.target.value) || 0 }) })) })),
+      saveRisk: () => toast('Risk himoyalari saqlandi · yangi sessiyalarga qo\'llanadi', 'ok'),
+      exportAll: () => { const Q = window.QL; Q.downloadCSV('quantlab-strategiyalar.csv', [['ID', 'Nomi', 'Juftlik', 'TF', 'Turi', 'Daromad %', 'Sharpe', 'Max DD %', 'Savdolar', 'Holat']].concat(Q.STRATS.map(x => [x.id, x.name, x.pair, x.tf, x.type, x.ret.toFixed(2), x.sharpe.toFixed(2), x.mdd.toFixed(2), x.trades, x.status]))); toast('Strategiyalar eksport qilindi', 'ok'); },
+      deleteAccount: () => confirm({ danger: true, title: "Hisobni butunlay o'chirasizmi?", okLabel: "Hisobni o'chirish", text: "Barcha strategiyalar, backtest natijalari, paper sessiyalar va saqlangan kalitlar o'chiriladi. Bu amalni ortga qaytarib bo'lmaydi.", onOk: () => { toast("Demo hisob o'chirildi", 'info'); this.props.nav && this.props.nav('auth'); } })
+    });
+  }
+}
+</script>
+</body>
+</html>

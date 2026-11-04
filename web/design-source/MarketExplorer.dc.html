@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/ican-business-design-system-64d11fa8-448a-41b1-9653-97041b289bb2/colors_and_type.css">
+<script src="_ds/ican-business-design-system-64d11fa8-448a-41b1-9653-97041b289bb2/_ds_bundle.js"></script>
+<script src="ql.js"></script>
+</helmet>
+<div style="font-family:var(--font-ui);color:#F1F5F9;display:flex;flex-direction:column;gap:16px">
+  <div style="display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px">
+    <div>
+      <h1 style="font-family:var(--font-display);font-size:22px;line-height:28px;font-weight:700;letter-spacing:-.01em;margin:0">Bozor tadqiqoti</h1>
+      <p style="margin:4px 0 0;font-size:13px;color:#94A3B8">Binance Spot juftliklari · ommaviy bozor ma'lumotlari (faqat o'qish) · demo narxlar</p>
+    </div>
+  </div>
+  <sc-if value="{{ v.loading }}" hint-placeholder-val="{{ true }}"><dc-import name="StateBlock" kind="loading" hint-size="100%,520px"></dc-import></sc-if>
+  <sc-if value="{{ v.error }}" hint-placeholder-val="{{ false }}"><dc-import name="StateBlock" kind="error" title="Bozor ma'lumotlari olinmadi" text="Binance ommaviy API javob bermadi (HTTP 429 — so'rovlar limiti). 60 soniyadan so'ng avtomatik qayta urinish." action-label="Qayta urinish" on-action="{{ retry }}" hint-size="100%,300px"></dc-import></sc-if>
+  <sc-if value="{{ v.empty }}" hint-placeholder-val="{{ false }}"><dc-import name="StateBlock" kind="empty" icon="chart-candlestick" title="Juftliklar ro'yxati bo'sh" text="Pairlist filtrlari barcha juftliklarni chiqarib tashladi. VolumePairList va IslamicComplianceFilter sozlamalarini tekshiring." action-label="Sozlamalarga o'tish" on-action="{{ goSettings }}" hint-size="100%,300px"></dc-import></sc-if>
+  <sc-if value="{{ v.ok }}" hint-placeholder-val="{{ false }}">
+  <div style="display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start">
+    <section style="flex:1 1 300px;max-width:100%;min-width:0;background:#151C2C;border:1px solid #263244;border-radius:12px;display:flex;flex-direction:column">
+      <div style="padding:12px;display:flex;flex-direction:column;gap:10px;border-bottom:1px solid #263244">
+        <div style="display:flex;align-items:center;gap:8px;height:34px;padding:0 10px;background:#0F1522;border:1px solid #263244;border-radius:8px;color:#94A3B8">
+          <x-import component-from-global-scope="QL.Icon" icon="search" size="15" hint-size="15px,15px"></x-import>
+          <input value="{{ q }}" onChange="{{ setQ }}" placeholder="Juftlikni qidiring (BTC, ETH…)" style="flex:1;min-width:0;border:0;outline:none;background:transparent;color:#F1F5F9;font-size:13px">
+        </div>
+        <div style="display:flex;gap:2px;padding:2px;background:#0F1522;border:1px solid #263244;border-radius:8px">
+          <sc-for list="{{ filters }}" as="t" hint-placeholder-count="4">
+            <button onClick="{{ t.go }}" style="flex:1;height:26px;padding:0 6px;border:0;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;background:{{ t.bg }};color:{{ t.fg }}">{{ t.label }}</button>
+          </sc-for>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:22px minmax(0,1fr) 88px 66px;gap:8px;padding:8px 12px;border-bottom:1px solid #263244;font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:#94A3B8">
+        <span></span>
+        <sc-for list="{{ heads }}" as="h" hint-placeholder-count="3">
+          <span onClick="{{ h.go }}" style="cursor:pointer;text-align:{{ h.align }};color:{{ h.color }};user-select:none;white-space:nowrap">{{ h.label }}{{ h.arrow }}</span>
+        </sc-for>
+      </div>
+      <div style="max-height:620px;overflow-y:auto">
+        <sc-for list="{{ rows }}" as="m" hint-placeholder-count="12">
+          <div onClick="{{ m.go }}" style="display:grid;grid-template-columns:22px minmax(0,1fr) 88px 66px;gap:8px;align-items:center;padding:8px 12px;border-bottom:1px solid #1E2738;cursor:pointer;font-variant-numeric:tabular-nums;background:{{ m.bg }}" style-hover="background:#1B2435">
+            <button onClick="{{ m.star }}" aria-label="Kuzatuv ro'yxati" style="border:0;background:transparent;padding:0;cursor:pointer;color:{{ m.starColor }};display:inline-flex"><x-import component-from-global-scope="QL.Icon" icon="star" size="14" hint-size="14px,14px"></x-import></button>
+            <div style="min-width:0"><div style="font-size:13px;font-weight:600">{{ m.base }}<span style="color:#64748B;font-weight:500">/USDT</span></div><div style="font-size:11px;color:#94A3B8">Hajm ${{ m.vol }}</div></div>
+            <div style="text-align:right;font-size:13px;font-weight:600">{{ m.price }}</div>
+            <div style="text-align:right;font-size:12px;font-weight:600;color:{{ m.tone }}">{{ m.ch }}</div>
+          </div>
+        </sc-for>
+        <sc-if value="{{ noRows }}" hint-placeholder-val="{{ false }}"><div style="padding:32px 16px;text-align:center;font-size:13px;color:#94A3B8">“{{ q }}” bo'yicha juftlik topilmadi.</div></sc-if>
+      </div>
+      <div style="display:flex;gap:10px;padding:12px;border-top:1px solid #263244;font-size:12px;line-height:17px;color:#94A3B8">
+        <span style="color:#16C784;display:inline-flex;margin-top:1px"><x-import component-from-global-scope="QL.Icon" icon="shield-check" size="15" hint-size="15px,15px"></x-import></span>
+        <span>IslamicComplianceFilter faol: leveraged tokenlar (UP/DOWN, 3L/3S, BULL/BEAR) va qora ro'yxatdagi aktivlar ko'rsatilmaydi.</span>
+      </div>
+    </section>
+
+    <div style="flex:3 1 560px;min-width:0;display:flex;flex-direction:column;gap:16px">
+      <section style="background:#151C2C;border:1px solid #263244;border-radius:12px">
+        <div style="display:flex;flex-wrap:wrap;align-items:center;gap:16px 24px;padding:14px 16px;border-bottom:1px solid #263244">
+          <div style="display:flex;align-items:center;gap:12px">
+            <div style="width:38px;height:38px;border-radius:10px;background:#1B2435;border:1px solid #263244;display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-weight:700;font-size:12px">{{ cur.base }}</div>
+            <div>
+              <div style="font-family:var(--font-display);font-size:18px;font-weight:700">{{ cur.sym }}</div>
+              <div style="font-size:11px;color:#94A3B8">Binance Spot · #{{ cur.rank }} hajm bo'yicha</div>
+            </div>
+          </div>
+          <div style="font-variant-numeric:tabular-nums">
+            <div style="font-size:22px;font-weight:700;color:{{ cur.tone }}">{{ cur.price }}</div>
+            <div style="font-size:12px;font-weight:600;color:{{ cur.tone }}">{{ cur.ch }} · 24 soat</div>
+          </div>
+          <div style="display:flex;gap:20px;font-size:12px;font-variant-numeric:tabular-nums">
+            <div><div style="color:#94A3B8">24s yuqori</div><div style="font-weight:600;margin-top:2px">{{ cur.high }}</div></div>
+            <div><div style="color:#94A3B8">24s past</div><div style="font-weight:600;margin-top:2px">{{ cur.low }}</div></div>
+            <div><div style="color:#94A3B8">24s hajm (USDT)</div><div style="font-weight:600;margin-top:2px">{{ cur.vol }}</div></div>
+          </div>
+          <div style="flex:1"></div>
+          <div style="display:flex;gap:8px">
+            <button onClick="{{ toggleCurStar }}" style="display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 12px;border-radius:8px;border:1px solid #263244;background:#1B2435;color:#F1F5F9;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap" style-hover="background:#222D42"><span style="color:{{ cur.starColor }};display:inline-flex"><x-import component-from-global-scope="QL.Icon" icon="star" size="15" hint-size="15px,15px"></x-import></span>{{ cur.starLabel }}</button>
+            <button onClick="{{ goBacktest }}" style="display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 14px;border-radius:8px;border:1px solid #3B82F6;background:#3B82F6;color:#fff;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap" style-hover="background:#2563EB"><x-import component-from-global-scope="QL.Icon" icon="flask-conical" size="15" hint-size="15px,15px"></x-import>Backtest qilish</button>
+          </div>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid #263244">
+          <div style="display:inline-flex;gap:2px;padding:2px;background:#0F1522;border:1px solid #263244;border-radius:8px">
+            <sc-for list="{{ tfs }}" as="t" hint-placeholder-count="7">
+              <button onClick="{{ t.go }}" style="height:26px;min-width:36px;padding:0 8px;border:0;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;background:{{ t.bg }};color:{{ t.fg }}">{{ t.label }}</button>
+            </sc-for>
+          </div>
+          <span style="width:1px;height:20px;background:#263244"></span>
+          <sc-for list="{{ inds }}" as="i" hint-placeholder-count="5">
+            <button onClick="{{ i.go }}" style="display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;border-radius:999px;border:1px solid {{ i.border }};background:{{ i.bg }};color:{{ i.fg }};font-size:12px;font-weight:600;cursor:pointer"><span style="width:8px;height:8px;border-radius:2px;background:{{ i.color }}"></span>{{ i.label }}</button>
+          </sc-for>
+          <div style="flex:1"></div>
+          <span style="display:inline-flex;align-items:center;gap:6px;font-size:11px;color:#94A3B8"><x-import component-from-global-scope="QL.LiveDot" color="{{ liveColor }}" pulse="{{ live }}" size="7" hint-size="7px,7px"></x-import>{{ liveLabel }}</span>
+        </div>
+        <div style="padding:8px 8px 4px 12px">
+          <x-import component-from-global-scope="QL.Chart" candles="{{ cs }}" overlays="{{ overlays }}" volume="{{ showVol }}" name="{{ cur.sym }}" data-key="{{ key }}" live="{{ live }}" intraday="{{ intraday }}" bars="{{ 150 }}" height="420" hint-size="100%,420px"></x-import>
+        </div>
+        <sc-if value="{{ showRsi }}" hint-placeholder-val="{{ true }}">
+          <div style="padding:0 8px 8px 12px;border-top:1px solid #1E2738">
+            <div style="font-size:11px;color:#94A3B8;padding:8px 4px 0">RSI (14) · 30 / 70 chegaralari</div>
+            <x-import component-from-global-scope="QL.Chart" series="{{ rsiSeries }}" fmt="num" data-key="{{ key }}" live="{{ live }}" intraday="{{ intraday }}" bars="{{ 150 }}" legend="{{ false }}" height="120" hint-size="100%,120px"></x-import>
+          </div>
+        </sc-if>
+      </section>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px">
+        <sc-for list="{{ stats }}" as="k" hint-placeholder-count="4">
+          <dc-import name="Metric" m="{{ k }}" hint-size="100%,96px"></dc-import>
+        </sc-for>
+      </div>
+    </div>
+  </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;nav&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;function&quot;},&quot;toast&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;function&quot;},&quot;confirm&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;function&quot;},&quot;demoState&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;normal&quot;,&quot;loading&quot;,&quot;empty&quot;,&quot;error&quot;],&quot;default&quot;:&quot;normal&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;live&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;},&quot;params&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;object&quot;}}">
+const TFS = ['1m', '5m', '15m', '1h', '4h', '1d', '1w'];
+const INDS = [['ema20', 'EMA 20', '#FFA841'], ['ema50', 'EMA 50', '#9747FF'], ['bb', 'Bollinger 20,2', '#16B5CA'], ['vol', 'Hajm', '#64748B'], ['rsi', 'RSI 14', '#EC4899']];
+class Component extends DCLogic {
+  state = { ready: false, sym: (this.props.params && this.props.params.sym) || 'BTC/USDT', tf: '1h', q: '', filter: 'all', sort: 'vol', dir: -1, watch: ['BTC/USDT', 'ETH/USDT', 'SOL/USDT', 'BNB/USDT'], ind: { ema20: true, ema50: true, bb: false, vol: true, rsi: true }, px: null, cs: null, key: '' };
+  componentDidMount() {
+    this._t = setInterval(() => { if (window.QL) { clearInterval(this._t); this.load(); this._r = setTimeout(() => this.setState({ ready: true }), 420); this.sub(); } }, 30);
+  }
+  componentDidUpdate(pp) { if (pp.live !== this.props.live) this.sub(); }
+  componentWillUnmount() { clearInterval(this._t); clearTimeout(this._r); if (this._u) this._u(); }
+  load(sym, tf) {
+    sym = sym || this.state.sym; tf = tf || this.state.tf;
+    const cs = window.QL.candles(sym, tf, 320);
+    this.setState({ sym, tf, cs, key: sym + '|' + tf });
+  }
+  sub() {
+    if (this._u) { this._u(); this._u = null; }
+    if (this.props.live === false || !window.QL) return;
+    this._u = window.QL.stream.subscribe(px => {
+      const s = this.state, cs = s.cs; if (!cs || !cs.length) { this.setState({ px: Object.assign({}, px) }); return; }
+      const Q = window.QL, step = Q.TF[s.tf], p = px[s.sym], bucket = Math.floor(Q.NOW() / step) * step, last = cs[cs.length - 1];
+      let next;
+      if (bucket > last.time) next = cs.slice(1).concat([{ time: bucket, open: last.close, high: Math.max(last.close, p), low: Math.min(last.close, p), close: p, volume: last.volume * 0.05 }]);
+      else { const u = Object.assign({}, last, { close: p, high: Math.max(last.high, p), low: Math.min(last.low, p), volume: last.volume + last.volume * 0.004 }); next = cs.slice(0, -1).concat([u]); }
+      this.setState({ px: Object.assign({}, px), cs: next });
+    });
+  }
+  view() {
+    const d = this.props.demoState, loading = !this.state.ready || d === 'loading';
+    return { loading, error: !loading && d === 'error', empty: !loading && d === 'empty', ok: !loading && (!d || d === 'normal') };
+  }
+  toggleStar(sym) { this.setState(s => ({ watch: s.watch.includes(sym) ? s.watch.filter(x => x !== sym) : s.watch.concat([sym]) })); if (this.props.toast) this.props.toast(this.state.watch.includes(sym) ? sym + " kuzatuv ro'yxatidan olib tashlandi" : sym + " kuzatuv ro'yxatiga qo'shildi", 'info'); }
+
+  renderVals() {
+    const v = this.view(), s = this.state;
+    const base = { v, retry: () => { this.setState({ ready: false }); setTimeout(() => this.setState({ ready: true }), 600); }, goSettings: () => this.props.nav && this.props.nav('settings'), q: s.q };
+    if (!v.ok || !s.cs) return base;
+    const Q = window.QL, f = Q.fmt, px = s.px || {};
+    const price = (m) => px[m.sym] || m.price, chg = (m) => (price(m) / (m.price / (1 + m.ch / 100)) - 1) * 100;
+    const q = s.q.trim().toUpperCase();
+    let list = Q.MARKETS.filter(m => !q || m.sym.includes(q));
+    if (s.filter === 'watch') list = list.filter(m => s.watch.includes(m.sym));
+    if (s.filter === 'up') list = list.filter(m => chg(m) > 0);
+    if (s.filter === 'down') list = list.filter(m => chg(m) < 0);
+    const val = { sym: m => m.base, price: m => price(m), ch: m => chg(m), vol: m => m.vol };
+    list = list.slice().sort((a, b) => { const x = val[s.sort](a), y = val[s.sort](b); return (typeof x === 'string' ? x.localeCompare(y) : x - y) * s.dir; });
+    const rows = list.map(m => ({
+      base: m.base, price: f.price(price(m)), ch: f.pct(chg(m)), tone: f.tone(chg(m)), vol: f.compact(m.vol), bg: m.sym === s.sym ? 'rgba(59,130,246,.1)' : 'transparent',
+      starColor: s.watch.includes(m.sym) ? '#F0B90B' : '#475569', star: (e) => { e.stopPropagation(); this.toggleStar(m.sym); }, go: () => this.load(m.sym)
+    }));
+    const heads = [['Juftlik', 'sym', 'left'], ['Narx', 'price', 'right'], ['24s %', 'ch', 'right']].map(([label, key, align]) => ({ label, align, color: s.sort === key ? '#F1F5F9' : '#94A3B8', arrow: s.sort === key ? (s.dir < 0 ? ' ↓' : ' ↑') : '', go: () => this.setState(st => ({ sort: key, dir: st.sort === key ? -st.dir : -1 })) }));
+    const m = Q.MK[s.sym], cp = price(m), cc = chg(m), cs = s.cs, cl = cs.map(c => c.close);
+    const e20 = Q.ind.ema(cl, 20), e50 = Q.ind.ema(cl, 50), bb = Q.ind.boll(cl, 20, 2), rs = Q.ind.rsi(cl, 14);
+    const overlays = [];
+    if (s.ind.ema20) overlays.push({ name: 'EMA 20', color: '#FFA841', data: Q.toSeries(cs, e20, 20) });
+    if (s.ind.ema50) overlays.push({ name: 'EMA 50', color: '#9747FF', data: Q.toSeries(cs, e50, 50) });
+    if (s.ind.bb) { overlays.push({ name: 'BB yuqori', color: '#16B5CA', data: Q.toSeries(cs, bb.upper, 20) }); overlays.push({ name: 'BB pastki', color: '#16B5CA', data: Q.toSeries(cs, bb.lower, 20) }); }
+    const rsiSeries = [{ name: 'RSI', color: '#EC4899', data: Q.toSeries(cs, rs, 15) }, { name: '70', color: '#475569', dashed: true, width: 1, data: cs.slice(15).map(c => ({ time: c.time, value: 70 })) }, { name: '30', color: '#475569', dashed: true, width: 1, data: cs.slice(15).map(c => ({ time: c.time, value: 30 })) }];
+    const n = cs.length - 1, r = rs[n], trend = e20[n] > e50[n];
+    const atr = cs.slice(-14).reduce((a, c) => a + (c.high - c.low) / c.close, 0) / 14 * 100;
+    const bbPos = (cl[n] - bb.lower[n]) / ((bb.upper[n] - bb.lower[n]) || 1) * 100;
+    const stats = [
+      { label: 'RSI (14)', value: r.toFixed(1), color: r < 30 ? '#16C784' : r > 70 ? '#EA3943' : '#F1F5F9', sub: r < 30 ? "Haddan tashqari sotilgan zona" : r > 70 ? "Haddan tashqari sotib olingan zona" : 'Neytral zona (30–70)', tip: "Nisbiy kuch indeksi: so'nggi 14 shamdagi o'sish va pasayishlar nisbati. 30 dan past — ortiqcha sotilgan, 70 dan yuqori — ortiqcha sotib olingan." },
+      { label: 'Trend (EMA 20/50)', value: trend ? "Ko'tarilish" : 'Pasayish', color: trend ? '#16C784' : '#EA3943', sub: 'EMA20 ' + f.price(e20[n]) + ' · EMA50 ' + f.price(e50[n]) },
+      { label: 'Bollinger pozitsiyasi', value: bbPos.toFixed(0) + '%', sub: "0% = pastki chiziq, 100% = yuqori chiziq", tip: 'Narxning Bollinger kanali ichidagi nisbiy joylashuvi.' },
+      { label: 'ATR (14), %', value: atr.toFixed(2) + '%', sub: s.tf + " shamlardagi o'rtacha diapazon", tip: "O'rtacha haqiqiy diapazon: volatillik o'lchovi. Stop-loss masofasini tanlashda foydali." }
+    ];
+    const live = this.props.live !== false;
+    return Object.assign(base, {
+      rows, heads, noRows: !rows.length, setQ: (e) => this.setState({ q: e.target.value }),
+      filters: [['all', 'Hammasi'], ['watch', 'Kuzatuv'], ['up', "O'sish"], ['down', 'Pasayish']].map(([id, label]) => ({ label, bg: s.filter === id ? '#263244' : 'transparent', fg: s.filter === id ? '#F1F5F9' : '#94A3B8', go: () => this.setState({ filter: id }) })),
+      cur: { sym: s.sym, base: m.base, rank: m.rank, price: f.price(cp), ch: f.pct(cc), tone: f.tone(cc), high: f.price(Math.max(m.high, cp)), low: f.price(Math.min(m.low, cp)), vol: f.compact(m.vol), starColor: s.watch.includes(s.sym) ? '#F0B90B' : '#94A3B8', starLabel: s.watch.includes(s.sym) ? 'Kuzatuvda' : 'Kuzatish' },
+      toggleCurStar: () => this.toggleStar(s.sym),
+      goBacktest: () => this.props.nav && this.props.nav('backtest', { pair: s.sym, tf: ['15m', '1h', '4h'].includes(s.tf) ? s.tf : '1h' }),
+      tfs: TFS.map(t => ({ label: t, bg: s.tf === t ? '#263244' : 'transparent', fg: s.tf === t ? '#F1F5F9' : '#94A3B8', go: () => this.load(s.sym, t) })),
+      inds: INDS.map(([id, label, color]) => { const on = s.ind[id]; return { label, color: on ? color : '#475569', bg: on ? '#1B2435' : 'transparent', border: on ? '#334155' : '#263244', fg: on ? '#F1F5F9' : '#94A3B8', go: () => this.setState(st => ({ ind: Object.assign({}, st.ind, { [id]: !st.ind[id] }) })) }; }),
+      cs, overlays, showVol: !!s.ind.vol, showRsi: !!s.ind.rsi, rsiSeries, key: s.key, live, intraday: Q.TF[s.tf] < 86400,
+      liveColor: live ? '#16C784' : '#64748B', liveLabel: live ? 'Jonli · har soniyada yangilanadi' : 'Jonli yangilanish o\'chirilgan', stats
+    });
+  }
+}
+</script>
+</body>
+</html>

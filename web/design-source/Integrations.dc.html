@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/ican-business-design-system-64d11fa8-448a-41b1-9653-97041b289bb2/colors_and_type.css">
+<script src="_ds/ican-business-design-system-64d11fa8-448a-41b1-9653-97041b289bb2/_ds_bundle.js"></script>
+<script src="ql.js"></script>
+</helmet>
+<div style="font-family:var(--font-ui);color:#F1F5F9;display:flex;flex-direction:column;gap:16px">
+  <div>
+    <h1 style="font-family:var(--font-display);font-size:22px;line-height:28px;font-weight:700;letter-spacing:-.01em;margin:0">Integratsiyalar</h1>
+    <p style="margin:4px 0 0;font-size:13px;color:#94A3B8">Bozor ma'lumotlari, ixtiyoriy Testnet kalitlari va Telegram. Maxfiy kalitlar faqat serverda shifrlangan holda saqlanadi.</p>
+  </div>
+  <sc-if value="{{ v.loading }}" hint-placeholder-val="{{ true }}"><dc-import name="StateBlock" kind="loading" hint-size="100%,520px"></dc-import></sc-if>
+  <sc-if value="{{ v.error }}" hint-placeholder-val="{{ false }}"><dc-import name="StateBlock" kind="error" title="Integratsiyalar holati olinmadi" action-label="Qayta urinish" on-action="{{ retry }}" hint-size="100%,300px"></dc-import></sc-if>
+  <sc-if value="{{ v.empty }}" hint-placeholder-val="{{ false }}"><dc-import name="StateBlock" kind="empty" icon="plug" title="Integratsiya ulanmagan" text="Platforma Binance ommaviy bozor ma'lumotlari bilan kalitsiz ishlaydi. Testnet va Telegram ixtiyoriy." action-label="Qayta tekshirish" on-action="{{ retry }}" hint-size="100%,300px"></dc-import></sc-if>
+  <sc-if value="{{ v.ok }}" hint-placeholder-val="{{ false }}">
+  <div style="display:flex;flex-direction:column;gap:16px">
+    <div style="display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start">
+      <section style="flex:1 1 420px;min-width:0;background:#151C2C;border:1px solid #263244;border-radius:12px">
+        <div style="display:flex;align-items:center;gap:12px;padding:14px 16px;border-bottom:1px solid #263244">
+          <div style="width:36px;height:36px;border-radius:9px;background:rgba(240,185,11,.14);color:#F0B90B;display:flex;align-items:center;justify-content:center"><x-import component-from-global-scope="QL.Icon" icon="database" size="18" hint-size="18px,18px"></x-import></div>
+          <div style="flex:1;min-width:0"><div style="font-family:var(--font-display);font-size:14px;font-weight:600">Binance ommaviy bozor ma'lumotlari</div><div style="font-size:12px;color:#94A3B8;margin-top:2px">Faqat o'qish · API kalit talab qilinmaydi</div></div>
+          <span style="display:inline-flex;align-items:center;gap:6px;height:22px;padding:0 8px;border-radius:6px;font-size:11px;font-weight:700;background:rgba(22,199,132,.13);color:#16C784"><x-import component-from-global-scope="QL.LiveDot" color="#16C784" size="6" hint-size="6px,6px"></x-import>Ulangan</span>
+        </div>
+        <div style="padding:8px 16px 4px">
+          <sc-for list="{{ md }}" as="x" hint-placeholder-count="6"><div style="display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid #1E2738;font-size:13px"><span style="color:#94A3B8">{{ x.k }}</span><span style="font-weight:600;text-align:right;font-variant-numeric:tabular-nums;color:{{ x.color }}">{{ x.v }}</span></div></sc-for>
+        </div>
+        <div style="padding:10px 16px 14px">
+          <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:6px"><span style="color:#94A3B8">So'rovlar og'irligi (1 daqiqa)</span><b style="font-variant-numeric:tabular-nums">{{ weight }} / 6 000</b></div>
+          <div style="height:6px;border-radius:9px;background:#1B2435"><div style="height:100%;width:{{ weightW }};border-radius:9px;background:#3B82F6"></div></div>
+          <button onClick="{{ test }}" style="margin-top:12px;display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 12px;border-radius:8px;border:1px solid #263244;background:#1B2435;color:#F1F5F9;font-size:12px;font-weight:600;cursor:pointer" style-hover="background:#222D42"><x-import component-from-global-scope="QL.Icon" icon="refresh-cw" size="13" hint-size="13px,13px"></x-import>Ulanishni tekshirish</button>
+        </div>
+      </section>
+
+      <section style="flex:1 1 420px;min-width:0;background:#151C2C;border:1px solid #263244;border-radius:12px">
+        <div style="display:flex;align-items:center;gap:12px;padding:14px 16px;border-bottom:1px solid #263244">
+          <div style="width:36px;height:36px;border-radius:9px;background:rgba(59,130,246,.14);color:#60A5FA;display:flex;align-items:center;justify-content:center"><x-import component-from-global-scope="QL.Icon" icon="key-round" size="18" hint-size="18px,18px"></x-import></div>
+          <div style="flex:1;min-width:0"><div style="font-family:var(--font-display);font-size:14px;font-weight:600">Binance Spot Testnet kalitlari</div><div style="font-size:12px;color:#94A3B8;margin-top:2px">Ixtiyoriy · faqat testnet.binance.vision · real mablag' ishlatilmaydi</div></div>
+          <span style="display:inline-flex;align-items:center;height:22px;padding:0 8px;border-radius:6px;font-size:11px;font-weight:700;background:{{ tn.st.bg }};color:{{ tn.st.color }}">{{ tn.st.label }}</span>
+        </div>
+        <sc-if value="{{ tn.has }}" hint-placeholder-val="{{ false }}">
+          <div style="padding:14px 16px;display:flex;flex-direction:column;gap:12px">
+            <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;background:#111827;border:1px solid #263244">
+              <x-import component-from-global-scope="QL.Icon" icon="lock" size="15" color="#94A3B8" hint-size="15px,15px"></x-import>
+              <div style="flex:1;min-width:0"><div style="font-family:'JetBrains Mono',Menlo,monospace;font-size:13px">{{ tn.masked }}</div><div style="font-size:11px;color:#94A3B8;margin-top:2px">Qo'shilgan {{ tn.added }} · maxfiy kalit ko'rsatilmaydi</div></div>
+              <button onClick="{{ removeKey }}" style="height:30px;padding:0 10px;border-radius:7px;border:1px solid rgba(234,57,67,.4);background:transparent;color:#F87171;font-size:12px;font-weight:600;cursor:pointer" style-hover="background:rgba(234,57,67,.12)">O'chirish</button>
+            </div>
+          </div>
+        </sc-if>
+        <sc-if value="{{ tn.none }}" hint-placeholder-val="{{ true }}">
+          <div style="padding:14px 16px;display:flex;flex-direction:column;gap:10px">
+            <label style="display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:500;color:#94A3B8">API kalit
+              <input value="{{ keyIn }}" onChange="{{ setKey }}" placeholder="Testnet API key" autocomplete="off" style="height:36px;padding:0 10px;background:#0F1522;border:1px solid {{ keyBorder }};border-radius:8px;color:#F1F5F9;font-size:13px;outline:none;font-family:'JetBrains Mono',Menlo,monospace" style-focus="border-color:#3B82F6">
+            </label>
+            <label style="display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:500;color:#94A3B8">Maxfiy kalit (secret)
+              <input type="password" value="{{ secIn }}" onChange="{{ setSec }}" placeholder="••••••••••••••••" autocomplete="new-password" style="height:36px;padding:0 10px;background:#0F1522;border:1px solid {{ keyBorder }};border-radius:8px;color:#F1F5F9;font-size:13px;outline:none" style-focus="border-color:#3B82F6">
+            </label>
+            <sc-if value="{{ keyErr }}" hint-placeholder-val="{{ false }}"><div style="font-size:12px;color:#F87171">{{ keyErrText }}</div></sc-if>
+            <button onClick="{{ saveKey }}" style="align-self:flex-start;height:34px;padding:0 14px;border-radius:8px;border:1px solid #3B82F6;background:#3B82F6;color:#fff;font-size:13px;font-weight:600;cursor:pointer" style-hover="background:#2563EB">Serverga xavfsiz saqlash</button>
+          </div>
+        </sc-if>
+        <div style="padding:0 16px 14px">
+          <div style="font-size:12px;font-weight:600;color:#94A3B8;margin-bottom:6px">Talab qilinadigan ruxsatlar</div>
+          <sc-for list="{{ perms }}" as="p" hint-placeholder-count="4"><div style="display:flex;align-items:center;gap:8px;padding:5px 0;font-size:12px"><span style="color:{{ p.color }};display:inline-flex"><x-import component-from-global-scope="QL.Icon" icon="{{ p.icon }}" size="14" hint-size="14px,14px"></x-import></span><span style="color:#CBD5E1">{{ p.text }}</span></div></sc-for>
+        </div>
+      </section>
+    </div>
+
+    <section style="background:#151C2C;border:1px solid #263244;border-radius:12px">
+      <div style="display:flex;flex-wrap:wrap;align-items:center;gap:12px;padding:14px 16px;border-bottom:1px solid #263244">
+        <div style="width:36px;height:36px;border-radius:9px;background:rgba(22,181,202,.14);color:#16B5CA;display:flex;align-items:center;justify-content:center"><x-import component-from-global-scope="QL.Icon" icon="send" size="18" hint-size="18px,18px"></x-import></div>
+        <div style="flex:1;min-width:200px"><div style="font-family:var(--font-display);font-size:14px;font-weight:600">Telegram</div><div style="font-size:12px;color:#94A3B8;margin-top:2px">Ixtiyoriy kanal: ogohlantirishlar va tezkor holat. Barcha boshqaruv veb-ilovada qoladi.</div></div>
+        <span style="display:inline-flex;align-items:center;height:22px;padding:0 8px;border-radius:6px;font-size:11px;font-weight:700;background:{{ tg.st.bg }};color:{{ tg.st.color }}">{{ tg.st.label }}</span>
+      </div>
+      <div style="display:flex;flex-wrap:wrap">
+        <div style="flex:1.2 1 420px;min-width:0;padding:14px 16px;display:flex;flex-direction:column;gap:14px">
+          <sc-if value="{{ tg.off }}" hint-placeholder-val="{{ true }}">
+            <div style="display:flex;flex-direction:column;gap:10px">
+              <sc-for list="{{ steps }}" as="s" hint-placeholder-count="3">
+                <div style="display:flex;gap:12px;align-items:flex-start"><span style="width:24px;height:24px;border-radius:50%;flex-shrink:0;background:#1B2435;border:1px solid #334155;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700">{{ s.n }}</span><div style="font-size:13px;line-height:20px;color:#CBD5E1">{{ s.text }} <code>{{ s.code }}</code></div></div>
+              </sc-for>
+              <button onClick="{{ connectTg }}" style="align-self:flex-start;display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 14px;border-radius:8px;border:1px solid #3B82F6;background:#3B82F6;color:#fff;font-size:13px;font-weight:600;cursor:pointer" style-hover="background:#2563EB">{{ tg.btn }}</button>
+            </div>
+          </sc-if>
+          <sc-if value="{{ tg.on }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;background:#111827;border:1px solid #263244;font-size:13px">
+              <x-import component-from-global-scope="QL.Icon" icon="circle-check" size="16" color="#16C784" hint-size="16px,16px"></x-import>
+              <span style="flex:1">Ulangan: <b>@abdulhaq_research</b> · chat ID 5•••••812</span>
+              <button onClick="{{ disconnectTg }}" style="height:30px;padding:0 10px;border-radius:7px;border:1px solid rgba(234,57,67,.4);background:transparent;color:#F87171;font-size:12px;font-weight:600;cursor:pointer">Uzish</button>
+            </div>
+          </sc-if>
+          <div>
+            <div style="font-size:12px;font-weight:600;color:#94A3B8;margin-bottom:6px">Telegramga yuboriladigan xabarlar</div>
+            <sc-for list="{{ alerts }}" as="a" hint-placeholder-count="6">
+              <label style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid #1E2738;font-size:13px;cursor:pointer;opacity:{{ a.op }}">
+                <input type="checkbox" checked="{{ a.on }}" onChange="{{ a.toggle }}" disabled="{{ a.dis }}" style="width:15px;height:15px">
+                <span style="flex:1">{{ a.label }}</span><span style="font-size:12px;color:#94A3B8">{{ a.hint }}</span>
+              </label>
+            </sc-for>
+          </div>
+        </div>
+        <div style="flex:1 1 320px;min-width:0;padding:14px 16px;border-left:1px solid #1E2738;display:flex;flex-direction:column;gap:12px">
+          <div style="font-size:12px;font-weight:600;color:#94A3B8">Kuzatuv buyruqlari</div>
+          <div style="display:grid;grid-template-columns:auto 1fr;gap:6px 12px;font-size:12px">
+            <sc-for list="{{ cmds }}" as="c" hint-placeholder-count="7"><code style="justify-self:start">{{ c.c }}</code><span style="color:#CBD5E1">{{ c.d }}</span></sc-for>
+          </div>
+          <div style="font-size:12px;font-weight:600;color:#94A3B8;margin-top:4px">Kunlik xulosa namunasi</div>
+          <div style="align-self:flex-start;max-width:320px;padding:10px 12px;border-radius:12px 12px 12px 4px;background:#1B2435;border:1px solid #263244;font-size:12px;line-height:18px;color:#E2E8F0;white-space:pre-line">{{ sample }}</div>
+        </div>
+      </div>
+    </section>
+  </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;nav&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;function&quot;},&quot;toast&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;function&quot;},&quot;confirm&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;function&quot;},&quot;demoState&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;normal&quot;,&quot;loading&quot;,&quot;empty&quot;,&quot;error&quot;],&quot;default&quot;:&quot;normal&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;params&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;object&quot;}}">
+class Component extends DCLogic {
+  state = { ready: false, key: null, keyIn: '', secIn: '', keyErr: '', tg: 'off', alerts: { daily: true, bt: true, paper: true, risk: true, ml: false, sys: true } };
+  componentDidMount() { this._t = setInterval(() => { if (window.QL) { clearInterval(this._t); this._r = setTimeout(() => this.setState({ ready: true }), 380); } }, 30); }
+  componentWillUnmount() { clearInterval(this._t); clearTimeout(this._r); clearTimeout(this._c); }
+  view() {
+    const d = this.props.demoState, loading = !this.state.ready || d === 'loading';
+    return { loading, error: !loading && d === 'error', empty: !loading && d === 'empty', ok: !loading && (!d || d === 'normal') };
+  }
+  renderVals() {
+    const v = this.view(), s = this.state;
+    const base = { v, retry: () => { this.setState({ ready: false }); setTimeout(() => this.setState({ ready: true }), 500); } };
+    if (!v.ok) return base;
+    const Q = window.QL, f = Q.fmt, toast = (t, k) => this.props.toast && this.props.toast(t, k), P = Q.portfolio;
+    const tgOn = s.tg === 'on', st = (k, l) => Object.assign(Q.status(k), l ? { label: l } : {});
+    return Object.assign(base, {
+      md: [['REST', 'api.binance.com', '#F1F5F9'], ['WebSocket', 'stream.binance.com:9443 · kline + ticker', '#F1F5F9'], ['Kechikish', '182 ms', '#F1F5F9'], ['Sinxronlangan juftliklar', '18 · 1m – 1d', '#F1F5F9'], ['Oxirgi sinxronizatsiya', '2 daqiqa oldin', '#F1F5F9'], ['Ogohlantirish', 'SOL/USDT 1m: 429 limit, qayta urinish navbatda', '#F0B90B']].map(([k, val, color]) => ({ k, v: val, color })),
+      weight: '312', weightW: (312 / 6000 * 100) + '%', test: () => toast('Binance ommaviy API javob berdi · 176 ms', 'ok'),
+      tn: { has: !!s.key, none: !s.key, masked: s.key ? s.key.masked : '', added: s.key ? s.key.added : '', st: s.key ? st('ok', 'Sozlangan') : st('inactive', "Sozlanmagan") },
+      keyIn: s.keyIn, secIn: s.secIn, keyErr: !!s.keyErr, keyErrText: s.keyErr, keyBorder: s.keyErr ? '#EA3943' : '#263244',
+      setKey: (e) => this.setState({ keyIn: e.target.value, keyErr: '' }), setSec: (e) => this.setState({ secIn: e.target.value, keyErr: '' }),
+      saveKey: () => {
+        const k = s.keyIn.trim(), sc = s.secIn.trim();
+        if (k.length < 16 || sc.length < 16) { this.setState({ keyErr: "Kalit va maxfiy kalit kamida 16 belgidan iborat bo'lishi kerak." }); return; }
+        this.setState({ key: { masked: k.slice(0, 4) + '••••••••••••' + k.slice(-4), added: f.dt(Q.NOW()) }, keyIn: '', secIn: '' });
+        toast('Testnet kalitlari serverga shifrlangan holda saqlandi. Maxfiy kalit qayta ko\'rsatilmaydi.', 'ok');
+      },
+      removeKey: () => this.props.confirm && this.props.confirm({ danger: true, title: "Testnet kalitlarini o'chirasizmi?", okLabel: "O'chirish", text: "Kalitlar serverdan o'chiriladi. Paper trading va backtest ishlashda davom etadi — ular kalit talab qilmaydi.", onOk: () => { this.setState({ key: null }); toast("Testnet kalitlari o'chirildi", 'ok'); } }),
+      perms: [['circle-check', '#16C784', "Spot savdo — faqat Testnet uchun"], ['circle-x', '#EA3943', "Mablag' chiqarish (withdrawal) — o'chirilgan bo'lishi shart"], ['circle-x', '#EA3943', 'Margin va Futures — Shariat siyosati bo\'yicha taqiqlangan'], ['circle-check', '#16C784', "IP cheklovi tavsiya etiladi"]].map(([icon, color, text]) => ({ icon, color, text })),
+      tg: { on: tgOn, off: !tgOn, st: tgOn ? st('ok', 'Ulangan') : s.tg === 'wait' ? st('queued', 'Tasdiq kutilmoqda') : st('inactive', 'Ulanmagan'), btn: s.tg === 'wait' ? 'Ulanishni tekshirish' : 'Ulanish kodini yaratish' },
+      steps: [['1', 'Telegramda botni oching:', '@QuantLabUzBot'], ['2', 'Botga quyidagi buyruqni yuboring:', '/start QL-4821-7XK'], ['3', 'Bot javob bergach, “Ulanishni tekshirish” tugmasini bosing.', '']].map(([n, text, code]) => ({ n, text, code })),
+      connectTg: () => { if (s.tg === 'off') { this.setState({ tg: 'wait' }); toast('Kod yaratildi: QL-4821-7XK (10 daqiqa amal qiladi)', 'info'); } else { this.setState({ tg: 'on' }); toast('Telegram ulandi: @abdulhaq_research', 'ok'); } },
+      disconnectTg: () => this.props.confirm && this.props.confirm({ title: 'Telegramni uzasizmi?', okLabel: 'Uzish', text: "Telegramga xabarlar yuborilmaydi. Ilovadagi bildirishnomalar o'zgarishsiz qoladi.", onOk: () => { this.setState({ tg: 'off' }); toast('Telegram uzildi', 'info'); } }),
+      alerts: [['daily', 'Kunlik natijalar xulosasi', '21:00, Toshkent'], ['bt', 'Backtest yakunlandi', ''], ['paper', 'Paper trading: kirish/chiqish', ''], ['risk', 'Risk ogohlantirishlari', 'Drawdown, zarar limitlari'], ['ml', "ML o'qitish yakunlandi", ''], ['sys', "Ma'lumot sinxronizatsiyasi xatolari", '']].map(([k, label, hint]) => ({ label, hint, on: s.alerts[k], dis: !tgOn, op: tgOn ? 1 : 0.55, toggle: () => this.setState(st2 => ({ alerts: Object.assign({}, st2.alerts, { [k]: !st2.alerts[k] }) })) })),
+      cmds: [['/status', 'Faol sessiyalar holati'], ['/profit', 'Umumiy virtual PnL'], ['/balance', 'Virtual balans'], ['/daily', 'Kunlik natijalar (7 kun)'], ['/performance', 'Strategiyalar bo\'yicha natija'], ['/sessions', 'Sessiyalar ro\'yxati'], ['/help', 'Buyruqlar ro\'yxati']].map(([c, d]) => ({ c, d })),
+      sample: 'Kunlik xulosa · 04.11.2026\nVirtual balans: ' + f.usd(P.final) + '\nBugungi PnL: ' + f.susd(P.daily[P.daily.length - 1].value) + '\nFaol sessiyalar: 3 · pauzada: 1\nEng yaxshi: EMA Crossover ' + f.pct(Q.strat('ema').ret) + '\nDiqqat: MACD Momentum — MaxDrawdown himoyasi'
+    });
+  }
+}
+</script>
+</body>
+</html>

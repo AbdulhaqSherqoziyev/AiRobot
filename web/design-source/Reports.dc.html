@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/ican-business-design-system-64d11fa8-448a-41b1-9653-97041b289bb2/colors_and_type.css">
+<script src="_ds/ican-business-design-system-64d11fa8-448a-41b1-9653-97041b289bb2/_ds_bundle.js"></script>
+<script src="ql.js"></script>
+</helmet>
+<div style="font-family:var(--font-ui);color:#F1F5F9;display:flex;flex-direction:column;gap:16px">
+  <div style="display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px">
+    <div>
+      <h1 style="font-family:var(--font-display);font-size:22px;line-height:28px;font-weight:700;letter-spacing:-.01em;margin:0">Hisobotlar va tahlil</h1>
+      <p style="margin:4px 0 0;font-size:13px;color:#94A3B8">Hisobot turini tanlang, ko'rib chiqing va PDF yoki CSV formatida eksport qiling</p>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button onClick="{{ exportCsv }}" style="display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 14px;border-radius:8px;border:1px solid #263244;background:#1B2435;color:#F1F5F9;font-size:13px;font-weight:600;cursor:pointer" style-hover="background:#222D42"><x-import component-from-global-scope="QL.Icon" icon="download" size="15" hint-size="15px,15px"></x-import>CSV</button>
+      <button onClick="{{ exportPdf }}" style="display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 14px;border-radius:8px;border:1px solid #3B82F6;background:#3B82F6;color:#fff;font-size:13px;font-weight:600;cursor:pointer" style-hover="background:#2563EB"><x-import component-from-global-scope="QL.Icon" icon="file-text" size="15" hint-size="15px,15px"></x-import>PDF eksport</button>
+    </div>
+  </div>
+  <sc-if value="{{ v.loading }}" hint-placeholder-val="{{ true }}"><dc-import name="StateBlock" kind="loading" hint-size="100%,520px"></dc-import></sc-if>
+  <sc-if value="{{ v.error }}" hint-placeholder-val="{{ false }}"><dc-import name="StateBlock" kind="error" title="Hisobot yaratilmadi" text="Hisobot generatori vaqt chegarasidan oshdi. Davrni qisqartirib qayta urinib ko'ring." action-label="Qayta urinish" on-action="{{ retry }}" hint-size="100%,300px"></dc-import></sc-if>
+  <sc-if value="{{ v.empty }}" hint-placeholder-val="{{ false }}"><dc-import name="StateBlock" kind="empty" icon="file-text" title="Hisobot uchun ma'lumot yetarli emas" text="Tanlangan davrda yakunlangan backtest yoki paper savdo yo'q." action-label="Davrni o'zgartirish" on-action="{{ retry }}" hint-size="100%,300px"></dc-import></sc-if>
+  <sc-if value="{{ v.ok }}" hint-placeholder-val="{{ false }}">
+  <div style="display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start">
+    <aside style="flex:1 1 260px;max-width:100%;min-width:0;display:flex;flex-direction:column;gap:16px">
+      <section style="background:#151C2C;border:1px solid #263244;border-radius:12px;padding:8px">
+        <sc-for list="{{ types }}" as="t" hint-placeholder-count="7">
+          <div onClick="{{ t.go }}" style="display:flex;align-items:center;gap:10px;padding:10px;border-radius:8px;cursor:pointer;background:{{ t.bg }};color:{{ t.fg }}" style-hover="background:#1B2435;color:#F1F5F9">
+            <x-import component-from-global-scope="QL.Icon" icon="{{ t.icon }}" size="16" color="{{ t.ic }}" hint-size="16px,16px"></x-import>
+            <div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600">{{ t.label }}</div><div style="font-size:11px;color:#94A3B8;margin-top:1px">{{ t.desc }}</div></div>
+          </div>
+        </sc-for>
+      </section>
+      <section style="background:#151C2C;border:1px solid #263244;border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:10px">
+        <label style="display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:500;color:#94A3B8">Davr
+          <select value="{{ period }}" onChange="{{ setPeriod }}" style="height:34px;padding:0 8px;background:#0F1522;border:1px solid #263244;border-radius:8px;color:#F1F5F9;font-size:13px;outline:none"><sc-for list="{{ periods }}" as="p" hint-placeholder-count="7"><option value="{{ p.id }}">{{ p.label }}</option></sc-for></select>
+        </label>
+        <button onClick="{{ generate }}" style="height:34px;border-radius:8px;border:1px solid #263244;background:#1B2435;color:#F1F5F9;font-size:13px;font-weight:600;cursor:pointer" style-hover="background:#222D42">Hisobotni arxivga saqlash</button>
+      </section>
+      <section style="background:#151C2C;border:1px solid #263244;border-radius:12px">
+        <div style="padding:12px 14px;border-bottom:1px solid #263244;font-size:13px;font-weight:600">Yaratilgan hisobotlar</div>
+        <sc-for list="{{ archive }}" as="a" hint-placeholder-count="4">
+          <div style="display:flex;align-items:center;gap:10px;padding:9px 14px;border-bottom:1px solid #1E2738">
+            <x-import component-from-global-scope="QL.Icon" icon="file-text" size="15" color="#94A3B8" hint-size="15px,15px"></x-import>
+            <div style="flex:1;min-width:0"><div style="font-size:12px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ a.title }}</div><div style="font-size:11px;color:#94A3B8">{{ a.sub }}</div></div>
+          </div>
+        </sc-for>
+      </section>
+    </aside>
+    <article style="flex:3 1 600px;min-width:0;background:#151C2C;border:1px solid #263244;border-radius:12px;overflow:hidden">
+      <div style="padding:20px 22px;border-bottom:1px solid #263244;display:flex;flex-wrap:wrap;gap:12px;align-items:flex-start">
+        <div style="flex:1;min-width:240px">
+          <div style="font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#60A5FA">AI Trading Quant Lab · hisobot</div>
+          <div style="font-family:var(--font-display);font-size:20px;font-weight:700;margin-top:6px">{{ doc.title }}</div>
+          <div style="font-size:12px;color:#94A3B8;margin-top:4px">{{ doc.sub }}</div>
+        </div>
+        <span style="font-size:11px;font-weight:700;letter-spacing:.05em;color:#F0B90B;border:1px solid rgba(240,185,11,.35);border-radius:5px;padding:3px 8px">DEMO MA'LUMOT</span>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));border-bottom:1px solid #263244">
+        <sc-for list="{{ doc.summary }}" as="k" hint-placeholder-count="4">
+          <div style="padding:14px 22px;border-right:1px solid #1E2738;font-variant-numeric:tabular-nums"><div style="font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:#94A3B8">{{ k.k }}</div><div style="font-size:19px;font-weight:700;margin-top:4px;color:{{ k.color }}">{{ k.v }}</div></div>
+        </sc-for>
+      </div>
+      <sc-for list="{{ doc.sections }}" as="sec" hint-placeholder-count="2">
+        <div style="padding:16px 22px 6px">
+          <div style="font-family:var(--font-display);font-size:14px;font-weight:600;margin-bottom:10px">{{ sec.title }}</div>
+          <div style="overflow-x:auto;border:1px solid #263244;border-radius:10px">
+            <table style="width:100%;border-collapse:collapse;font-size:12px;font-variant-numeric:tabular-nums">
+              <thead><tr><sc-for list="{{ sec.cols }}" as="c" hint-placeholder-count="6"><th style="text-align:{{ c.a }};padding:9px 12px;font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:#94A3B8;border-bottom:1px solid #263244;white-space:nowrap;background:#131A29">{{ c.l }}</th></sc-for></tr></thead>
+              <tbody>
+                <sc-for list="{{ sec.rows }}" as="r" hint-placeholder-count="6">
+                  <tr><sc-for list="{{ r }}" as="x" hint-placeholder-count="6"><td style="text-align:{{ x.a }};padding:8px 12px;border-bottom:1px solid #1E2738;white-space:nowrap;color:{{ x.color }};font-weight:{{ x.fw }}">{{ x.t }}</td></sc-for></tr>
+                </sc-for>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </sc-for>
+      <div style="padding:16px 22px 20px;font-size:11px;line-height:17px;color:#94A3B8">Ushbu hisobot tadqiqot va simulyatsiya natijalariga asoslangan. Tarixiy va virtual natijalar kelajakdagi daromadni kafolatlamaydi. Real bajarilishda komissiya, slippage va likvidlik natijani o'zgartirishi mumkin. Yaratilgan: {{ doc.created }}.</div>
+    </article>
+  </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;nav&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;function&quot;},&quot;toast&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;function&quot;},&quot;confirm&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;function&quot;},&quot;demoState&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;normal&quot;,&quot;loading&quot;,&quot;empty&quot;,&quot;error&quot;],&quot;default&quot;:&quot;normal&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;params&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;object&quot;}}">
+const TYPES = [['overall', 'Strategiyalar samaradorligi', 'Barcha strategiyalar bo\'yicha umumiy natija', 'layers'], ['monthly', 'Oylik hisobot', 'Tanlangan oy bo\'yicha natijalar', 'calendar'], ['annual', 'Yillik hisobot', 'Oyma-oy portfel dinamikasi', 'calendar-days'], ['risk', 'Risk tahlili', 'Pasayish, VaR, Sortino', 'shield-check'], ['portfolio', 'Portfel tahlili', 'Taqsimot va sessiyalar', 'chart-pie'], ['compare', 'Strategiyalarni solishtirish', 'Ko\'rsatkichlar matritsasi', 'git-compare'], ['stats', 'Savdo statistikasi', 'Juftlik va chiqish sababi bo\'yicha', 'chart-column']];
+class Component extends DCLogic {
+  state = { ready: false, type: 'overall', period: '2026-9', archive: [] };
+  componentDidMount() { this._t = setInterval(() => { if (window.QL) { clearInterval(this._t); this._r = setTimeout(() => this.setState({ ready: true }), 420); } }, 30); }
+  componentWillUnmount() { clearInterval(this._t); clearTimeout(this._r); }
+  view() {
+    const d = this.props.demoState, loading = !this.state.ready || d === 'loading';
+    return { loading, error: !loading && d === 'error', empty: !loading && d === 'empty', ok: !loading && (!d || d === 'normal') };
+  }
+  doc() {
+    const Q = window.QL, f = Q.fmt, S = Q.STRATS, P = Q.portfolio, s = this.state;
+    const c = (t, color, a, fw) => ({ t: String(t), color: color || '#F1F5F9', a: a || 'right', fw: fw || 500 }), L = (t, fw) => c(t, '#F1F5F9', 'left', fw || 600);
+    const col = (l, a) => ({ l, a: a || 'right' });
+    const [py, pm] = s.period.split('-').map(Number), pLabel = f.mon(py, pm);
+    const best = S.slice().sort((a, b) => b.ret - a.ret)[0];
+    const all = Q.trades().filter(t => t.status === 'closed');
+    if (s.type === 'overall') return { title: 'Strategiyalar samaradorligi hisoboti', sub: S.length + ' ta strategiya · oxirgi backtestlar · $50 boshlang\'ich kapital · 0.1% komissiya',
+      summary: [['Strategiyalar', S.length], ['Eng yaxshisi', best.name, '#16C784'], ["O'rtacha daromad", f.pct(Q.avg(S.map(x => x.ret))), f.tone(Q.avg(S.map(x => x.ret)))], ['Jami savdolar', S.reduce((a, x) => a + x.trades, 0)]],
+      sections: [{ title: 'Strategiyalar bo\'yicha natijalar', cols: [col('Strategiya', 'left'), col('Juftlik', 'left'), col('Daromad'), col('Sharpe'), col('Sortino'), col('Max DD'), col("G'alaba"), col('PF'), col('Savdolar')], rows: S.map(x => [L(x.name), c(x.pair + ' · ' + x.tf, '#CBD5E1', 'left'), c(f.pct(x.ret), f.tone(x.ret)), c(x.sharpe.toFixed(2)), c(x.sortino.toFixed(2)), c(f.pct(x.mdd), '#F87171'), c(x.win.toFixed(1) + '%'), c(x.pf.toFixed(2)), c(x.trades)]) }] };
+    if (s.type === 'monthly') { const pmon = P.monthly.find(m => m.y === py && m.m === pm), inM = all.filter(t => { const d = new Date(t.exitT * 1000); return d.getUTCFullYear() === py && d.getUTCMonth() === pm; }), mp = inM.reduce((a, t) => a + t.pnl, 0);
+      return { title: 'Oylik hisobot · ' + pLabel, sub: 'Virtual portfel va strategiyalarning ' + pLabel + ' oyidagi natijalari',
+        summary: [['Portfel daromadi', pmon ? f.pct(pmon.ret) : '—', pmon ? f.tone(pmon.ret) : null], ['Yopilgan savdolar', inM.length], ['Savdolar PnL', f.susd(mp), f.tone(mp)], ["G'alaba ulushi", inM.length ? (inM.filter(t => t.pnl > 0).length / inM.length * 100).toFixed(1) + '%' : '—']],
+        sections: [{ title: 'Strategiyalar · ' + pLabel, cols: [col('Strategiya', 'left'), col('Oylik daromad'), col('Savdolar'), col('PnL')], rows: S.map(x => { const mm = x.monthly.find(z => z.y === py && z.m === pm), tr = inM.filter(t => t.strat === x.id), pp = tr.reduce((a, t) => a + t.pnl, 0); return [L(x.name), mm ? c(f.pct(mm.ret), f.tone(mm.ret)) : c('—', '#64748B'), c(tr.length), c(f.susd(pp, 3), f.tone(pp))]; }) }] }; }
+    if (s.type === 'annual') { let prev = P.start; const rows = P.monthly.map(m => { const usd = prev * m.ret / 100, st = prev; prev *= 1 + m.ret / 100; return [L(f.mon(m.y, m.m)), c(f.usd(st)), c(f.usd(prev)), c(f.susd(usd), f.tone(usd)), c(f.pct(m.ret), f.tone(m.ret))]; });
+      return { title: 'Yillik hisobot · 2026', sub: 'Virtual hisob 01.05.2026 da $2,000 bilan ochilgan', summary: [['Yil boshidan', f.pct(P.ret), f.tone(P.ret)], ['Sof foyda', f.susd(P.final - P.start), f.tone(P.final - P.start)], ['Max DD', f.pct(P.mdd), '#F87171'], ['Sharpe', P.sharpe.toFixed(2)]],
+        sections: [{ title: 'Oyma-oy dinamika', cols: [col('Oy', 'left'), col('Boshida'), col('Oxirida'), col('PnL'), col('Daromad')], rows }] }; }
+    if (s.type === 'risk') return { title: 'Risk tahlili hisoboti', sub: 'Pasayish, volatillik va riskka moslashtirilgan daromad', summary: [['Portfel Max DD', f.pct(P.mdd), '#F87171'], ['Yillik volatillik', P.vol.toFixed(1) + '%'], ['Sortino', P.sortino.toFixed(2)], ['Calmar', P.calmar.toFixed(2)]],
+      sections: [{ title: 'Strategiyalar risk profili', cols: [col('Strategiya', 'left'), col('Max DD'), col('Sharpe'), col('Sortino'), col("O'rt. zarar"), col('Stop-loss')], rows: S.map(x => { const ls = all.filter(t => t.strat === x.id && t.pnl <= 0); return [L(x.name), c(f.pct(x.mdd), '#F87171'), c(x.sharpe.toFixed(2)), c(x.sortino.toFixed(2)), c(ls.length ? f.pct(Q.avg(ls.map(t => t.pnlPct))) : '—', '#F87171'), c(x.sl ? '−' + x.sl + '%' : '—', '#CBD5E1')]; }) },
+        { title: 'Faol risk himoyalari', cols: [col('Himoya', 'left'), col('Chegara', 'left'), col('Holat', 'left')], rows: [['MaxDailyLoss', '5% / kun'], ['MaxWeeklyLoss', '10% / hafta'], ['MaxDrawdown', '10% · 48 sham'], ['StoplossGuard', '4 ta / 24 sham'], ['ConsecutiveLossGuard', '4 ketma-ket zarar'], ['CooldownPeriod', '2 sham']].map(([a, b]) => [L(a), c(b, '#CBD5E1', 'left'), c('Faol', '#16C784', 'left', 600)]) }] };
+    if (s.type === 'portfolio') { const ss = Q.SESS; return { title: 'Portfel tahlili hisoboti', sub: 'Aktivlar taqsimoti va paper trading sessiyalari', summary: [['Jami equity', f.usd(P.final)], ['Daromad', f.pct(P.ret), f.tone(P.ret)], ['Faol sessiyalar', ss.filter(x => x.status === 'running').length], ["Bo'sh USDT", '17.6%']],
+      sections: [{ title: 'Aktivlar taqsimoti', cols: [col('Aktiv', 'left'), col('Ulush')], rows: P.alloc.map(a => [L(a.name), c(a.v.toFixed(1) + '%')]) }, { title: 'Sessiyalar', cols: [col('ID', 'left'), col('Strategiya', 'left'), col("Boshlang'ich"), col('Realizatsiya PnL'), col('Holat', 'left')], rows: ss.map(x => [L(x.id.toUpperCase()), c(Q.strat(x.strat).name + ' · ' + x.pair, '#CBD5E1', 'left'), c(f.usd(x.start)), c(f.susd(x.realized), f.tone(x.realized)), c(Q.status(x.status).label, Q.status(x.status).color, 'left', 600)]) }] }; }
+    if (s.type === 'compare') { const M = [["Daromad", x => f.pct(x.ret)], ['Sof foyda', x => f.susd(x.net)], ["G'alaba", x => x.win.toFixed(1) + '%'], ['Profit faktor', x => x.pf.toFixed(2)], ['Max DD', x => f.pct(x.mdd)], ['Sharpe', x => x.sharpe.toFixed(2)], ['Savdolar', x => x.trades], ["O'rt. savdo", x => f.pct(x.avgTrade)]];
+      return { title: 'Strategiyalarni solishtirish hisoboti', sub: 'Bir xil sharoit: $50, 0.1% komissiya, 0.05% slippage', summary: [['Strategiyalar', S.length], ['Eng yuqori Sharpe', S.slice().sort((a, b) => b.sharpe - a.sharpe)[0].name], ['Eng past DD', S.slice().sort((a, b) => b.mdd - a.mdd)[0].name], ['Eng ko\'p savdo', S.slice().sort((a, b) => b.trades - a.trades)[0].name]],
+        sections: [{ title: 'Ko\'rsatkichlar matritsasi', cols: [col("Ko'rsatkich", 'left')].concat(S.map(x => col(x.name))), rows: M.map(([l, fn]) => [L(l)].concat(S.map(x => c(fn(x))))) }] }; }
+    const pairs = Array.from(new Set(all.map(t => t.pair))), reasons = Array.from(new Set(all.map(t => t.why)));
+    return { title: 'Savdo statistikasi', sub: all.length + ' ta yopilgan savdo (backtest + paper)', summary: [['Savdolar', all.length], ["G'alaba ulushi", (all.filter(t => t.pnl > 0).length / all.length * 100).toFixed(1) + '%'], ["O'rtacha PnL", f.pct(Q.avg(all.map(t => t.pnlPct)))], ["O'rt. davomiylik", f.dur(Q.avg(all.map(t => t.exitT - t.entryT)))]],
+      sections: [{ title: 'Juftliklar bo\'yicha', cols: [col('Juftlik', 'left'), col('Savdolar'), col("G'alaba"), col('Jami PnL'), col("O'rt. PnL %")], rows: pairs.map(p => { const tr = all.filter(t => t.pair === p), pp = tr.reduce((a, t) => a + t.pnl, 0); return [L(p), c(tr.length), c((tr.filter(t => t.pnl > 0).length / tr.length * 100).toFixed(1) + '%'), c(f.susd(pp), f.tone(pp)), c(f.pct(Q.avg(tr.map(t => t.pnlPct))))]; }) },
+        { title: 'Chiqish sababi bo\'yicha', cols: [col('Sabab', 'left'), col('Savdolar'), col('Ulush'), col("O'rt. PnL %")], rows: reasons.map(r => { const tr = all.filter(t => t.why === r), a = Q.avg(tr.map(t => t.pnlPct)); return [L(r), c(tr.length), c((tr.length / all.length * 100).toFixed(1) + '%'), c(f.pct(a), f.tone(a))]; }) }] };
+  }
+  renderVals() {
+    const v = this.view(), s = this.state;
+    const base = { v, retry: () => { this.setState({ ready: false }); setTimeout(() => this.setState({ ready: true }), 600); }, exportCsv: () => {}, exportPdf: () => {} };
+    if (!v.ok) return base;
+    const Q = window.QL, f = Q.fmt, d = this.doc(), now = Q.NOW();
+    d.summary = d.summary.map(([k, val, color]) => ({ k, v: String(val), color: color || '#F1F5F9' }));
+    d.created = f.dt(now) + ' UTC';
+    const tl = TYPES.find(t => t[0] === s.type);
+    return Object.assign(base, {
+      doc: d, period: s.period,
+      types: TYPES.map(([id, label, desc, icon]) => ({ label, desc, icon, bg: s.type === id ? 'rgba(59,130,246,.14)' : 'transparent', fg: s.type === id ? '#F1F5F9' : '#CBD5E1', ic: s.type === id ? '#60A5FA' : '#94A3B8', go: () => this.setState({ type: id }) })),
+      periods: Q.portfolio.monthly.slice().reverse().map(m => ({ id: m.y + '-' + m.m, label: f.mon(m.y, m.m) })), setPeriod: (e) => this.setState({ period: e.target.value }),
+      archive: s.archive.concat([{ title: 'Oylik hisobot · Okt 2026', sub: 'PDF · 01.11.2026' }, { title: 'Risk tahlili', sub: 'PDF · 28.10.2026' }, { title: 'Savdo statistikasi', sub: 'CSV · 21.10.2026' }, { title: 'Strategiyalar samaradorligi', sub: 'PDF · 01.10.2026' }]),
+      generate: () => { this.setState(st => ({ archive: [{ title: tl[1], sub: 'Arxivlandi · ' + f.dt(now) }].concat(st.archive) })); this.props.toast && this.props.toast('“' + tl[1] + '” arxivga saqlandi', 'ok'); },
+      exportCsv: () => { const rows = []; d.sections.forEach(sec => { rows.push([sec.title]); rows.push(sec.cols.map(x => x.l)); sec.rows.forEach(r => rows.push(r.map(x => x.t.replace(/−/g, '-')))); rows.push([]); }); Q.downloadCSV('hisobot-' + s.type + '.csv', [[d.title], [d.sub], []].concat(rows)); this.props.toast && this.props.toast('Hisobot CSV formatida yuklab olindi', 'ok'); },
+      exportPdf: () => {
+        const esc = (x) => String(x).replace(/[&<>]/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[ch]));
+        const html = '<!doctype html><html><head><meta charset="utf-8"><title>' + esc(d.title) + '</title><style>body{font:12px/1.5 system-ui,sans-serif;color:#111;margin:32px}h1{font-size:20px;margin:0 0 4px}p{color:#555;margin:0 0 16px}table{border-collapse:collapse;width:100%;margin:8px 0 20px}th,td{border-bottom:1px solid #ddd;padding:6px 8px;text-align:right}th:first-child,td:first-child{text-align:left}th{font-size:10px;text-transform:uppercase;color:#666}.k{display:inline-block;margin:0 24px 12px 0}.k b{display:block;font-size:16px}</style></head><body><h1>' + esc(d.title) + '</h1><p>' + esc(d.sub) + ' · DEMO MA\'LUMOT · ' + esc(d.created) + '</p>' + d.summary.map(k => '<span class="k">' + esc(k.k) + '<b>' + esc(k.v) + '</b></span>').join('') + d.sections.map(sec => '<h3>' + esc(sec.title) + '</h3><table><tr>' + sec.cols.map(x => '<th>' + esc(x.l) + '</th>').join('') + '</tr>' + sec.rows.map(r => '<tr>' + r.map(x => '<td>' + esc(x.t) + '</td>').join('') + '</tr>').join('') + '</table>').join('') + '<p>Tarixiy va virtual natijalar kelajakdagi daromadni kafolatlamaydi.</p></body></html>';
+        const w = window.open('', '_blank');
+        if (!w) { this.props.toast && this.props.toast("Brauzer yangi oynani blokladi. Qalqib chiquvchi oynalarga ruxsat bering.", 'warn'); return; }
+        w.document.write(html); w.document.close(); w.focus(); setTimeout(() => w.print(), 300);
+      }
+    });
+  }
+}
+</script>
+</body>
+</html>

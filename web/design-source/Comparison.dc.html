@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/ican-business-design-system-64d11fa8-448a-41b1-9653-97041b289bb2/colors_and_type.css">
+<script src="_ds/ican-business-design-system-64d11fa8-448a-41b1-9653-97041b289bb2/_ds_bundle.js"></script>
+<script src="ql.js"></script>
+</helmet>
+<div style="font-family:var(--font-ui);color:#F1F5F9;display:flex;flex-direction:column;gap:16px">
+  <div style="display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px">
+    <div>
+      <h1 style="font-family:var(--font-display);font-size:22px;line-height:28px;font-weight:700;letter-spacing:-.01em;margin:0">Strategiyalarni solishtirish</h1>
+      <p style="margin:4px 0 0;font-size:13px;color:#94A3B8">Bir xil shartlarda: $50 kapital, 0.1% komissiya, 0.05% slippage · demo tarixiy ma'lumot</p>
+    </div>
+    <button onClick="{{ exportCsv }}" style="display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 14px;border-radius:8px;border:1px solid #263244;background:#1B2435;color:#F1F5F9;font-size:13px;font-weight:600;cursor:pointer" style-hover="background:#222D42"><x-import component-from-global-scope="QL.Icon" icon="download" size="15" hint-size="15px,15px"></x-import>CSV eksport</button>
+  </div>
+  <sc-if value="{{ v.loading }}" hint-placeholder-val="{{ true }}"><dc-import name="StateBlock" kind="loading" hint-size="100%,520px"></dc-import></sc-if>
+  <sc-if value="{{ v.error }}" hint-placeholder-val="{{ false }}"><dc-import name="StateBlock" kind="error" action-label="Qayta urinish" on-action="{{ retry }}" hint-size="100%,300px"></dc-import></sc-if>
+  <sc-if value="{{ v.empty }}" hint-placeholder-val="{{ false }}"><dc-import name="StateBlock" kind="empty" icon="git-compare" title="Solishtirish uchun natija yo'q" text="Solishtirish uchun kamida ikkita strategiyaning yakunlangan backtesti kerak." action-label="Backtest laboratoriyasi" on-action="{{ goBacktest }}" hint-size="100%,300px"></dc-import></sc-if>
+  <sc-if value="{{ v.ok }}" hint-placeholder-val="{{ false }}">
+  <div style="display:flex;flex-direction:column;gap:16px">
+    <section style="background:#151C2C;border:1px solid #263244;border-radius:12px;padding:12px 14px;display:flex;flex-wrap:wrap;align-items:center;gap:10px">
+      <span style="font-size:12px;font-weight:600;color:#94A3B8">Strategiyalar:</span>
+      <sc-for list="{{ chips }}" as="c" hint-placeholder-count="6">
+        <button onClick="{{ c.go }}" style="display:inline-flex;align-items:center;gap:7px;height:30px;padding:0 12px;border-radius:999px;border:1px solid {{ c.border }};background:{{ c.bg }};color:{{ c.fg }};font-size:12px;font-weight:600;cursor:pointer;opacity:{{ c.op }}"><span style="width:8px;height:8px;border-radius:2px;background:{{ c.color }}"></span>{{ c.name }}</button>
+      </sc-for>
+      <div style="flex:1"></div>
+      <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#94A3B8">Taymfreym
+        <select value="{{ tf }}" onChange="{{ setTf }}" style="height:30px;padding:0 6px;background:#0F1522;border:1px solid #263244;border-radius:7px;color:#F1F5F9;font-size:12px;outline:none"><option value="all">Hammasi</option><option value="15m">15m</option><option value="1h">1h</option><option value="4h">4h</option></select>
+      </label>
+      <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:#94A3B8">Aktiv
+        <select value="{{ asset }}" onChange="{{ setAsset }}" style="height:30px;padding:0 6px;background:#0F1522;border:1px solid #263244;border-radius:7px;color:#F1F5F9;font-size:12px;outline:none"><option value="all">Hammasi</option><option value="BTC">BTC</option><option value="ETH">ETH</option><option value="SOL">SOL</option><option value="BNB">BNB</option></select>
+      </label>
+    </section>
+
+    <sc-if value="{{ tooFew }}" hint-placeholder-val="{{ false }}"><dc-import name="StateBlock" kind="empty" icon="git-compare" title="Kamida 2 ta strategiyani tanlang" text="Yuqoridagi tugmalardan strategiyalarni belgilang yoki taymfreym va aktiv filtrlarini kengaytiring." hint-size="100%,240px"></dc-import></sc-if>
+    <sc-if value="{{ enough }}" hint-placeholder-val="{{ true }}">
+    <div style="display:flex;flex-direction:column;gap:16px">
+      <section style="background:#151C2C;border:1px solid #263244;border-radius:12px">
+        <div style="padding:14px 16px;border-bottom:1px solid #263244">
+          <div style="font-family:var(--font-display);font-size:14px;font-weight:600">Equity egri chiziqlari</div>
+          <div style="font-size:12px;color:#94A3B8;margin-top:2px">Jamlangan daromad, % · sana oralig'ini o'ng yuqoridan tanlang</div>
+        </div>
+        <div style="padding:10px 8px 8px 12px">
+          <x-import component-from-global-scope="QL.Chart" series="{{ eqSeries }}" kind="line" fmt="pct" ranges="{{ true }}" data-key="{{ key }}" height="300" hint-size="100%,300px"></x-import>
+        </div>
+      </section>
+
+      <section style="background:#151C2C;border:1px solid #263244;border-radius:12px;overflow:hidden">
+        <div style="padding:14px 16px;border-bottom:1px solid #263244;display:flex;align-items:center;justify-content:space-between;gap:10px">
+          <div style="font-family:var(--font-display);font-size:14px;font-weight:600">Ko'rsatkichlar jadvali</div>
+          <span style="font-size:12px;color:#94A3B8"><span style="color:#16C784">●</span> har bir qatordagi eng yaxshi qiymat</span>
+        </div>
+        <div style="overflow-x:auto">
+          <table style="width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric:tabular-nums">
+            <thead><tr>
+              <th style="text-align:left;padding:10px 14px;font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:#94A3B8;border-bottom:1px solid #263244;white-space:nowrap">Ko'rsatkich</th>
+              <sc-for list="{{ cols }}" as="c" hint-placeholder-count="4">
+                <th style="text-align:right;padding:10px 14px;border-bottom:1px solid #263244;white-space:nowrap"><span style="display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:#F1F5F9"><span style="width:8px;height:8px;border-radius:2px;background:{{ c.color }}"></span>{{ c.name }}</span><div style="font-size:11px;color:#94A3B8;font-weight:500;margin-top:2px">{{ c.meta }}</div></th>
+              </sc-for>
+            </tr></thead>
+            <tbody>
+              <sc-for list="{{ metricRows }}" as="r" hint-placeholder-count="8">
+                <tr style-hover="background:#1B2435">
+                  <td title="{{ r.tip }}" style="padding:10px 14px;border-bottom:1px solid #1E2738;color:#CBD5E1;white-space:nowrap">{{ r.label }}</td>
+                  <sc-for list="{{ r.cells }}" as="c" hint-placeholder-count="4">
+                    <td style="padding:10px 14px;border-bottom:1px solid #1E2738;text-align:right;white-space:nowrap;font-weight:{{ c.fw }};color:{{ c.color }}">{{ c.mark }}{{ c.text }}</td>
+                  </sc-for>
+                </tr>
+              </sc-for>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <div style="display:flex;flex-wrap:wrap;gap:16px">
+        <section style="flex:1.3 1 460px;min-width:0;background:#151C2C;border:1px solid #263244;border-radius:12px">
+          <div style="padding:14px 16px;border-bottom:1px solid #263244">
+            <div style="font-family:var(--font-display);font-size:14px;font-weight:600">Risk / daromad</div>
+            <div style="font-size:12px;color:#94A3B8;margin-top:2px">X — maksimal pasayish (chapga yaxshiroq), Y — umumiy daromad (yuqoriga yaxshiroq)</div>
+          </div>
+          <div style="padding:16px 20px 30px 52px">
+            <div style="position:relative;height:250px;border-left:1px solid #334155;border-bottom:1px solid #334155">
+              <sc-for list="{{ yTicks }}" as="t" hint-placeholder-count="5">
+                <div style="position:absolute;left:0;right:0;bottom:{{ t.pos }};border-top:1px dashed {{ t.line }}"><span style="position:absolute;right:calc(100% + 8px);top:-8px;font-size:11px;color:#94A3B8;white-space:nowrap">{{ t.label }}</span></div>
+              </sc-for>
+              <sc-for list="{{ xTicks }}" as="t" hint-placeholder-count="5">
+                <span style="position:absolute;bottom:-20px;left:{{ t.pos }};transform:translateX(-50%);font-size:11px;color:#94A3B8">{{ t.label }}</span>
+              </sc-for>
+              <sc-for list="{{ dots }}" as="d" hint-placeholder-count="4">
+                <div title="{{ d.title }}" style="position:absolute;left:{{ d.x }};bottom:{{ d.y }};transform:translate(-50%,50%);display:flex;align-items:center;gap:6px">
+                  <span style="width:14px;height:14px;border-radius:50%;background:{{ d.color }};border:2px solid #151C2C;box-shadow:0 0 0 1px {{ d.color }}"></span>
+                  <span style="font-size:11px;font-weight:600;color:#E2E8F0;white-space:nowrap;background:rgba(11,15,25,.7);padding:1px 5px;border-radius:4px">{{ d.name }}</span>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </section>
+        <section style="flex:1 1 340px;min-width:0;background:#151C2C;border:1px solid #263244;border-radius:12px">
+          <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;padding:12px 16px;border-bottom:1px solid #263244">
+            <div style="font-family:var(--font-display);font-size:14px;font-weight:600">Reyting</div>
+            <div style="display:inline-flex;gap:2px;padding:2px;background:#0F1522;border:1px solid #263244;border-radius:8px">
+              <sc-for list="{{ rankTabs }}" as="t" hint-placeholder-count="4">
+                <button onClick="{{ t.go }}" style="height:26px;padding:0 9px;border:0;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;background:{{ t.bg }};color:{{ t.fg }}">{{ t.label }}</button>
+              </sc-for>
+            </div>
+          </div>
+          <div style="padding:10px 16px 14px;display:flex;flex-direction:column;gap:12px">
+            <sc-for list="{{ ranking }}" as="r" hint-placeholder-count="4">
+              <div>
+                <div style="display:flex;align-items:center;gap:8px;font-size:13px;margin-bottom:6px">
+                  <span style="width:20px;color:#94A3B8;font-weight:700">{{ r.rank }}</span>
+                  <span style="flex:1;font-weight:600">{{ r.name }}</span>
+                  <span style="font-weight:700;font-variant-numeric:tabular-nums;color:{{ r.tone }}">{{ r.value }}</span>
+                </div>
+                <div style="height:6px;border-radius:9px;background:#1B2435;margin-left:28px"><div style="height:100%;width:{{ r.w }};border-radius:9px;background:{{ r.color }}"></div></div>
+              </div>
+            </sc-for>
+          </div>
+        </section>
+      </div>
+
+      <div style="display:flex;flex-wrap:wrap;gap:16px">
+        <section style="flex:1 1 460px;min-width:0;background:#151C2C;border:1px solid #263244;border-radius:12px">
+          <div style="padding:14px 16px;border-bottom:1px solid #263244">
+            <div style="font-family:var(--font-display);font-size:14px;font-weight:600">Pasayishlarni solishtirish</div>
+            <div style="font-size:12px;color:#94A3B8;margin-top:2px">Cho'qqidan tushish, %</div>
+          </div>
+          <div style="padding:10px 8px 8px 12px">
+            <x-import component-from-global-scope="QL.Chart" series="{{ ddSeries }}" kind="line" fmt="pct" data-key="{{ key }}" height="240" hint-size="100%,240px"></x-import>
+          </div>
+        </section>
+        <section style="flex:1 1 460px;min-width:0;background:#151C2C;border:1px solid #263244;border-radius:12px;overflow:hidden">
+          <div style="padding:14px 16px;border-bottom:1px solid #263244">
+            <div style="font-family:var(--font-display);font-size:14px;font-weight:600">Oylik natijalar</div>
+            <div style="font-size:12px;color:#94A3B8;margin-top:2px">Oylik daromad, % · so'nggi 8 oy</div>
+          </div>
+          <div style="overflow-x:auto;padding:10px 12px 14px">
+            <table style="width:100%;border-collapse:separate;border-spacing:3px;font-size:12px;font-variant-numeric:tabular-nums">
+              <thead><tr>
+                <th style="text-align:left;padding:4px 6px;font-size:11px;font-weight:600;color:#94A3B8"></th>
+                <sc-for list="{{ monthCols }}" as="m" hint-placeholder-count="8"><th style="padding:4px 6px;font-size:11px;font-weight:600;color:#94A3B8;text-align:center">{{ m }}</th></sc-for>
+              </tr></thead>
+              <tbody>
+                <sc-for list="{{ heatRows }}" as="r" hint-placeholder-count="4">
+                  <tr>
+                    <td style="padding:6px;white-space:nowrap;font-weight:600"><span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:{{ r.color }};margin-right:6px"></span>{{ r.name }}</td>
+                    <sc-for list="{{ r.cells }}" as="c" hint-placeholder-count="8"><td title="{{ c.title }}" style="padding:7px 4px;text-align:center;border-radius:5px;background:{{ c.bg }};color:#F1F5F9;font-weight:600;min-width:52px">{{ c.text }}</td></sc-for>
+                  </tr>
+                </sc-for>
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+    </div>
+    </sc-if>
+  </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;nav&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;function&quot;},&quot;toast&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;function&quot;},&quot;confirm&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;function&quot;},&quot;demoState&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;normal&quot;,&quot;loading&quot;,&quot;empty&quot;,&quot;error&quot;],&quot;default&quot;:&quot;normal&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;params&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;object&quot;}}">
+const METRICS = [
+  ['ret', 'Umumiy daromad', 'max', (f, s) => f.pct(s.ret), 'Boshlang\'ich kapitalga nisbatan yakuniy foiz o\'zgarish'],
+  ['net', 'Sof foyda ($50 dan)', 'max', (f, s) => f.susd(s.net), 'Komissiya va slippage chegirilgandan keyingi foyda'],
+  ['win', "G'alaba ulushi", 'max', (f, s) => s.win.toFixed(1) + '%', 'Foydali savdolarning ulushi'],
+  ['pf', 'Profit faktor', 'max', (f, s) => s.pf.toFixed(2), 'Yalpi foyda / yalpi zarar. 1 dan yuqori — foydali'],
+  ['mdd', 'Maksimal pasayish', 'max', (f, s) => f.pct(s.mdd), "Equity cho'qqisidan eng chuqur tushish"],
+  ['sharpe', 'Sharpe koeffitsienti', 'max', (f, s) => s.sharpe.toFixed(2), 'Riskka moslashtirilgan daromad (yillik)'],
+  ['trades', 'Savdolar soni', null, (f, s) => String(s.trades), ''],
+  ['avgTrade', "O'rtacha savdo daromadi", 'max', (f, s) => f.pct(s.avgTrade), "Bir savdoning o'rtacha PnL foizi"]
+];
+class Component extends DCLogic {
+  state = { ready: false, sel: (this.props.params && this.props.params.ids) || ['rsi', 'ema', 'multi', 'macd'], tf: 'all', asset: 'all', rankBy: 'sharpe' };
+  componentDidMount() { this._t = setInterval(() => { if (window.QL) { clearInterval(this._t); this._r = setTimeout(() => this.setState({ ready: true }), 420); } }, 30); }
+  componentWillUnmount() { clearInterval(this._t); clearTimeout(this._r); }
+  view() {
+    const d = this.props.demoState, loading = !this.state.ready || d === 'loading';
+    return { loading, error: !loading && d === 'error', empty: !loading && d === 'empty', ok: !loading && (!d || d === 'normal') };
+  }
+  memo(key, list) {
+    if (this._k === key) return this._m;
+    this._k = key;
+    this._m = { eqSeries: list.map(s => ({ name: s.name, color: s.color, data: s.curve })), ddSeries: list.map(s => ({ name: s.name, color: s.color, data: s.dd })) };
+    return this._m;
+  }
+  renderVals() {
+    const v = this.view(), s = this.state;
+    const base = { v, tf: s.tf, asset: s.asset, retry: () => { this.setState({ ready: false }); setTimeout(() => this.setState({ ready: true }), 600); }, goBacktest: () => this.props.nav && this.props.nav('backtest'), exportCsv: () => {} };
+    if (!v.ok) return base;
+    const Q = window.QL, f = Q.fmt;
+    const avail = Q.STRATS.filter(x => (s.tf === 'all' || x.tf === s.tf) && (s.asset === 'all' || x.pair.startsWith(s.asset + '/')));
+    const list = avail.filter(x => s.sel.includes(x.id));
+    const chips = Q.STRATS.map(x => { const on = s.sel.includes(x.id), ok = avail.includes(x); return { name: x.name, color: x.color, border: on ? x.color : '#263244', bg: on ? Q.hexA(x.color, 0.12) : 'transparent', fg: on ? '#F1F5F9' : '#94A3B8', op: ok ? 1 : 0.4, go: () => this.setState(st => ({ sel: st.sel.includes(x.id) ? st.sel.filter(i => i !== x.id) : st.sel.concat([x.id]) })) }; });
+    const key = list.map(x => x.id).join(','), m = this.memo(key, list);
+    const metricRows = METRICS.map(([k, label, dir, fn, tip]) => {
+      const best = dir ? Math.max(...list.map(x => x[k])) : null;
+      return { label, tip, cells: list.map(x => { const isBest = dir && x[k] === best && list.length > 1; return { text: fn(f, x), fw: isBest ? 700 : 500, color: isBest ? '#16C784' : (k === 'mdd' ? '#F87171' : '#F1F5F9'), mark: isBest ? '● ' : '' }; }) };
+    });
+    const maxX = Math.max(5, ...list.map(x => Math.abs(x.mdd))) * 1.2, rets = list.map(x => x.ret), minY = Math.min(0, ...rets), maxY = Math.max(5, ...rets);
+    const pad = (maxY - minY) * 0.15, y0 = minY - pad, y1 = maxY + pad, Y = (val) => ((val - y0) / (y1 - y0) * 100) + '%';
+    const yTicks = [0, 1, 2, 3, 4].map(i => { const val = y0 + (y1 - y0) * i / 4; return { pos: (i / 4 * 100) + '%', label: f.pct(val, 0), line: '#1E2738' }; });
+    if (y0 < 0) yTicks.push({ pos: Y(0), label: '0%', line: '#475569' });
+    const xTicks = [0, 1, 2, 3, 4].map(i => ({ pos: (i / 4 * 100) + '%', label: '−' + (maxX * i / 4).toFixed(0) + '%' }));
+    const dots = list.map(x => ({ name: x.name, color: x.color, x: (Math.abs(x.mdd) / maxX * 100) + '%', y: Y(x.ret), title: x.name + ': daromad ' + f.pct(x.ret) + ', max DD ' + f.pct(x.mdd) }));
+    const RK = { sharpe: ['Sharpe', x => x.sharpe, x => x.sharpe.toFixed(2)], ret: ['Daromad', x => x.ret, x => f.pct(x.ret)], pf: ['Profit faktor', x => x.pf, x => x.pf.toFixed(2)], mdd: ['Max DD', x => x.mdd, x => f.pct(x.mdd)] };
+    const rk = RK[s.rankBy], sorted = list.slice().sort((a, b) => rk[1](b) - rk[1](a)), mx = Math.max(...list.map(x => Math.abs(rk[1](x)))) || 1;
+    const ranking = sorted.map((x, i) => ({ rank: i + 1, name: x.name, color: x.color, value: rk[2](x), tone: s.rankBy === 'mdd' ? '#F87171' : f.tone(rk[1](x)), w: (Math.abs(rk[1](x)) / mx * 100) + '%' }));
+    const keys = []; list.forEach(x => x.monthly.forEach(mm => { const k = mm.y * 100 + mm.m; if (!keys.includes(k)) keys.push(k); }));
+    keys.sort((a, b) => a - b); const last = keys.slice(-8);
+    const heatRows = list.map(x => ({ name: x.name, color: x.color, cells: last.map(k => { const mm = x.monthly.find(z => z.y * 100 + z.m === k); return mm ? { text: f.pct(mm.ret, 1), bg: Q.heat(mm.ret, 12), title: x.name + ' · ' + f.mon(mm.y, mm.m) + ': ' + f.pct(mm.ret) } : { text: '—', bg: '#111827', title: "Bu oyda ma'lumot yo'q" }; }) }));
+    return Object.assign(base, m, {
+      chips, key, tooFew: list.length < 2, enough: list.length >= 2,
+      setTf: (e) => this.setState({ tf: e.target.value }), setAsset: (e) => this.setState({ asset: e.target.value }),
+      cols: list.map(x => ({ name: x.name, color: x.color, meta: x.pair + ' · ' + x.tf })), metricRows, yTicks, xTicks, dots, ranking,
+      rankTabs: Object.keys(RK).map(id => ({ label: RK[id][0], bg: s.rankBy === id ? '#263244' : 'transparent', fg: s.rankBy === id ? '#F1F5F9' : '#94A3B8', go: () => this.setState({ rankBy: id }) })),
+      monthCols: last.map(k => Q.MON[k % 100] + " '" + String(Math.floor(k / 100)).slice(2)), heatRows,
+      exportCsv: () => { Q.downloadCSV('strategiyalar-solishtirish.csv', [['Ko\'rsatkich'].concat(list.map(x => x.name))].concat(METRICS.map(([k, label, d, fn]) => [label].concat(list.map(x => fn(f, x).replace('−', '-')))))); this.props.toast && this.props.toast('Solishtirish jadvali CSV formatida yuklab olindi', 'ok'); }
+    });
+  }
+}
+</script>
+</body>
+</html>

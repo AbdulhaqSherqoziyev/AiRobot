@@ -80,3 +80,38 @@
   action spaces remain out of scope (ISLAMIC_POLICY.md).
 - **Consequences:** Faster, explainable path to a first pilot; the AI advisor layer
   becomes a later increment layered on the same validated engine + guards.
+
+## ADR-0007 — Quant Lab platform lives in `quantlab/` with its own engines
+- **Status:** accepted (2026-11-04)
+- **Context:** The owner's platform spec asks for many isolated $100 paper sessions that survive
+  restarts, an internal paper engine independent of exchange APIs, and a separate live module.
+  The audit (D1) recommended one Freqtrade container per session. That means about one process
+  and its RAM per session, and it could not be built or tested here without Docker access.
+- **Decision:** A new top-level package, `quantlab/`, holds the data, strategy, backtest, paper,
+  ML, optimizer, risk, evaluation and live engines, the FastAPI control plane and workers.
+  One candle-by-candle core is shared by backtest and paper. Freqtrade stays untouched and
+  runnable; `quantlab` reuses its compliance screening (`freqtrade/islamic/screening.py`).
+- **Consequences:** Sessions are database rows, so 15 sessions cost no extra processes. Isolation
+  is enforced by per-session portfolios and tested. The cost: `quantlab` does not inherit
+  Freqtrade's order handling, protections or L1-L6 hooks, so its live engine is new, unproven
+  code. It has been tested against a fake exchange only. This supersedes audit decisions D1, D2,
+  D4 (`ft_client`), D6, D7 and D8.
+
+## ADR-0008 — Live trading gates
+- **Status:** accepted (2026-11-04)
+- **Decision:** Real orders need all of: final evaluation report, strategy passed it, owner
+  authorization with exact text and password, stored key that passes a rights check (no
+  withdrawal, margin or derivatives; IP restricted), `QL_LIVE_ENABLED=true`, the `live` worker
+  running, and an owner Start action. First allocation is capped at 100 USDT in code. Orders are
+  written to the database before sending. An unknown outcome halts until reconciled. The kill switch
+  commits its halt before touching the exchange and needs no password. Stop-loss is enforced
+  by the engine every cycle, so it does not run if the worker is down; an exchange-side stop is
+  not implemented.
+
+## ADR-0009 — ML strategies before live (proposed: owner decision needed)
+- **Status:** proposed (2026-11-04)
+- **Context:** The owner's spec includes ML strategies in the evaluation. ADR-0006 deferred AI
+  for the first live path, and the constitution treats AI as advisory (ADR-0003).
+- **Current behaviour:** ML strategies trade only on paper unless their model was explicitly promoted
+  and attached. The authorization code does not exclude them from live; if the owner keeps ADR-0006,
+  that restriction still has to be added.

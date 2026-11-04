@@ -1,0 +1,103 @@
+# Quant Lab production stack. See deploy/DEPLOY.md.
+# The live profile is off unless explicitly requested: docker compose --profile live up -d
+x-logging: &logging
+  driver: json-file
+  options: { max-size: "20m", max-file: "5" }
+x-backend: &backend
+  build: { context: .., dockerfile: deploy/Dockerfile.api }
+  image: quantlab-backend:local
+  env_file: .env
+  restart: unless-stopped
+  logging: *logging
+  volumes: [ "quantlab_data:/data" ]
+  depends_on:
+    migrate: { condition: service_completed_successfully }
+  networks: [ internal ]
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    logging: *logging
+    environment:
+      POSTGRES_DB: quantlab
+      POSTGRES_USER: quantlab
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+    volumes: [ "postgres_data:/var/lib/postgresql/data" ]
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U quantlab -d quantlab" ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks: [ internal ]
+
+  migrate:
+    build: { context: .., dockerfile: deploy/Dockerfile.api }
+    image: quantlab-backend:local
+    env_file: .env
+    command: [ "python", "-m", "quantlab.cli", "migrate" ]
+    restart: "no"
+    depends_on:
+      postgres: { condition: service_healthy }
+    networks: [ internal ]
+
+  api:
+    <<: *backend
+    command: [ "uvicorn", "--factory", "quantlab.api.app:app_factory", "--host", "0.0.0.0", "--port", "8100" ]
+    healthcheck:
+      test: [ "CMD", "python", "-c", "import urllib.request as u; u.urlopen('http://127.0.0.1:8100/health', timeout=3)" ]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  worker-market:
+    <<: *backend
+    command: [ "python", "-m", "quantlab.worker", "market" ]
+  worker-paper:
+    <<: *backend
+    command: [ "python", "-m", "quantlab.worker", "paper" ]
+  worker-jobs:
+    <<: *backend
+    command: [ "python", "-m", "quantlab.worker", "jobs" ]
+  worker-notify:
+    <<: *backend
+    command: [ "python", "-m", "quantlab.worker", "notify" ]
+  # Sends real orders once every gate in the app is open. Off by default.
+  worker-live:
+    <<: *backend
+    profiles: [ live ]
+    command: [ "python", "-m", "quantlab.worker", "live" ]
+
+  web:
+    build: { context: .., dockerfile: deploy/Dockerfile.web }
+    restart: unless-stopped
+    logging: *logging
+    environment: { QL_API_URL: "http://api:8100" }
+    depends_on: [ api ]
+    healthcheck:
+      test: [ "CMD", "node", "-e", "fetch('http://127.0.0.1:3100/').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))" ]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+    networks: [ internal ]
+
+  nginx:
+    image: nginx:1.27-alpine
+    restart: unless-stopped
+    logging: *logging
+    depends_on: [ web ]
+    ports: [ "80:80", "443:443" ]
+    volumes:
+      - ./nginx.conf.template:/etc/nginx/templates/default.conf.template:ro
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+      - certbot_www:/var/www/certbot:ro
+    environment: { DOMAIN: "${DOMAIN:?set DOMAIN in .env}" }
+    networks: [ internal ]
+
+volumes:
+  postgres_data:
+  quantlab_data:
+  certbot_www:
+
+networks:
+  internal:

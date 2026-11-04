@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/ican-business-design-system-64d11fa8-448a-41b1-9653-97041b289bb2/colors_and_type.css">
+<script src="_ds/ican-business-design-system-64d11fa8-448a-41b1-9653-97041b289bb2/_ds_bundle.js"></script>
+<script src="ql.js"></script>
+</helmet>
+<div style="min-height:100vh;background:#0B0F19;color:#F1F5F9;font-family:var(--font-ui);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px 16px;box-sizing:border-box">
+  <div style="width:100%;max-width:420px;display:flex;flex-direction:column;gap:20px">
+    <div style="display:flex;align-items:center;gap:12px">
+      <div style="width:38px;height:38px;border-radius:10px;background:#3B82F6;display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-weight:800;font-size:14px;color:#fff">QL</div>
+      <div><div style="font-family:var(--font-display);font-weight:700;font-size:16px">AI Trading Quant Lab</div><div style="font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#94A3B8;margin-top:2px">Binance Spot · tadqiqot va simulyatsiya</div></div>
+    </div>
+    <section style="background:#151C2C;border:1px solid #263244;border-radius:14px;padding:24px;display:flex;flex-direction:column;gap:16px">
+      <div>
+        <h1 style="font-family:var(--font-display);font-size:20px;line-height:26px;font-weight:700;margin:0">{{ m.title }}</h1>
+        <p style="margin:6px 0 0;font-size:13px;line-height:19px;color:#94A3B8">{{ m.sub }}</p>
+      </div>
+      <sc-if value="{{ hasErr }}" hint-placeholder-val="{{ false }}"><div style="display:flex;gap:8px;align-items:flex-start;padding:10px 12px;border-radius:8px;background:rgba(234,57,67,.1);border:1px solid rgba(234,57,67,.35);font-size:12px;line-height:17px;color:#FCA5A5"><x-import component-from-global-scope="QL.Icon" icon="circle-alert" size="15" hint-size="15px,15px"></x-import>{{ err }}</div></sc-if>
+      <sc-if value="{{ hasInfo }}" hint-placeholder-val="{{ false }}"><div style="display:flex;gap:8px;align-items:flex-start;padding:10px 12px;border-radius:8px;background:rgba(22,199,132,.08);border:1px solid rgba(22,199,132,.3);font-size:12px;line-height:17px;color:#86EFAC"><x-import component-from-global-scope="QL.Icon" icon="circle-check" size="15" hint-size="15px,15px"></x-import>{{ info }}</div></sc-if>
+      <sc-if value="{{ showFields }}" hint-placeholder-val="{{ true }}">
+        <div style="display:flex;flex-direction:column;gap:12px">
+          <sc-for list="{{ fields }}" as="x" hint-placeholder-count="2">
+            <label style="display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:500;color:#94A3B8">
+              <span style="display:flex;justify-content:space-between"><span>{{ x.label }}</span><sc-if value="{{ x.hasLink }}" hint-placeholder-val="{{ false }}"><a onClick="{{ x.link }}" style="cursor:pointer;font-weight:600">{{ x.linkLabel }}</a></sc-if></span>
+              <input type="{{ x.type }}" value="{{ x.value }}" onChange="{{ x.set }}" onKeyDown="{{ onKey }}" placeholder="{{ x.ph }}" autocomplete="{{ x.ac }}" style="height:40px;padding:0 12px;background:#0F1522;border:1px solid {{ x.border }};border-radius:8px;color:#F1F5F9;font-size:14px;outline:none" style-focus="border-color:#3B82F6;box-shadow:0 0 0 3px rgba(59,130,246,.22)">
+            </label>
+          </sc-for>
+          <sc-if value="{{ showStrength }}" hint-placeholder-val="{{ false }}">
+            <div><div style="display:flex;gap:4px"><sc-for list="{{ strength }}" as="b" hint-placeholder-count="4"><div style="flex:1;height:4px;border-radius:9px;background:{{ b }}"></div></sc-for></div><div style="font-size:11px;color:#94A3B8;margin-top:5px">{{ strengthLabel }}</div></div>
+          </sc-if>
+          <sc-if value="{{ showTerms }}" hint-placeholder-val="{{ false }}">
+            <label style="display:flex;gap:8px;align-items:flex-start;font-size:12px;line-height:17px;color:#CBD5E1;cursor:pointer"><input type="checkbox" checked="{{ terms }}" onChange="{{ toggleTerms }}" style="margin-top:2px;width:15px;height:15px">Platforma faqat tadqiqot va simulyatsiya uchun ekanini, real buyurtmalar yuborilmasligini tushunaman va foydalanish shartlariga roziman.</label>
+          </sc-if>
+        </div>
+      </sc-if>
+      <sc-if value="{{ isTwoFa }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <input value="{{ code }}" onChange="{{ setCode }}" onKeyDown="{{ onKey }}" inputmode="numeric" maxlength="6" placeholder="••••••" autoFocus="{{ true }}" style="height:56px;padding:0 12px;background:#0F1522;border:1px solid {{ codeBorder }};border-radius:10px;color:#F1F5F9;font-size:26px;font-weight:700;letter-spacing:.6em;text-align:center;outline:none;font-variant-numeric:tabular-nums" style-focus="border-color:#3B82F6">
+          <div style="display:flex;justify-content:space-between;font-size:12px;color:#94A3B8"><span>Authenticator ilovasidagi 6 xonali kod</span><a onClick="{{ backup }}" style="cursor:pointer;font-weight:600">Zaxira kod</a></div>
+        </div>
+      </sc-if>
+      <button onClick="{{ submit }}" disabled="{{ busy }}" style="height:42px;border-radius:9px;border:1px solid #3B82F6;background:#3B82F6;color:#fff;font-size:14px;font-weight:700;cursor:pointer;opacity:{{ busyOp }};display:inline-flex;align-items:center;justify-content:center;gap:8px" style-hover="background:#2563EB">{{ m.cta }}</button>
+      <div style="display:flex;justify-content:center;flex-wrap:wrap;gap:6px;font-size:13px;color:#94A3B8">
+        <span>{{ m.alt }}</span><a onClick="{{ altGo }}" style="cursor:pointer;font-weight:600">{{ m.altLink }}</a>
+      </div>
+    </section>
+    <div style="display:flex;flex-wrap:wrap;justify-content:center;gap:6px 18px;font-size:12px;color:#64748B">
+      <span style="display:inline-flex;align-items:center;gap:6px"><x-import component-from-global-scope="QL.Icon" icon="shield-check" size="13" hint-size="13px,13px"></x-import>Spot-only · Shariat filtri</span>
+      <span>Real buyurtmalar yuborilmaydi</span>
+      <span>Demo: istalgan email, parol 8+ belgi, 2FA kodi 6 raqam</span>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;onEnter&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;() =&gt; void&quot;}}">
+const MODES = {
+  login: { title: 'Hisobga kirish', sub: 'Strategiyalar, backtestlar va virtual sessiyalaringizga qayting.', cta: 'Kirish', alt: "Hisobingiz yo'qmi?", altLink: "Ro'yxatdan o'tish", altTo: 'register' },
+  register: { title: "Ro'yxatdan o'tish", sub: "Bepul tadqiqot hisobi: backtest, paper trading va AI tahlil. Bank kartasi talab qilinmaydi.", cta: 'Hisob yaratish', alt: 'Hisobingiz bormi?', altLink: 'Kirish', altTo: 'login' },
+  forgot: { title: 'Parolni tiklash', sub: "Email manzilingizni kiriting — parolni tiklash havolasini yuboramiz.", cta: 'Havola yuborish', alt: 'Parolni esladingizmi?', altLink: 'Kirish', altTo: 'login' },
+  reset: { title: "Yangi parol o'rnatish", sub: "Havola tasdiqlandi. Kamida 10 belgidan iborat yangi parol kiriting.", cta: 'Parolni saqlash', alt: '', altLink: 'Kirishga qaytish', altTo: 'login' },
+  twofa: { title: 'Ikki bosqichli tasdiqlash', sub: 'Hisobingiz 2FA bilan himoyalangan. Authenticator ilovasidagi kodni kiriting.', cta: 'Tasdiqlash', alt: 'Boshqa hisob?', altLink: 'Orqaga', altTo: 'login' }
+};
+class Component extends DCLogic {
+  state = { mode: 'login', email: '', pass: '', name: '', pass2: '', code: '', terms: false, err: '', info: '', busy: false, bad: {} };
+  go(mode, info) { this.setState({ mode, err: '', info: info || '', bad: {}, code: '', busy: false }); }
+  fail(err, bad) { this.setState({ err, bad: bad || {}, busy: false }); }
+  wait(fn) { this.setState({ busy: true, err: '' }); clearTimeout(this._w); this._w = setTimeout(fn, 700); }
+  componentWillUnmount() { clearTimeout(this._w); }
+  submit() {
+    const s = this.state, okEmail = /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(s.email.trim());
+    if (s.mode === 'login') { if (!okEmail) return this.fail("Email manzili noto'g'ri formatda.", { email: 1 }); if (s.pass.length < 8) return this.fail("Parol kamida 8 belgidan iborat bo'lishi kerak.", { pass: 1 }); return this.wait(() => this.go('twofa')); }
+    if (s.mode === 'twofa') { if (!/^\d{6}$/.test(s.code)) return this.fail('6 xonali raqamli kodni kiriting.', { code: 1 }); return this.wait(() => { this.setState({ busy: false }); this.props.onEnter && this.props.onEnter(); }); }
+    if (s.mode === 'register') { if (s.name.trim().length < 2) return this.fail('Ismingizni kiriting.', { name: 1 }); if (!okEmail) return this.fail("Email manzili noto'g'ri formatda.", { email: 1 }); if (s.pass.length < 10) return this.fail("Parol kamida 10 belgidan iborat bo'lishi kerak.", { pass: 1 }); if (!s.terms) return this.fail('Davom etish uchun shartlarga rozilik bildiring.'); return this.wait(() => this.go('login', 'Hisob yaratildi. Tasdiqlash xati ' + s.email + ' manziliga yuborildi. Endi kirishingiz mumkin.')); }
+    if (s.mode === 'forgot') { if (!okEmail) return this.fail("Email manzili noto'g'ri formatda.", { email: 1 }); return this.wait(() => this.setState({ busy: false, mode: 'reset', info: 'Havola ' + s.email + " manziliga yuborildi (demo: havola avtomatik ochildi).", err: '' })); }
+    if (s.mode === 'reset') { if (s.pass.length < 10) return this.fail("Parol kamida 10 belgidan iborat bo'lishi kerak.", { pass: 1 }); if (s.pass !== s.pass2) return this.fail('Parollar mos kelmadi.', { pass2: 1 }); return this.wait(() => this.go('login', 'Parol yangilandi. Yangi parol bilan kiring.')); }
+  }
+  renderVals() {
+    const s = this.state, m = MODES[s.mode], set = (k) => (e) => this.setState({ [k]: e.target.value, err: '', bad: Object.assign({}, s.bad, { [k]: 0 }) });
+    const F = (label, k, type, ph, ac, link) => ({ label, type, ph, ac, value: s[k], set: set(k), border: s.bad[k] ? '#EA3943' : '#263244', hasLink: !!link, linkLabel: link ? link[0] : '', link: link ? link[1] : null });
+    const fields = s.mode === 'login' ? [F('Email', 'email', 'email', 'siz@misol.uz', 'email'), F('Parol', 'pass', 'password', '••••••••', 'current-password', ['Parolni unutdingizmi?', () => this.go('forgot')])]
+      : s.mode === 'register' ? [F("To'liq ism", 'name', 'text', 'Ism Familiya', 'name'), F('Email', 'email', 'email', 'siz@misol.uz', 'email'), F('Parol', 'pass', 'password', 'Kamida 10 belgi', 'new-password')]
+      : s.mode === 'forgot' ? [F('Email', 'email', 'email', 'siz@misol.uz', 'email')]
+      : s.mode === 'reset' ? [F('Yangi parol', 'pass', 'password', 'Kamida 10 belgi', 'new-password'), F('Parolni tasdiqlang', 'pass2', 'password', 'Qayta kiriting', 'new-password')] : [];
+    const p = s.pass, score = (p.length >= 10) + /[A-Z]/.test(p) + /\d/.test(p) + /[^A-Za-z0-9]/.test(p);
+    const col = ['#EA3943', '#F0B90B', '#F0B90B', '#16C784', '#16C784'][score];
+    return {
+      m: Object.assign({}, m, { cta: s.busy ? 'Tekshirilmoqda…' : m.cta }), fields, showFields: fields.length > 0, isTwoFa: s.mode === 'twofa',
+      err: s.err, hasErr: !!s.err, info: s.info, hasInfo: !!s.info && !s.err,
+      showStrength: (s.mode === 'register' || s.mode === 'reset') && p.length > 0, strength: [0, 1, 2, 3].map(i => i < Math.max(1, score) ? col : '#263244'), strengthLabel: ['Juda zaif', 'Zaif', "O'rtacha", 'Yaxshi', 'Kuchli'][score] + ' parol',
+      showTerms: s.mode === 'register', terms: s.terms, toggleTerms: () => this.setState({ terms: !s.terms, err: '' }),
+      code: s.code, setCode: (e) => this.setState({ code: e.target.value.replace(/\D/g, '').slice(0, 6), err: '' }), codeBorder: s.bad.code ? '#EA3943' : '#263244',
+      backup: () => this.setState({ info: 'Zaxira kodi: 8 xonali koddan birini kiriting (demo: istalgan 6 raqam).', err: '' }),
+      busy: s.busy, busyOp: s.busy ? 0.7 : 1, submit: () => this.submit(), onKey: (e) => { if (e.key === 'Enter') this.submit(); },
+      altGo: () => this.go(m.altTo)
+    };
+  }
+}
+</script>
+</body>
+</html>

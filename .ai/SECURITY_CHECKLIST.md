@@ -11,7 +11,7 @@ must be verified before any live run and re-checked on each deployment.
 - [ ] **IP allowlist** set to the exact server IP running the bot. Note: the server
       IP (`157.173.123.206`) must be whitelisted, not the dev machine.
 - [ ] Keys supplied via **environment variables** (`FREQTRADE__EXCHANGE__KEY` /
-      `FREQTRADE__EXCHANGE__SECRET`), never committed. `.env*` is gitignored.
+      `FREQTRADE__EXCHANGE__SECRET`), never committed. `.env*` is gitignored (fixed 2026-11-04; before that only the exact name `.env` was).
 
 ## Secrets hygiene
 - [ ] No secrets in `config*.json`, code, logs, or the repo. Grep before commit.

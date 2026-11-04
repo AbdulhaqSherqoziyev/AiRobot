@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/ican-business-design-system-64d11fa8-448a-41b1-9653-97041b289bb2/colors_and_type.css">
+<script src="_ds/ican-business-design-system-64d11fa8-448a-41b1-9653-97041b289bb2/_ds_bundle.js"></script>
+<script src="ql.js"></script>
+</helmet>
+<div style="font-family:var(--font-ui);color:#F1F5F9;display:flex;flex-direction:column;gap:16px">
+  <div>
+    <h1 style="font-family:var(--font-display);font-size:22px;line-height:28px;font-weight:700;letter-spacing:-.01em;margin:0">Portfel tahlili</h1>
+    <p style="margin:4px 0 0;font-size:13px;color:#94A3B8">Virtual hisob · 01.05.2026 – 04.11.2026 · BTC buy &amp; hold bilan solishtirish · demo ma'lumot</p>
+  </div>
+  <sc-if value="{{ v.loading }}" hint-placeholder-val="{{ true }}"><dc-import name="StateBlock" kind="loading" hint-size="100%,520px"></dc-import></sc-if>
+  <sc-if value="{{ v.error }}" hint-placeholder-val="{{ false }}"><dc-import name="StateBlock" kind="error" action-label="Qayta urinish" on-action="{{ retry }}" hint-size="100%,300px"></dc-import></sc-if>
+  <sc-if value="{{ v.empty }}" hint-placeholder-val="{{ false }}"><dc-import name="StateBlock" kind="empty" icon="chart-pie" title="Portfel tarixi yo'q" text="Paper trading sessiyasi boshlangach, portfel equity, taqsimot va risk ko'rsatkichlari shu yerda hisoblanadi." action-label="Paper trading" on-action="{{ goPaper }}" hint-size="100%,300px"></dc-import></sc-if>
+  <sc-if value="{{ v.ok }}" hint-placeholder-val="{{ false }}">
+  <div style="display:flex;flex-direction:column;gap:16px">
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:12px">
+      <sc-for list="{{ kpis }}" as="k" hint-placeholder-count="8"><dc-import name="Metric" m="{{ k }}" hint-size="100%,96px"></dc-import></sc-for>
+    </div>
+    <section style="background:#151C2C;border:1px solid #263244;border-radius:12px">
+      <div style="padding:14px 16px;border-bottom:1px solid #263244">
+        <div style="font-family:var(--font-display);font-size:14px;font-weight:600">Portfel va benchmark</div>
+        <div style="font-size:12px;color:#94A3B8;margin-top:2px">Jamlangan daromad, % · BTC buy &amp; hold xuddi shu davrda</div>
+      </div>
+      <div style="padding:10px 8px 8px 12px"><x-import component-from-global-scope="QL.Chart" series="{{ benchSeries }}" kind="line" fmt="pct" ranges="{{ true }}" height="300" hint-size="100%,300px"></x-import></div>
+    </section>
+    <div style="display:flex;flex-wrap:wrap;gap:16px">
+      <section style="flex:1 1 300px;min-width:0;background:#151C2C;border:1px solid #263244;border-radius:12px">
+        <div style="padding:14px 16px;border-bottom:1px solid #263244;font-family:var(--font-display);font-size:14px;font-weight:600">Aktivlar bo'yicha</div>
+        <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:20px;padding:18px 16px">
+          <div style="position:relative;width:140px;height:140px;border-radius:50%;background:{{ allocBg }}"><div style="position:absolute;inset:22px;border-radius:50%;background:#151C2C"></div></div>
+          <div style="display:flex;flex-direction:column;gap:8px;min-width:140px">
+            <sc-for list="{{ alloc }}" as="a" hint-placeholder-count="5"><div style="display:flex;align-items:center;gap:8px;font-size:13px"><span style="width:10px;height:10px;border-radius:3px;background:{{ a.color }}"></span><span style="flex:1;color:#CBD5E1">{{ a.name }}</span><b style="font-variant-numeric:tabular-nums">{{ a.pct }}</b></div></sc-for>
+          </div>
+        </div>
+      </section>
+      <section style="flex:1 1 320px;min-width:0;background:#151C2C;border:1px solid #263244;border-radius:12px">
+        <div style="padding:14px 16px;border-bottom:1px solid #263244;font-family:var(--font-display);font-size:14px;font-weight:600">Strategiyalar bo'yicha kapital</div>
+        <div style="padding:14px 16px;display:flex;flex-direction:column;gap:12px">
+          <sc-for list="{{ byStrat }}" as="b" hint-placeholder-count="4">
+            <div>
+              <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px;font-variant-numeric:tabular-nums"><span style="color:#CBD5E1">{{ b.name }}</span><span><b>{{ b.cap }}</b> <span style="color:{{ b.tone }}">{{ b.pnl }}</span></span></div>
+              <div style="height:8px;border-radius:9px;background:#1B2435"><div style="height:100%;width:{{ b.w }};border-radius:9px;background:{{ b.color }}"></div></div>
+            </div>
+          </sc-for>
+        </div>
+      </section>
+      <section style="flex:1 1 300px;min-width:0;background:#151C2C;border:1px solid #263244;border-radius:12px">
+        <div style="padding:14px 16px;border-bottom:1px solid #263244;font-family:var(--font-display);font-size:14px;font-weight:600">Risk ko'rsatkichlari</div>
+        <div style="padding:6px 16px 12px">
+          <sc-for list="{{ risk }}" as="r" hint-placeholder-count="7">
+            <div title="{{ r.tip }}" style="display:flex;justify-content:space-between;gap:10px;padding:9px 0;border-bottom:1px solid #1E2738;font-size:13px"><span style="color:#CBD5E1">{{ r.k }}</span><b style="font-variant-numeric:tabular-nums;color:{{ r.color }}">{{ r.v }}</b></div>
+          </sc-for>
+        </div>
+      </section>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:16px">
+      <section style="flex:1 1 460px;min-width:0;background:#151C2C;border:1px solid #263244;border-radius:12px">
+        <div style="padding:14px 16px;border-bottom:1px solid #263244">
+          <div style="font-family:var(--font-display);font-size:14px;font-weight:600">Pasayish (drawdown)</div>
+          <div style="font-size:12px;color:#94A3B8;margin-top:2px">Equity cho'qqisidan tushish, %</div>
+        </div>
+        <div style="padding:10px 8px 8px 12px"><x-import component-from-global-scope="QL.Chart" data="{{ dd }}" kind="baseline" fmt="pct" name="Pasayish" height="220" hint-size="100%,220px"></x-import></div>
+      </section>
+      <section style="flex:1 1 420px;min-width:0;background:#151C2C;border:1px solid #263244;border-radius:12px">
+        <div style="padding:14px 16px;border-bottom:1px solid #263244">
+          <div style="font-family:var(--font-display);font-size:14px;font-weight:600">Strategiyalar korrelyatsiyasi</div>
+          <div style="font-size:12px;color:#94A3B8;margin-top:2px">Kunlik daromadlar, so'nggi 75 kun · past korrelyatsiya diversifikatsiyani oshiradi</div>
+        </div>
+        <div style="padding:12px 16px;overflow-x:auto">
+          <table style="border-collapse:separate;border-spacing:3px;font-size:11px;font-variant-numeric:tabular-nums;margin:0 auto">
+            <thead><tr><th></th><sc-for list="{{ corrCols }}" as="c" hint-placeholder-count="6"><th style="padding:4px;color:#94A3B8;font-weight:600;white-space:nowrap">{{ c }}</th></sc-for></tr></thead>
+            <tbody>
+              <sc-for list="{{ corr }}" as="r" hint-placeholder-count="6"><tr><td style="padding:4px 8px 4px 0;color:#CBD5E1;font-weight:600;white-space:nowrap;text-align:right">{{ r.name }}</td><sc-for list="{{ r.cells }}" as="x" hint-placeholder-count="6"><td title="{{ x.title }}" style="width:52px;height:32px;text-align:center;border-radius:5px;background:{{ x.bg }};font-weight:600">{{ x.v }}</td></sc-for></tr></sc-for>
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+    <section style="background:#151C2C;border:1px solid #263244;border-radius:12px">
+      <div style="padding:14px 16px;border-bottom:1px solid #263244;font-family:var(--font-display);font-size:14px;font-weight:600">Oylik daromadlar · virtual portfel</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px;padding:14px 16px">
+        <sc-for list="{{ months }}" as="m" hint-placeholder-count="7">
+          <div style="padding:12px;border-radius:10px;background:{{ m.bg }};font-variant-numeric:tabular-nums"><div style="font-size:12px;color:#CBD5E1">{{ m.label }}</div><div style="font-size:17px;font-weight:700;margin-top:4px">{{ m.val }}</div><div style="font-size:11px;color:#CBD5E1;margin-top:2px">{{ m.usd }}</div></div>
+        </sc-for>
+      </div>
+    </section>
+  </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;nav&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;function&quot;},&quot;toast&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;function&quot;},&quot;confirm&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;function&quot;},&quot;demoState&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;normal&quot;,&quot;loading&quot;,&quot;empty&quot;,&quot;error&quot;],&quot;default&quot;:&quot;normal&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;params&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;object&quot;}}">
+class Component extends DCLogic {
+  state = { ready: false };
+  componentDidMount() { this._t = setInterval(() => { if (window.QL) { clearInterval(this._t); this._r = setTimeout(() => this.setState({ ready: true }), 420); } }, 30); }
+  componentWillUnmount() { clearInterval(this._t); clearTimeout(this._r); }
+  view() {
+    const d = this.props.demoState, loading = !this.state.ready || d === 'loading';
+    return { loading, error: !loading && d === 'error', empty: !loading && d === 'empty', ok: !loading && (!d || d === 'normal') };
+  }
+  cache() {
+    if (this._c) return this._c;
+    const Q = window.QL, f = Q.fmt, P = Q.portfolio, vals = P.values;
+    const dr = []; for (let i = 1; i < vals.length; i++) dr.push(vals[i] / vals[i - 1] - 1);
+    const sorted = dr.slice().sort((a, b) => a - b), k = Math.floor(sorted.length * 0.05), varD = sorted[k], cvar = Q.avg(sorted.slice(0, k + 1));
+    let pk = vals[0], start = 0, longest = 0; vals.forEach((v, i) => { if (v >= pk) { pk = v; start = i; } else longest = Math.max(longest, i - start); });
+    const bench = P.bench[P.bench.length - 1].value;
+    const kpis = [
+      { label: 'Jami equity', value: f.usd(P.final), sub: "Boshlang'ich " + f.usd(P.start, 0) },
+      { label: 'Umumiy daromad', value: f.pct(P.ret), color: f.tone(P.ret), sub: 'BTC: ' + f.pct(bench) + ' · farq ' + f.pct(P.ret - bench), tip: 'Benchmark: shu davrda BTC/USDT ni sotib olib ushlab turish (demo).' },
+      { label: 'Yillik volatillik', value: P.vol.toFixed(1) + '%', sub: 'Kunlik daromadlar asosida', tip: "Kunlik daromadlar standart og'ishi × √365." },
+      { label: 'Sharpe', value: P.sharpe.toFixed(2), tip: "Yillik riskka moslashtirilgan daromad (risksiz stavka 0%)." },
+      { label: 'Sortino', value: P.sortino.toFixed(2), tip: "Faqat salbiy volatillik hisobga olinadi." },
+      { label: 'Calmar', value: P.calmar.toFixed(2), tip: 'Umumiy daromad / maksimal pasayish moduli.' },
+      { label: 'Maksimal pasayish', value: f.pct(P.mdd), color: '#EA3943' },
+      { label: 'Foydali kunlar', value: P.winDays.toFixed(1) + '%', sub: dr.length + ' kundan' }
+    ];
+    const sess = Q.SESS.filter(s => s.status !== 'stopped'), tot = sess.reduce((a, s) => a + s.start, 0);
+    const byStrat = sess.map(s => { const st = Q.strat(s.strat), e = s.start + s.realized + (s.pos ? s.pos.qty * (Q.MK[s.pair].price - s.pos.entry) : 0), d = e - s.start; return { name: st.name + ' · ' + s.pair, color: st.color, cap: f.usd(s.start, 0), pnl: f.susd(d), tone: f.tone(d), w: (s.start / tot * 100) + '%' }; });
+    const risk = [['VaR 95% (1 kun)', f.pct(varD * 100), '#F87171', "95% ehtimol bilan bir kunlik zarar shu qiymatdan oshmaydi (tarixiy usul)."], ['CVaR 95% (1 kun)', f.pct(cvar * 100), '#F87171', "Eng yomon 5% kunlardagi o'rtacha zarar."], ['Eng yaxshi kun', f.pct(Math.max(...dr) * 100), '#16C784', ''], ['Eng yomon kun', f.pct(Math.min(...dr) * 100), '#F87171', ''], ["Eng uzun pasayish davri", longest + ' kun', '#F1F5F9', "Cho'qqidan yangi cho'qqigacha o'tgan eng uzun vaqt."], ['Ochiq pozitsiyalar', sess.filter(s => s.pos).length + ' ta', '#F1F5F9', ''], ["Leverage / short", "Yo'q (spot-only)", '#16C784', "Shariat siyosati: L1–L6 himoya qatlamlari."]].map(([kk, v, color, tip]) => ({ k: kk, v, color, tip }));
+    const S = Q.STRATS, N = 75, rets = S.map(s => { const d = s.dailyEq.slice(-N - 1), r = []; for (let i = 1; i < d.length; i++) r.push(d[i] / d[i - 1] - 1); return r; });
+    const cor = (a, b) => { const n = Math.min(a.length, b.length), x = a.slice(-n), y = b.slice(-n), mx = Q.avg(x), my = Q.avg(y); let sxy = 0, sx = 0, sy = 0; for (let i = 0; i < n; i++) { sxy += (x[i] - mx) * (y[i] - my); sx += (x[i] - mx) ** 2; sy += (y[i] - my) ** 2; } return sx && sy ? sxy / Math.sqrt(sx * sy) : 0; };
+    const corr = S.map((s, i) => ({ name: s.name, cells: S.map((t, j) => { const c = i === j ? 1 : cor(rets[i], rets[j]); return { v: c.toFixed(2), bg: c >= 0 ? Q.hexA('#3B82F6', 0.08 + c * 0.6) : Q.hexA('#EA3943', 0.08 - c * 0.6), title: s.name + ' × ' + t.name + ': ' + c.toFixed(2) }; }) }));
+    this._c = {
+      kpis, byStrat, risk, corr, corrCols: S.map(s => s.name.split(' ')[0]), dd: P.dd,
+      benchSeries: [{ name: 'Virtual portfel', color: '#3B82F6', data: P.pnlPct }, { name: 'BTC buy & hold', color: '#FFA841', data: P.bench, width: 1.5 }],
+      alloc: P.alloc.map(a => ({ name: a.name, color: a.color, pct: a.v.toFixed(1) + '%' })), allocBg: Q.conic(P.alloc),
+      months: (() => { let prev = P.start; return P.monthly.map(m => { const usd = prev * m.ret / 100; prev = prev * (1 + m.ret / 100); return { label: f.mon(m.y, m.m), val: f.pct(m.ret, 2), usd: f.susd(usd), bg: Q.heat(m.ret, 6) }; }); })()
+    };
+    return this._c;
+  }
+  renderVals() {
+    const v = this.view();
+    const base = { v, retry: () => { this.setState({ ready: false }); setTimeout(() => this.setState({ ready: true }), 600); }, goPaper: () => this.props.nav && this.props.nav('paper') };
+    if (!v.ok) return base;
+    return Object.assign(base, this.cache());
+  }
+}
+</script>
+</body>
+</html>

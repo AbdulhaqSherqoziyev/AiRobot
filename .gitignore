@@ -119,3 +119,9 @@ target/
 
 docker-compose-*.yml
 .venv/
+
+# Secrets: every env file variant except committed templates.
+.env*
+!**/.env.example
+# Quant Lab runtime data (candles, models, sqlite)
+quantlab_data/

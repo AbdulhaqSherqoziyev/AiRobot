@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/ican-business-design-system-64d11fa8-448a-41b1-9653-97041b289bb2/colors_and_type.css">
+<script src="_ds/ican-business-design-system-64d11fa8-448a-41b1-9653-97041b289bb2/_ds_bundle.js"></script>
+<script src="ql.js"></script>
+</helmet>
+<div style="font-family:var(--font-ui);color:#F1F5F9;display:flex;flex-direction:column;gap:16px">
+  <div style="display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px">
+    <div>
+      <h1 style="font-family:var(--font-display);font-size:22px;line-height:28px;font-weight:700;letter-spacing:-.01em;margin:0">Bildirishnomalar</h1>
+      <p style="margin:4px 0 0;font-size:13px;color:#94A3B8">{{ sub }}</p>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button onClick="{{ goPrefs }}" style="display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 12px;border-radius:8px;border:1px solid #263244;background:#1B2435;color:#F1F5F9;font-size:13px;font-weight:600;cursor:pointer" style-hover="background:#222D42"><x-import component-from-global-scope="QL.Icon" icon="settings" size="15" hint-size="15px,15px"></x-import>Sozlamalar</button>
+      <button onClick="{{ readAll }}" style="display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 12px;border-radius:8px;border:1px solid #263244;background:#1B2435;color:#F1F5F9;font-size:13px;font-weight:600;cursor:pointer" style-hover="background:#222D42"><x-import component-from-global-scope="QL.Icon" icon="check-check" size="15" hint-size="15px,15px"></x-import>Hammasini o'qildi</button>
+    </div>
+  </div>
+  <sc-if value="{{ v.loading }}" hint-placeholder-val="{{ true }}"><dc-import name="StateBlock" kind="loading" hint-size="100%,520px"></dc-import></sc-if>
+  <sc-if value="{{ v.error }}" hint-placeholder-val="{{ false }}"><dc-import name="StateBlock" kind="error" action-label="Qayta urinish" on-action="{{ retry }}" hint-size="100%,300px"></dc-import></sc-if>
+  <sc-if value="{{ v.empty }}" hint-placeholder-val="{{ false }}"><dc-import name="StateBlock" kind="empty" icon="bell" title="Bildirishnoma yo'q" text="Backtest yakunlanishi, sessiya hodisalari va risk ogohlantirishlari shu yerda paydo bo'ladi." hint-size="100%,300px"></dc-import></sc-if>
+  <sc-if value="{{ v.ok }}" hint-placeholder-val="{{ false }}">
+  <section style="background:#151C2C;border:1px solid #263244;border-radius:12px;overflow:hidden">
+    <div style="display:flex;flex-wrap:wrap;gap:2px;padding:6px 8px;border-bottom:1px solid #263244">
+      <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="8">
+        <button onClick="{{ t.go }}" style="height:34px;padding:0 12px;border:0;border-bottom:2px solid {{ t.line }};background:transparent;color:{{ t.fg }};font-size:13px;font-weight:600;cursor:pointer">{{ t.label }} <span style="opacity:.6">{{ t.n }}</span></button>
+      </sc-for>
+    </div>
+    <sc-for list="{{ items }}" as="n" hint-placeholder-count="8">
+      <div style="display:flex;gap:14px;padding:14px 16px;border-bottom:1px solid #1E2738;background:{{ n.bg }}">
+        <div style="width:36px;height:36px;border-radius:9px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:{{ n.iconBg }};color:{{ n.tone }}"><x-import component-from-global-scope="QL.Icon" icon="{{ n.icon }}" size="17" hint-size="17px,17px"></x-import></div>
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+            <sc-if value="{{ n.unread }}" hint-placeholder-val="{{ false }}"><span style="width:7px;height:7px;border-radius:99px;background:#3B82F6"></span></sc-if>
+            <span style="font-size:14px;font-weight:600">{{ n.title }}</span>
+            <span style="font-size:11px;font-weight:600;color:#94A3B8;padding:1px 6px;border:1px solid #263244;border-radius:5px">{{ n.type }}</span>
+          </div>
+          <div style="font-size:13px;line-height:19px;color:#CBD5E1;margin-top:4px;text-wrap:pretty">{{ n.text }}</div>
+          <div style="font-size:12px;color:#64748B;margin-top:6px">{{ n.when }}</div>
+        </div>
+        <div style="display:flex;gap:4px;align-items:flex-start">
+          <button onClick="{{ n.open }}" style="height:30px;padding:0 10px;border-radius:7px;border:1px solid #263244;background:#1B2435;color:#F1F5F9;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap" style-hover="background:#222D42">Ochish</button>
+          <sc-if value="{{ n.unread }}" hint-placeholder-val="{{ false }}"><button onClick="{{ n.read }}" title="O'qildi deb belgilash" style="width:30px;height:30px;border-radius:7px;border:1px solid #263244;background:transparent;color:#94A3B8;cursor:pointer" style-hover="background:#1B2435;color:#F1F5F9"><x-import component-from-global-scope="QL.Icon" icon="check" size="14" hint-size="14px,14px"></x-import></button></sc-if>
+          <button onClick="{{ n.remove }}" title="O'chirish" style="width:30px;height:30px;border-radius:7px;border:1px solid #263244;background:transparent;color:#F87171;cursor:pointer" style-hover="background:rgba(234,57,67,.12)"><x-import component-from-global-scope="QL.Icon" icon="trash-2" size="14" hint-size="14px,14px"></x-import></button>
+        </div>
+      </div>
+    </sc-for>
+    <sc-if value="{{ none }}" hint-placeholder-val="{{ false }}"><div style="padding:48px 24px;text-align:center;font-size:13px;color:#94A3B8">Bu toifada bildirishnoma yo'q.</div></sc-if>
+  </section>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;nav&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;function&quot;},&quot;toast&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;function&quot;},&quot;confirm&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;function&quot;},&quot;demoState&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;normal&quot;,&quot;loading&quot;,&quot;empty&quot;,&quot;error&quot;],&quot;default&quot;:&quot;normal&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;notifs&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;array&quot;},&quot;onRead&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;function&quot;},&quot;onReadAll&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;function&quot;},&quot;onRemove&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;function&quot;}}">
+const TYPES = { backtest: 'Backtest', paper: 'Paper trading', risk: 'Risk', ml: 'ML', optimizer: 'Optimizator', system: 'Tizim' };
+class Component extends DCLogic {
+  state = { ready: false, tab: 'all' };
+  componentDidMount() { this._t = setInterval(() => { if (window.QL) { clearInterval(this._t); this._r = setTimeout(() => this.setState({ ready: true }), 380); } }, 30); }
+  componentWillUnmount() { clearInterval(this._t); clearTimeout(this._r); }
+  view() {
+    const d = this.props.demoState, loading = !this.state.ready || d === 'loading';
+    return { loading, error: !loading && d === 'error', empty: !loading && (d === 'empty' || (this.props.notifs && !this.props.notifs.length)), ok: !loading && (!d || d === 'normal') && !(this.props.notifs && !this.props.notifs.length) };
+  }
+  renderVals() {
+    const v = this.view(), s = this.state, notifs = this.props.notifs || [], unread = notifs.filter(n => !n.read).length;
+    const base = { v, sub: notifs.length + ' ta bildirishnoma · ' + unread + " ta o'qilmagan", retry: () => { this.setState({ ready: false }); setTimeout(() => this.setState({ ready: true }), 500); },
+      readAll: () => this.props.onReadAll && this.props.onReadAll(), goPrefs: () => this.props.nav && this.props.nav('settings', { tab: 'notif' }) };
+    if (!v.ok || !window.QL) return base;
+    const Q = window.QL;
+    const count = (id) => id === 'all' ? notifs.length : id === 'unread' ? unread : notifs.filter(n => n.type === id).length;
+    const list = notifs.filter(n => s.tab === 'all' || (s.tab === 'unread' ? !n.read : n.type === s.tab));
+    return Object.assign(base, {
+      tabs: [['all', 'Hammasi'], ['unread', "O'qilmagan"]].concat(Object.keys(TYPES).map(k => [k, TYPES[k]])).map(([id, label]) => ({ label, n: count(id), line: s.tab === id ? '#3B82F6' : 'transparent', fg: s.tab === id ? '#F1F5F9' : '#94A3B8', go: () => this.setState({ tab: id }) })),
+      items: list.map(n => ({
+        title: n.title, text: n.text, icon: n.icon, tone: n.tone, iconBg: n.tone + '22', type: TYPES[n.type] || n.type, unread: !n.read, bg: n.read ? 'transparent' : 'rgba(59,130,246,.04)', when: Q.fmt.ago(n.ago),
+        read: () => this.props.onRead && this.props.onRead(n.id), open: () => { if (this.props.onRead) this.props.onRead(n.id); if (this.props.nav) this.props.nav(n.route); },
+        remove: () => this.props.confirm && this.props.confirm({ danger: true, title: "Bildirishnomani o'chirasizmi?", okLabel: "O'chirish", text: '“' + n.title + "” ro'yxatdan olib tashlanadi.", onOk: () => { this.props.onRemove && this.props.onRemove(n.id); this.props.toast && this.props.toast("Bildirishnoma o'chirildi", 'ok'); } })
+      })),
+      none: !list.length
+    });
+  }
+}
+</script>
+</body>
+</html>

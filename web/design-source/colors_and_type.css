@@ -1,0 +1,191 @@
+/* ─────────────────────────────────────────────────────────────
+   ICAN Business — Design Tokens
+   Derived from Figma "Design System / Ican Business / 1.0.0"
+   Type: Inter Tight + Manrope. Primary: sea-green/teal #16B5CA.
+   ───────────────────────────────────────────────────────────── */
+
+@font-face {
+  font-family: "Inter Tight";
+  src: url("./fonts/InterTight-VariableFont_wght.ttf") format("truetype-variations");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "Inter Tight";
+  src: url("./fonts/InterTight-Italic-VariableFont_wght.ttf") format("truetype-variations");
+  font-weight: 100 900;
+  font-style: italic;
+  font-display: swap;
+}
+
+/* Manrope ships from Google Fonts — UI labels/numerics.
+   NOTE: Manrope TTF not bundled. Served from CDN. */
+@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap");
+
+:root {
+  /* ─── PRIMARY (Sea Green / teal scale) ─── */
+  --ican-sea-100: #16B5CA;       /* brand anchor — fills, CTAs, links */
+  --ican-sea-200: #19A2B5;       /* hover/darker surface */
+  --ican-sea-300: #2D8E95;       /* active, dark-bg accent */
+  --ican-sea-400: #166667;       /* pressed, emphasis dark */
+  --ican-sea-050: #B9E8EE;       /* soft fill */
+  --ican-sea-025: #DCFEFF;       /* wash */
+  --ican-sea-wash: #EDFFFF;      /* page-level wash (getting-started blocks) */
+
+  /* ─── NEUTRALS (Bootstrap-aligned grayscale — used 10k+ times) ─── */
+  --neutral-000: #FFFFFF;
+  --neutral-025: #F8F9FA;        /* page bg */
+  --neutral-050: #F6F9FE;        /* info card bg */
+  --neutral-075: #F4F4F4;
+  --neutral-100: #E9ECEF;        /* secondary-button bg, dividers */
+  --neutral-150: #E0E3E9;
+  --neutral-200: #DEE2E6;
+  --neutral-250: #CED4DA;
+  --neutral-300: #ADB5BD;        /* disabled text, default borders */
+  --neutral-400: #6C757D;        /* muted / secondary text */
+  --neutral-500: #495057;        /* label text */
+  --neutral-600: #343A40;        /* body / heading text */
+  --neutral-700: #212529;        /* strong headings */
+  --neutral-800: #222222;
+  --neutral-900: #1C293D;        /* shadow-anchor color */
+  --neutral-inkDark: #222A39;    /* dark-mode card bg */
+  --neutral-inkDeep: #303A4F;    /* dark-mode page bg */
+
+  /* ─── STATUS ─── */
+  --success-100: #15E036;
+  --success-solid: #019F3C;      /* text / strong status */
+  --success-wash: #EAFEF1;       /* 15% tint bg */
+  --error-100:   #E31C1C;
+  --error-solid: #D91528;
+  --error-wash:  #FCE4E4;
+  --info-100:    #1998FF;
+  --info-wash:   rgba(25,152,255,0.15);
+  --warning-100: #FFA841;
+  --warning-wash: rgba(255,168,65,0.15);
+
+  /* ─── CHART PALETTE (Style 1 — Neon; brand default) ─── */
+  --chart-neon-1: #16B5CA;
+  --chart-neon-2: #9747FF;
+  --chart-neon-3: #EC4899;
+  --chart-neon-4: #3B82F6;
+  --chart-neon-5: #15E036;
+  --chart-neon-6: #FFA841;
+  --chart-neon-7: #E31C1C;
+  --chart-neon-8: #445371;
+
+  /* ─── ELEVATION / SHADOW ─── */
+  --shadow-xs: 0 1px 2px 0 rgba(22,102,103,0.05);
+  --shadow-sm: 0 1px 3px 0 rgba(22,102,103,0.08), 0 1px 2px 0 rgba(22,102,103,0.05);
+  --shadow-md: 0 4px 8px 0 rgba(22,102,103,0.05), 0 0 15px 0 rgba(22,102,103,0.10);
+  --shadow-lg: 0 8px 24px 0 rgba(22,102,103,0.08), 0 2px 6px 0 rgba(22,102,103,0.05);
+  --shadow-focus: 0 0 0 4px rgba(22,181,202,0.20);
+
+  /* ─── RADIUS ─── */
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 8px;        /* buttons, inputs, chips */
+  --radius-lg: 12px;
+  --radius-xl: 16px;       /* cards */
+  --radius-2xl: 20px;      /* page sections, modals */
+  --radius-pill: 999px;
+
+  /* ─── BORDER WIDTH ─── */
+  --border-1: 1px;
+  --border-2: 2px;
+  --border-4: 4px;
+
+  /* ─── SIZE (base = 16) ─── */
+  --size-base: 16px;
+  --size-16: 16px;  --size-20: 20px; --size-24: 24px; --size-28: 28px;
+  --size-32: 32px;  --size-36: 36px; --size-48: 48px; --size-56: 56px;
+
+  /* ─── GAP / SPACING (base = 16) ─── */
+  --gap-xs: 8px;  --gap-s: 16px; --gap-m: 20px; --gap-l: 32px;
+  --gap-xl: 40px; --gap-xxl: 48px; --gap-xxxl: 56px;
+
+  --space-1: 1px; --space-2: 2px; --space-4: 4px;  --space-6: 6px;
+  --space-8: 8px; --space-12: 12px; --space-16: 16px; --space-20: 20px;
+  --space-24: 24px; --space-32: 32px; --space-40: 40px; --space-48: 48px;
+  --space-64: 64px; --space-80: 80px; --space-96: 96px; --space-128: 128px; --space-192: 192px;
+
+  /* ─── BREAKPOINTS ─── */
+  --bp-xs: 375px;  /* iOS */
+  --bp-sm: 768px;
+  --bp-md: 1024px;
+  --bp-lg: 1280px;
+  --bp-xl: 1440px;
+
+  /* ─── FONT FAMILIES ─── */
+  --font-display: "Inter Tight", "Inter", system-ui, -apple-system, sans-serif;
+  --font-body:    "Inter Tight", "Inter", system-ui, -apple-system, sans-serif;
+  --font-ui:      "Manrope", "Inter Tight", system-ui, sans-serif;  /* buttons, numerics, UI labels */
+
+  /* ─── TYPE SCALE ─── Display / Heading / Body / Description */
+  --display-l-size: 48px;  --display-l-lh: 56px;  --display-l-weight: 500;
+  --display-m-size: 40px;  --display-m-lh: 48px;  --display-m-weight: 500;
+  --display-s-size: 32px;  --display-s-lh: 44px;  --display-s-weight: 500;
+
+  --h1-size: 28px; --h1-lh: 32px; --h1-weight: 700;
+  --h2-size: 24px; --h2-lh: 32px; --h2-weight: 600;
+  --h3-size: 22px; --h3-lh: 28px; --h3-weight: 600;
+  --h4-size: 20px; --h4-lh: 28px; --h4-weight: 600;
+  --h5-size: 18px; --h5-lh: 24px; --h5-weight: 600;
+
+  --body-l-size: 18px; --body-l-lh: 28px; --body-l-weight: 400;
+  --body-m-size: 16px; --body-m-lh: 24px; --body-m-weight: 400;
+  --body-s-size: 14px; --body-s-lh: 20px; --body-s-weight: 400;
+
+  --desc-l-size: 16px; --desc-l-lh: 24px; --desc-l-weight: 400;
+  --desc-m-size: 14px; --desc-m-lh: 20px; --desc-m-weight: 500;
+  --desc-s-size: 12px; --desc-s-lh: 16px; --desc-s-weight: 500;
+
+  /* ─── SEMANTIC TEXT ROLES ─── */
+  --fg-strong:   var(--neutral-700);  /* headings */
+  --fg-default:  var(--neutral-600);  /* body */
+  --fg-muted:    var(--neutral-400);  /* secondary / captions */
+  --fg-subtle:   var(--neutral-300);  /* disabled / placeholder */
+  --fg-accent:   var(--ican-sea-100);
+  --fg-on-dark:  var(--neutral-025);
+  --fg-inverse:  var(--neutral-000);
+
+  --bg-canvas:   var(--neutral-025);
+  --bg-surface:  var(--neutral-000);
+  --bg-raised:   var(--neutral-050);
+  --bg-accent:   var(--ican-sea-100);
+  --bg-accent-wash: var(--ican-sea-wash);
+
+  --border-default: var(--neutral-200);
+  --border-muted:   rgba(173,181,189,0.4);
+  --border-accent:  var(--ican-sea-100);
+}
+
+/* ─── ELEMENT DEFAULTS ─── */
+html { font-family: var(--font-body); color: var(--fg-default); background: var(--bg-canvas); }
+body { margin: 0; font-family: var(--font-body); font-size: var(--body-m-size); line-height: var(--body-m-lh); color: var(--fg-default); -webkit-font-smoothing: antialiased; }
+
+h1, .h1 { font-family: var(--font-display); font-size: var(--h1-size); line-height: var(--h1-lh); font-weight: var(--h1-weight); color: var(--fg-strong); margin: 0; }
+h2, .h2 { font-family: var(--font-display); font-size: var(--h2-size); line-height: var(--h2-lh); font-weight: var(--h2-weight); color: var(--fg-strong); margin: 0; }
+h3, .h3 { font-family: var(--font-display); font-size: var(--h3-size); line-height: var(--h3-lh); font-weight: var(--h3-weight); color: var(--fg-strong); margin: 0; }
+h4, .h4 { font-family: var(--font-display); font-size: var(--h4-size); line-height: var(--h4-lh); font-weight: var(--h4-weight); color: var(--fg-strong); margin: 0; }
+h5, .h5 { font-family: var(--font-display); font-size: var(--h5-size); line-height: var(--h5-lh); font-weight: var(--h5-weight); color: var(--fg-strong); margin: 0; }
+
+.display-l { font-family: var(--font-display); font-size: var(--display-l-size); line-height: var(--display-l-lh); font-weight: var(--display-l-weight); color: var(--fg-strong); }
+.display-m { font-family: var(--font-display); font-size: var(--display-m-size); line-height: var(--display-m-lh); font-weight: var(--display-m-weight); color: var(--fg-strong); }
+.display-s { font-family: var(--font-display); font-size: var(--display-s-size); line-height: var(--display-s-lh); font-weight: var(--display-s-weight); color: var(--fg-strong); }
+
+p, .body-m { font-size: var(--body-m-size); line-height: var(--body-m-lh); color: var(--fg-default); margin: 0; }
+.body-l { font-size: var(--body-l-size); line-height: var(--body-l-lh); color: var(--fg-default); }
+.body-s { font-size: var(--body-s-size); line-height: var(--body-s-lh); color: var(--fg-default); }
+
+.desc-l { font-size: var(--desc-l-size); line-height: var(--desc-l-lh); color: var(--fg-muted); }
+.desc-m { font-size: var(--desc-m-size); line-height: var(--desc-m-lh); color: var(--fg-muted); }
+.desc-s { font-size: var(--desc-s-size); line-height: var(--desc-s-lh); color: var(--fg-muted); text-transform: uppercase; letter-spacing: 0.04em; }
+
+code, kbd, .mono { font-family: "JetBrains Mono", "Menlo", ui-monospace, monospace; font-size: 13px; background: var(--neutral-100); padding: 2px 6px; border-radius: var(--radius-xs); color: var(--neutral-700); }
+
+a { color: var(--ican-sea-200); text-decoration: none; }
+a:hover { color: var(--ican-sea-300); text-decoration: underline; }
+
+/* Buttons tend to use Manrope per Figma UI-label convention */
+button, .btn-label { font-family: var(--font-ui); font-weight: 500; }

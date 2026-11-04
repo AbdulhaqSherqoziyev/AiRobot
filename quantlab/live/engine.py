@@ -57,6 +57,9 @@ class LiveEngine:
     def __init__(self, db, settings: Settings, store: CandleStore, exchange: Exchange, environment: str = "live"):
         self.db, self.settings, self.store, self.ex, self.env = db, settings, store, exchange, environment
 
+    def _label(self) -> str:
+        return "REAL PUL:" if self.env == "live" else "TESTNET (soxta pul):"
+
     def _halt(self, s, pf: LivePortfolio, rule: str, detail: str, tone: str = "err") -> None:
         pf.status, pf.halt_reason = "halted", f"{rule}: {detail}"
         s.add(RiskEvent(scope="live", scope_id=pf.id, rule=rule, detail=detail))
@@ -109,11 +112,11 @@ class LiveEngine:
             t = s.query(LiveTrade).filter(LiveTrade.portfolio_id == pf.id, LiveTrade.exit_ts.is_(None)).one_or_none()
             if side == "BUY" and t is None:
                 s.add(LiveTrade(portfolio_id=pf.id, symbol=symbol, entry_ts=ts, entry_price=avg, qty=qty, entry_fee=fee))
-                notify(s, "trade", f"REAL SOTIB OLISH {symbol}", f"{qty} @ {avg}", "info", "live")
+                notify(s, "trade", f"{self._label()} SOTIB OLISH {symbol}", f"{qty} @ {avg}", "info", "live")
             elif side == "SELL" and t is not None:
                 t.exit_ts, t.exit_price, t.exit_fee, t.exit_reason = ts, avg, fee, reason
                 t.pnl = t.qty * avg - t.qty * t.entry_price - t.entry_fee - fee
-                notify(s, "trade", f"REAL SOTISH {symbol}", f"PnL {t.pnl:.4f} USDT ({reason})", "ok" if t.pnl >= 0 else "warn", "live")
+                notify(s, "trade", f"{self._label()} SOTISH {symbol}", f"PnL {t.pnl:.4f} USDT ({reason})", "ok" if t.pnl >= 0 else "warn", "live")
 
     def _send(self, pf_id: int, symbol: str, side: str, cid: str, *, quote: float | None = None, base: float | None = None, reason: str = "signal", ts: int | None = None) -> bool:
         if not self._write_order(pf_id, symbol, side, cid, quote, base):

@@ -25,7 +25,7 @@ const VOID = new Set(['input', 'br', 'hr', 'img', 'meta', 'link']);
 const OVERRIDE = {
   Dashboard: '@/screens/live/DashboardLive', MarketExplorer: '@/screens/live/MarketExplorerLive', Strategies: '@/screens/live/StrategiesLive', StrategyBuilder: '@/screens/live/StrategyBuilderLive',
   BacktestLab: '@/screens/live/BacktestLive', PaperTrading: '@/screens/live/PaperLive', MLLab: '@/screens/live/MLLive', Optimizer: '@/screens/OptimizerLive', Settings: '@/screens/SettingsLive', Integrations: '@/screens/MonitoringScreen',
-  Evaluation: '@/screens/EvaluationScreen', LiveCenter: '@/screens/LiveScreen', Monitoring: '@/screens/MonitoringScreen',
+  Analysis: '@/screens/AnalysisScreen', Evaluation: '@/screens/EvaluationScreen', LiveCenter: '@/screens/LiveScreen', Monitoring: '@/screens/MonitoringScreen',
 };
 const PATCH = {
   Integrations: [['<label style="display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:500;color:#94A3B8">API kalit',
@@ -82,9 +82,10 @@ const PATCH = {
       '<div title="{{ badge.title }}" style="display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 9px;border-radius:6px;background:{{ badge.bg }};border:1px solid {{ badge.border }};color:{{ badge.fg }};font-size:11px;font-weight:700;letter-spacing:.05em;white-space:nowrap">{{ badge.label }}</div>'],
     ['{{ latency }} ms', '{{ latencyText }}'],
     ['Tadqiqotchi · Demo hisob', 'Egasi'],
+    ["['optimizer', 'Optimizator', 'sliders-horizontal']] },\n", "['optimizer', 'Optimizator', 'sliders-horizontal'], ['analysis', 'Kunlik tahlil', 'activity']] },\n"],
     ['Xush kelibsiz! Demo hisobga kirdingiz.', 'Xush kelibsiz!'],
     ["{ group: 'Tizim', icon: 'settings', items: [['notifications', 'Bildirishnomalar', 'bell'], ['integrations', 'Integratsiyalar', 'plug'], ['settings', 'Sozlamalar', 'settings']] }", "{ group: 'Savdo nazorati', icon: 'shield-check', items: [['evaluation', 'Baholash markazi', 'clipboard-check'], ['live', 'Live savdo', 'siren']] },\n  { group: 'Tizim', icon: 'settings', items: [['notifications', 'Bildirishnomalar', 'bell'], ['monitoring', 'Monitoring', 'activity'], ['settings', 'Sozlamalar', 'settings']] }"],
-    [/<sc-if value="\{\{ r\.integrations \}\}"[\s\S]*?<\/sc-if>/, '<sc-if value="{{ r.monitoring }}" hint-placeholder-val="{{ false }}"><dc-import name="Monitoring"></dc-import></sc-if><sc-if value="{{ r.evaluation }}" hint-placeholder-val="{{ false }}"><dc-import name="Evaluation" nav="{{ nav }}" toast="{{ toast }}" confirm="{{ confirm }}"></dc-import></sc-if><sc-if value="{{ r.live }}" hint-placeholder-val="{{ false }}"><dc-import name="LiveCenter" nav="{{ nav }}" toast="{{ toast }}" confirm="{{ confirm }}"></dc-import></sc-if>'],
+    [/<sc-if value="\{\{ r\.integrations \}\}"[\s\S]*?<\/sc-if>/, '<sc-if value="{{ r.analysis }}" hint-placeholder-val="{{ false }}"><dc-import name="Analysis" toast="{{ toast }}"></dc-import></sc-if><sc-if value="{{ r.monitoring }}" hint-placeholder-val="{{ false }}"><dc-import name="Monitoring"></dc-import></sc-if><sc-if value="{{ r.evaluation }}" hint-placeholder-val="{{ false }}"><dc-import name="Evaluation" nav="{{ nav }}" toast="{{ toast }}" confirm="{{ confirm }}"></dc-import></sc-if><sc-if value="{{ r.live }}" hint-placeholder-val="{{ false }}"><dc-import name="LiveCenter" nav="{{ nav }}" toast="{{ toast }}" confirm="{{ confirm }}"></dc-import></sc-if>'],
     [/<sc-if value="\{\{ isAuth \}\}"[\s\S]*?<\/sc-if>\s*/, ''],
     ["['Telegram botni ulash', 'send', 'integrations', null]", "['Tizim monitoringi', 'activity', 'monitoring', null]"],
     ["goIntegrations: () => this.nav('integrations')", "goIntegrations: () => this.nav('monitoring')"],

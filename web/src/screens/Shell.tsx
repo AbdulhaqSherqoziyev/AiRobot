@@ -6,7 +6,7 @@ import { api } from '@/lib/api';
 import { hydrate, install, refresh } from '@/lib/backend';
 import React from 'react';
 
-const SNAPSHOT_MS = 10000;
+const SNAPSHOT_MS = 20000;
 const MODE = {
   backtest: { label: 'TARIXIY BACKTEST', title: "Tarixiy ma'lumotda simulyatsiya. Hech qanday buyurtma yuborilmaydi", fg: '#60A5FA', bg: 'rgba(59,130,246,.14)', border: 'rgba(59,130,246,.35)' },
   paper: { label: 'PAPER TRADING', title: "Real narx, virtual balans. Hech qanday real buyurtma yo'q", fg: '#F0B90B', bg: 'rgba(240,185,11,.12)', border: 'rgba(240,185,11,.3)' },
@@ -14,7 +14,7 @@ const MODE = {
   live: { label: 'REAL PUL · LIVE', title: 'Haqiqiy pul bilan savdo', fg: '#FFFFFF', bg: '#DC2F3A', border: '#DC2F3A' },
   research: { label: 'TADQIQOT', title: "Tadqiqot muhiti. Bu sahifa buyurtma yubormaydi", fg: '#94A3B8', bg: 'rgba(148,163,184,.12)', border: 'rgba(148,163,184,.3)' },
 };
-const ROUTE_MODE = { backtest: 'backtest', builder: 'backtest', optimizer: 'backtest', compare: 'backtest', paper: 'paper', evaluation: 'paper', trades: 'paper', portfolio: 'paper', live: 'live' };
+const ROUTE_MODE = { analysis: 'paper', backtest: 'backtest', builder: 'backtest', optimizer: 'backtest', compare: 'backtest', paper: 'paper', evaluation: 'paper', trades: 'paper', portfolio: 'paper', live: 'live' };
 
 class App extends QuantLab {
   constructor(props) {
@@ -106,6 +106,13 @@ export default function Shell() {
     const t = setInterval(() => refresh().catch((e) => { if (e.status === 401) setState('login'); }), SNAPSHOT_MS);
     return () => clearInterval(t);
   }, [state]);
+
+  // If the API was down at load time, keep trying without asking the user to press anything.
+  React.useEffect(() => {
+    if (state !== 'down') return;
+    const t = setTimeout(boot, 5000);
+    return () => clearTimeout(t);
+  }, [state, boot]);
 
   const center = { minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 14, background: '#0B0F19', color: '#94A3B8', fontSize: 14, padding: 16, textAlign: 'center' } as const;
   if (state === 'checking') return <div style={center}>Yuklanmoqda…</div>;

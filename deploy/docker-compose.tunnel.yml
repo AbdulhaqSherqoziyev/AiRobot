@@ -16,7 +16,9 @@ services:
   worker-market:
     mem_limit: 512m
   worker-paper:
-    mem_limit: 768m
+    mem_limit: 1536m
+  worker-trainer:
+    mem_limit: 1024m
   worker-jobs:
     mem_limit: 1536m
   worker-notify:

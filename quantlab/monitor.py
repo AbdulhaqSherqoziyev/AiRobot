@@ -10,7 +10,7 @@ from sqlalchemy import text
 
 from quantlab.models import ComponentHeartbeat, MarketDataset, utcnow
 
-STALE = {"market": 180, "paper": 90, "jobs": 90, "notify": 180, "live": 90}
+STALE = {"market": 180, "paper": 90, "jobs": 90, "notify": 180, "live": 90, "trainer": 1800}
 
 
 def snapshot(db, data_dir, client=None) -> dict:

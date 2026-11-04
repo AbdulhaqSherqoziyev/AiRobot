@@ -321,3 +321,15 @@ def test_live_entry_uses_volatility_stake_within_limits(db, tmp_path):
     assert le.LiveEngine(db, ON, store, ex).tick(now=int(t[-1]) + 3605, last_price=100) == "entry"
     stake = stake_series(df[df["ts"] >= int(t[-1]) + 3605 - 40 * 86400].reset_index(drop=True), risk)[-1]
     assert stake < 0.9 and ex.calls[0][1] == pytest.approx(100 * stake * 0.999, abs=0.02)
+
+
+def test_notifications_name_the_money_type(world):
+    from quantlab.models import Notification
+
+    db, _, df, *_ = world
+    live_ready(world)
+    t = df["ts"].to_numpy()
+    Scripted.enters, Scripted.exits = {int(t[299])}, set()
+    engine(world, FakeExchange()).tick(now=int(t[299]) + 3605, last_price=100)
+    with db.session() as s:
+        assert s.query(Notification).filter_by(category="trade").one().title.startswith("REAL PUL:")

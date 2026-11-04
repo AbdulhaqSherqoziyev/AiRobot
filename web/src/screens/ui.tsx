@@ -102,12 +102,17 @@ export const Icon = (p: any) => <QL.Icon {...p} />;
 export function usePoll(fn: () => Promise<any>, ms: number, deps: any[] = []) {
   const [data, setData] = React.useState<any>(null);
   const [error, setError] = React.useState<string>('');
+  const fails = React.useRef(0);
   const load = React.useCallback(async () => {
     try {
       setData(await fn());
+      fails.current = 0;
       setError('');
     } catch (e: any) {
-      setError(e.message || 'Xato');
+      // One failed poll is usually a restart. Keep showing the last good data; report it only
+      // if it continues, and a refused request (4xx) straight away.
+      fails.current += 1;
+      if (fails.current >= 3 || (e.status >= 400 && e.status < 500)) setError(e.message || 'Xato');
     }
   }, deps);
   React.useEffect(() => {

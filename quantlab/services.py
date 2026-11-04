@@ -176,6 +176,13 @@ class JobRunner:
             progress(0.02, "bozor ma'lumoti sinxronlanmoqda")
         sync_dataset(self.db, self.store, pair, tf, since)
 
+    def _do_analyze(self, job_id: int, p: dict, progress) -> dict:
+        from quantlab.analysis import generate
+
+        with self.db.session() as s:
+            pairs = [t.symbol for t in s.query(TradingPair).filter_by(enabled=True)]
+        return {"report_id": generate(self.db, self.store, pairs)}
+
     def _do_sync(self, job_id: int, p: dict, progress) -> dict:
         rep = sync_dataset(self.db, self.store, p["pair"], p["timeframe"], p.get("since"))
         return {"rows": rep.rows, "gaps": len(rep.gaps), "duplicates": rep.duplicates}

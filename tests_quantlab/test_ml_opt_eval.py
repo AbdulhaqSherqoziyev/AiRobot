@@ -323,3 +323,111 @@ def test_concurrent_seed_on_empty_database_all_succeed(db):
     with db.session() as s:
         assert s.query(TradingPair).filter_by(symbol=PAIR).count() == 1
         assert s.query(Strategy).filter_by(engine="ema_crossover").count() == 1
+
+
+def test_training_plan_queues_each_combination_once_and_skips_1h(db):
+    from quantlab.ml.models import ALGOS
+    from quantlab.ml.plan import enqueue_training
+    from quantlab.models import TrainingJob
+
+    assert enqueue_training(db, ["BTC/USDT", "ETH/USDT"]) == 2 * 2 * len(ALGOS)
+    assert enqueue_training(db, ["BTC/USDT", "ETH/USDT"]) == 0  # nothing piles up
+    with db.session() as s:
+        assert {t.timeframe for t in s.query(TrainingJob)} == {"4h", "1d"}
+
+
+# ---- daily review and challengers ----
+
+def test_verdict_needs_a_large_sample_and_a_hard_bar():
+    from quantlab.analysis import verdict
+
+    assert verdict(10, 9.0, 3.0) == "namuna_kam"
+    assert verdict(50, 2.5, 2.0) == "noaniq"  # 2.5 sigma is common when hundreds run together
+    assert verdict(50, 3.6, 1.5) == "umidli"
+    assert verdict(50, 3.6, 1.1) == "noaniq"
+    assert verdict(50, -2.5, 0.7) == "zararli"
+
+
+def test_strategy_table_pools_sessions_and_keeps_groups_apart():
+    from quantlab.analysis import strategy_table
+
+    row = lambda name, tf, pnl: {"strategy": name, "kind": "technical", "timeframe": tf, "pair": "BTC/USDT", "session_id": 1, "return": 1.0, "dd": -2.0, "bh": -5.0, "pnls": pnl, "pcts": pnl, "fees": 0.1, "days": 3.0}
+    t = strategy_table([row("A", "4h", [1.0, -0.5]), row("A", "4h", [2.0]), row("A", "1d", [1.0])])
+    a = next(x for x in t if x["timeframe"] == "4h")
+    assert a["sessions"] == 2 and a["trades"] == 3 and a["profit_factor"] == 6.0 and a["median_buy_hold"] == -5.0
+    assert len(t) == 2
+
+
+def test_generate_changes_nothing_but_writes_a_report(seeded):
+    from quantlab.analysis import generate
+    from quantlab.models import AnalysisReport, LiveAuthorization, LivePortfolio, StrategyVersion
+
+    db, store = seeded
+    run = start_run(db)
+    with db.session() as s:
+        before = (s.query(StrategyVersion).count(), s.query(PaperSession).count())
+    rid = generate(db, store, [PAIR])
+    with db.session() as s:
+        r = s.get(AnalysisReport, rid)
+        assert r.summary["sessions"] == 10 and "tavsiya etilmaydi" in r.summary["live_recommendation"] and r.findings
+        assert (s.query(StrategyVersion).count(), s.query(PaperSession).count()) == before
+        assert s.query(LiveAuthorization).count() == 0 and s.query(LivePortfolio).count() == 0
+
+
+def test_challengers_pick_by_validation_stay_candidates_and_do_not_repeat(db, tmp_path):
+    from quantlab.analysis import generate, run_challengers
+    from quantlab.models import StrategyVersion
+
+    seed(db, S)
+    store = CandleStore(tmp_path)
+    store.save(PAIR, "4h", synthetic(2000, step=14400))
+    a = train_version(db, tmp_path, store, "lightgbm", PAIR, "4h", name="a", hyper={"n_estimators": 10}, folds=2)
+    b = train_version(db, tmp_path, store, "lightgbm", PAIR, "4h", name="b", hyper={"n_estimators": 30}, folds=2, seed=1)
+    with db.session() as s:
+        cur_before = s.query(Strategy).filter_by(engine="ml_lightgbm").one().current_version_id
+        va, vb = (s.get(ModelVersion, a).validation_metrics["auc"], s.get(ModelVersion, b).validation_metrics["auc"])
+    assert run_challengers(db, store) == 1
+    assert run_challengers(db, store) == 0
+    best = a if va >= vb else b
+    with db.session() as s:
+        ps = s.query(PaperSession).one()
+        ver = s.get(StrategyVersion, ps.strategy_version_id)
+        assert ver.params()["model_path"] == s.get(ModelVersion, best).artifact_path
+        assert ps.portfolio.initial_balance == 100 and ps.risk["sizing"]["mode"] == "vol_target"
+        assert s.get(ModelVersion, best).status == "candidate"
+        assert s.query(Strategy).filter_by(engine="ml_lightgbm").one().current_version_id == cur_before
+    rid = generate(db, store, [PAIR])
+    from quantlab.models import AnalysisReport
+
+    with db.session() as s:
+        m = s.get(AnalysisReport, rid).models
+        assert m and m[0]["status"] == "candidate" and m[0]["forward_samples"] == 0
+
+
+def test_paper_all_covers_every_combination_once(db):
+    from quantlab.cli import paper_all
+
+    st = Settings(watchlist=(PAIR, "ETH/USDT"), secret_key="x" * 40)
+    assert paper_all(db, st) == 10 * 2 * 2
+    assert paper_all(db, st) == 0
+    with db.session() as s:
+        assert all(p.risk["sizing"]["mode"] == "vol_target" for p in s.query(PaperSession))
+        assert len({p.portfolio.id for p in s.query(PaperSession)}) == 40
+
+
+def test_paper_digest_sums_fills_once_and_says_test_money(seeded):
+    from quantlab.analysis import paper_digest
+    from quantlab.models import Notification
+
+    db, store = seeded
+    start_run(db)
+    assert paper_digest(db) == 0  # first run only sets the starting point
+    with db.session() as s:
+        sid = s.query(PaperSession).first().id
+        s.add(PaperTrade(session_id=sid, entry_signal_ts=1, entry_ts=2, entry_price=10, qty=1, entry_fee=0))
+        s.add(PaperTrade(session_id=sid, entry_signal_ts=3, entry_ts=4, entry_price=10, qty=1, entry_fee=0, exit_ts=9, exit_price=12, pnl=2.0, exit_reason="signal"))
+    assert paper_digest(db) == 3  # two entries, one exit
+    assert paper_digest(db) == 0  # never announced twice
+    with db.session() as s:
+        n = s.query(Notification).filter_by(category="paper").one()
+        assert n.title.startswith("TEST (virtual pul)") and "+2.00" in n.title

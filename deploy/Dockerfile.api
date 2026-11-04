@@ -4,6 +4,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends libgomp1 && rm 
 WORKDIR /app
 COPY quantlab/requirements.txt quantlab-requirements.txt
 RUN pip install --no-cache-dir -r quantlab-requirements.txt
+# CPU build, for the LSTM models
+RUN pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu
 # Only the screening helper is used from Freqtrade, loaded by file path.
 COPY quantlab quantlab
 COPY freqtrade/islamic/screening.py freqtrade/islamic/screening.py

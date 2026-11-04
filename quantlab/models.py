@@ -375,6 +375,16 @@ class LiveAuthorization(Base, Stamped):
     revoked_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
 
 
+class AnalysisReport(Base, Stamped):
+    __tablename__ = "analysis_reports"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    summary: Mapped[dict] = mapped_column(JSON, default=dict)
+    strategies: Mapped[list] = mapped_column(JSON, default=list)
+    models: Mapped[list] = mapped_column(JSON, default=list)
+    market: Mapped[list] = mapped_column(JSON, default=list)
+    findings: Mapped[list] = mapped_column(JSON, default=list)
+
+
 class RiskEvent(Base, Stamped):
     __tablename__ = "risk_events"
     id: Mapped[int] = mapped_column(primary_key=True)

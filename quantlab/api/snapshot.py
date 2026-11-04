@@ -9,7 +9,9 @@ from datetime import timezone
 import numpy as np
 import pandas as pd
 
-from quantlab.models import BacktestResult, BacktestSession, EquitySnapshot, Job, LiveTrade, ModelVersion, Notification, OptimizationJob, PaperSession, PaperTrade, Strategy, StrategyVersion, SystemSetting, TrainingJob
+from sqlalchemy.orm import selectinload
+
+from quantlab.models import BacktestResult, BacktestSession, EquitySnapshot, Job, LiveTrade, ModelVersion, Notification, OptimizationJob, PaperSession, PaperTrade, Strategy, StrategyVersion, SystemSetting, TrainingJob, VirtualPortfolio
 from quantlab.paper.engine import session_view
 
 ICONS = {"backtest": "flask-conical", "risk": "triangle-alert", "system": "database", "paper": "circle-play", "ml": "brain", "optimizer": "sliders-horizontal", "live": "siren", "trade": "repeat", "daily": "calendar", "evaluation": "clipboard-check"}
@@ -112,11 +114,16 @@ def portfolio(s, sessions: list[dict], tick: dict) -> dict:
     """Virtual portfolio only: the sum of isolated paper sessions. Real money is never in it."""
     frames = []
     start = 0.0
+    by_session: dict[int, list] = {}
+    for scope_id, t, e in s.query(EquitySnapshot.scope_id, EquitySnapshot.ts, EquitySnapshot.equity).filter(EquitySnapshot.scope == "paper").order_by(EquitySnapshot.ts):
+        by_session.setdefault(scope_id, []).append((t, e))
+    inits = []
     for ps in s.query(PaperSession):
-        rows = s.query(EquitySnapshot).filter_by(scope="paper", scope_id=ps.id).order_by(EquitySnapshot.ts).all()
+        rows = by_session.get(ps.id)
         start += ps.portfolio.initial_balance
         if rows:
-            frames.append(pd.Series([r.equity for r in rows], index=pd.to_datetime([r.ts for r in rows], unit="s")).resample("1D").last().ffill())
+            inits.append(ps.portfolio.initial_balance)
+            frames.append(pd.Series([e for _, e in rows], index=pd.to_datetime([t for t, _ in rows], unit="s")).resample("1D").last().ffill())
     empty = {"start": start, "final": start, "mdd": 0.0, "values": [], "equity": [], "dd": [], "pnlPct": [], "bench": [], "daily": [], "monthly": [], "alloc": [], "vol": 0.0, "sharpe": 0.0, "sortino": 0.0, "ret": 0.0, "calmar": 0.0, "winDays": 0.0}
     alloc: dict[str, float] = {}
     total = 0.0
@@ -133,7 +140,6 @@ def portfolio(s, sessions: list[dict], tick: dict) -> dict:
         return empty
     all_df = pd.concat(frames, axis=1).sort_index()
     # Sessions not yet started count at their opening capital; a later start is not a gain.
-    inits = [ps.portfolio.initial_balance for ps in s.query(PaperSession) if s.query(EquitySnapshot).filter_by(scope="paper", scope_id=ps.id).count()]
     for col, init in zip(all_df.columns, inits):
         all_df[col] = all_df[col].ffill().fillna(init)
     base = float(sum(inits)) or 1.0
@@ -215,6 +221,9 @@ def benchmark(store, series: list[dict]) -> list[dict]:
 
 
 def build(s, store=None) -> dict:
+    # Strategies, sessions and versions all relate: load them up front rather than row by row.
+    s.query(StrategyVersion).options(selectinload(StrategyVersion.strategy), selectinload(StrategyVersion.parameters)).all()
+    s.query(PaperSession).options(selectinload(PaperSession.portfolio).selectinload(VirtualPortfolio.balances)).all()
     tick = prices(s)
     sessions = [session_row(s, ps, tick) for ps in s.query(PaperSession).order_by(PaperSession.id.desc())]
     mods, feats, jobs = models(s)

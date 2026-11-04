@@ -63,6 +63,10 @@ services:
   worker-notify:
     <<: *backend
     command: [ "python", "-m", "quantlab.worker", "notify" ]
+  # Retrains weekly, runs virtual challengers and the daily review. Never touches real trading.
+  worker-trainer:
+    <<: *backend
+    command: [ "python", "-m", "quantlab.worker", "trainer" ]
   # Sends real orders once every gate in the app is open. Off by default.
   worker-live:
     <<: *backend

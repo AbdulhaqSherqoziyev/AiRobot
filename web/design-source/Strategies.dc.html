@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/ican-business-design-system-64d11fa8-448a-41b1-9653-97041b289bb2/colors_and_type.css">
+<script src="_ds/ican-business-design-system-64d11fa8-448a-41b1-9653-97041b289bb2/_ds_bundle.js"></script>
+<script src="ql.js"></script>
+</helmet>
+<div style="font-family:var(--font-ui);color:#F1F5F9;display:flex;flex-direction:column;gap:16px">
+  <div style="display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px">
+    <div>
+      <h1 style="font-family:var(--font-display);font-size:22px;line-height:28px;font-weight:700;letter-spacing:-.01em;margin:0">Mening strategiyalarim</h1>
+      <p style="margin:4px 0 0;font-size:13px;color:#94A3B8">{{ countLabel }}</p>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button onClick="{{ compare }}" disabled="{{ cmpDisabled }}" style="display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 14px;border-radius:8px;border:1px solid #263244;background:#1B2435;color:{{ cmpColor }};font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap" style-hover="background:#222D42"><x-import component-from-global-scope="QL.Icon" icon="git-compare" size="15" hint-size="15px,15px"></x-import>{{ cmpLabel }}</button>
+      <button onClick="{{ goBuilder }}" style="display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 14px;border-radius:8px;border:1px solid #3B82F6;background:#3B82F6;color:#fff;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap" style-hover="background:#2563EB"><x-import component-from-global-scope="QL.Icon" icon="plus" size="15" hint-size="15px,15px"></x-import>Yangi strategiya</button>
+    </div>
+  </div>
+  <sc-if value="{{ v.loading }}" hint-placeholder-val="{{ true }}"><dc-import name="StateBlock" kind="loading" hint-size="100%,520px"></dc-import></sc-if>
+  <sc-if value="{{ v.error }}" hint-placeholder-val="{{ false }}"><dc-import name="StateBlock" kind="error" action-label="Qayta urinish" on-action="{{ retry }}" hint-size="100%,300px"></dc-import></sc-if>
+  <sc-if value="{{ v.empty }}" hint-placeholder-val="{{ false }}"><dc-import name="StateBlock" kind="empty" icon="layers" title="Hali strategiya yo'q" text="Vizual konstruktor yordamida birinchi strategiyangizni yarating: kirish va chiqish shartlari, stop-loss va pozitsiya hajmini belgilang." action-label="Strategiya yaratish" on-action="{{ goBuilder }}" hint-size="100%,320px"></dc-import></sc-if>
+  <sc-if value="{{ v.ok }}" hint-placeholder-val="{{ false }}">
+  <div style="display:flex;flex-direction:column;gap:14px">
+    <div style="display:flex;flex-wrap:wrap;align-items:center;gap:10px">
+      <div style="display:flex;align-items:center;gap:8px;height:34px;padding:0 10px;flex:1 1 220px;max-width:340px;background:#0F1522;border:1px solid #263244;border-radius:8px;color:#94A3B8">
+        <x-import component-from-global-scope="QL.Icon" icon="search" size="15" hint-size="15px,15px"></x-import>
+        <input value="{{ q }}" onChange="{{ setQ }}" placeholder="Nomi yoki juftlik bo'yicha qidirish" style="flex:1;min-width:0;border:0;outline:none;background:transparent;color:#F1F5F9;font-size:13px">
+      </div>
+      <div style="display:inline-flex;flex-wrap:wrap;gap:2px;padding:2px;background:#0F1522;border:1px solid #263244;border-radius:8px">
+        <sc-for list="{{ filters }}" as="t" hint-placeholder-count="5">
+          <button onClick="{{ t.go }}" style="height:28px;padding:0 10px;border:0;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;background:{{ t.bg }};color:{{ t.fg }}">{{ t.label }} <span style="opacity:.6">{{ t.n }}</span></button>
+        </sc-for>
+      </div>
+      <div style="flex:1"></div>
+      <div style="display:inline-flex;gap:2px;padding:2px;background:#0F1522;border:1px solid #263244;border-radius:8px">
+        <sc-for list="{{ views }}" as="t" hint-placeholder-count="2">
+          <button onClick="{{ t.go }}" title="{{ t.label }}" style="width:32px;height:28px;border:0;border-radius:6px;cursor:pointer;display:flex;align-items:center;justify-content:center;background:{{ t.bg }};color:{{ t.fg }}"><x-import component-from-global-scope="QL.Icon" icon="{{ t.icon }}" size="15" hint-size="15px,15px"></x-import></button>
+        </sc-for>
+      </div>
+    </div>
+
+    <sc-if value="{{ noMatch }}" hint-placeholder-val="{{ false }}"><dc-import name="StateBlock" kind="empty" icon="search" title="Mos strategiya topilmadi" text="Qidiruv so'zini yoki holat filtrini o'zgartirib ko'ring." action-label="Filtrlarni tozalash" on-action="{{ clearFilters }}" hint-size="100%,260px"></dc-import></sc-if>
+
+    <sc-if value="{{ isGrid }}" hint-placeholder-val="{{ true }}">
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px">
+        <sc-for list="{{ cards }}" as="s" hint-placeholder-count="6">
+          <article style="background:#151C2C;border:1px solid {{ s.border }};border-radius:12px;display:flex;flex-direction:column">
+            <div style="display:flex;align-items:flex-start;gap:10px;padding:14px 14px 10px">
+              <input type="checkbox" checked="{{ s.selected }}" onChange="{{ s.select }}" title="Solishtirish uchun tanlash" style="margin:3px 0 0;width:15px;height:15px;cursor:pointer">
+              <div onClick="{{ s.open }}" style="flex:1;min-width:0;cursor:pointer">
+                <div style="display:flex;align-items:center;gap:8px">
+                  <span style="width:8px;height:8px;border-radius:2px;background:{{ s.color }};flex-shrink:0"></span>
+                  <span style="font-family:var(--font-display);font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ s.name }}</span>
+                </div>
+                <div style="font-size:12px;color:#94A3B8;margin-top:4px">{{ s.meta }}</div>
+              </div>
+              <span style="display:inline-flex;align-items:center;gap:6px;height:22px;padding:0 8px;border-radius:6px;font-size:11px;font-weight:600;background:{{ s.st.bg }};color:{{ s.st.color }};white-space:nowrap"><span style="width:6px;height:6px;border-radius:9px;background:{{ s.st.color }}"></span>{{ s.st.label }}</span>
+            </div>
+            <div onClick="{{ s.open }}" style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;padding:4px 14px 10px;cursor:pointer;font-variant-numeric:tabular-nums">
+              <div><div style="font-size:10px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:#94A3B8">Daromad</div><div style="font-size:15px;font-weight:700;margin-top:3px;color:{{ s.retColor }}">{{ s.ret }}</div></div>
+              <div><div style="font-size:10px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:#94A3B8">G'alaba</div><div style="font-size:15px;font-weight:700;margin-top:3px">{{ s.win }}</div></div>
+              <div><div style="font-size:10px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:#94A3B8">Max DD</div><div style="font-size:15px;font-weight:700;margin-top:3px;color:#F87171">{{ s.mdd }}</div></div>
+              <div><div style="font-size:10px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:#94A3B8">Savdolar</div><div style="font-size:15px;font-weight:700;margin-top:3px">{{ s.trades }}</div></div>
+            </div>
+            <div style="padding:0 14px 10px"><x-import component-from-global-scope="QL.Spark" values="{{ s.spark }}" height="40" hint-size="100%,40px"></x-import></div>
+            <div style="margin-top:auto;display:flex;align-items:center;gap:6px;padding:10px 10px 10px 14px;border-top:1px solid #263244">
+              <div style="flex:1;min-width:0;font-size:11px;color:#94A3B8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Oxirgi backtest: {{ s.bt }}</div>
+              <button onClick="{{ s.toggle }}" title="{{ s.toggleLabel }}" style="width:30px;height:30px;border-radius:7px;border:1px solid #263244;background:transparent;color:{{ s.toggleColor }};cursor:pointer;display:flex;align-items:center;justify-content:center" style-hover="background:#1B2435"><x-import component-from-global-scope="QL.Icon" icon="{{ s.toggleIcon }}" size="14" hint-size="14px,14px"></x-import></button>
+              <button onClick="{{ s.backtest }}" title="Backtest" style="width:30px;height:30px;border-radius:7px;border:1px solid #263244;background:transparent;color:#CBD5E1;cursor:pointer;display:flex;align-items:center;justify-content:center" style-hover="background:#1B2435;color:#F1F5F9"><x-import component-from-global-scope="QL.Icon" icon="flask-conical" size="14" hint-size="14px,14px"></x-import></button>
+              <button onClick="{{ s.edit }}" title="Tahrirlash" style="width:30px;height:30px;border-radius:7px;border:1px solid #263244;background:transparent;color:#CBD5E1;cursor:pointer;display:flex;align-items:center;justify-content:center" style-hover="background:#1B2435;color:#F1F5F9"><x-import component-from-global-scope="QL.Icon" icon="pencil" size="14" hint-size="14px,14px"></x-import></button>
+              <button onClick="{{ s.duplicate }}" title="Nusxalash" style="width:30px;height:30px;border-radius:7px;border:1px solid #263244;background:transparent;color:#CBD5E1;cursor:pointer;display:flex;align-items:center;justify-content:center" style-hover="background:#1B2435;color:#F1F5F9"><x-import component-from-global-scope="QL.Icon" icon="copy" size="14" hint-size="14px,14px"></x-import></button>
+              <button onClick="{{ s.remove }}" title="O'chirish" style="width:30px;height:30px;border-radius:7px;border:1px solid #263244;background:transparent;color:#F87171;cursor:pointer;display:flex;align-items:center;justify-content:center" style-hover="background:rgba(234,57,67,.12)"><x-import component-from-global-scope="QL.Icon" icon="trash-2" size="14" hint-size="14px,14px"></x-import></button>
+            </div>
+          </article>
+        </sc-for>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ isTable }}" hint-placeholder-val="{{ false }}">
+      <div style="background:#151C2C;border:1px solid #263244;border-radius:12px;overflow-x:auto">
+        <table style="width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric:tabular-nums">
+          <thead><tr>
+            <th style="padding:9px 12px;border-bottom:1px solid #263244;width:30px"></th>
+            <sc-for list="{{ heads }}" as="h" hint-placeholder-count="9">
+              <th onClick="{{ h.go }}" style="text-align:{{ h.align }};padding:9px 12px;font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:{{ h.color }};border-bottom:1px solid #263244;white-space:nowrap;cursor:pointer;user-select:none">{{ h.label }}{{ h.arrow }}</th>
+            </sc-for>
+            <th style="padding:9px 12px;border-bottom:1px solid #263244"></th>
+          </tr></thead>
+          <tbody>
+            <sc-for list="{{ cards }}" as="s" hint-placeholder-count="6">
+              <tr style-hover="background:#1B2435">
+                <td style="padding:10px 12px;border-bottom:1px solid #1E2738"><input type="checkbox" checked="{{ s.selected }}" onChange="{{ s.select }}" style="width:15px;height:15px;cursor:pointer"></td>
+                <td onClick="{{ s.open }}" style="padding:10px 12px;border-bottom:1px solid #1E2738;white-space:nowrap;cursor:pointer"><div style="display:flex;align-items:center;gap:8px"><span style="width:8px;height:8px;border-radius:2px;background:{{ s.color }}"></span><span style="font-weight:600">{{ s.name }}</span></div></td>
+                <td style="padding:10px 12px;border-bottom:1px solid #1E2738;white-space:nowrap">{{ s.pair }}</td>
+                <td style="padding:10px 12px;border-bottom:1px solid #1E2738">{{ s.tf }}</td>
+                <td style="padding:10px 12px;border-bottom:1px solid #1E2738;white-space:nowrap;color:#CBD5E1">{{ s.type }}</td>
+                <td style="padding:10px 12px;border-bottom:1px solid #1E2738;text-align:right;font-weight:600;color:{{ s.retColor }}">{{ s.ret }}</td>
+                <td style="padding:10px 12px;border-bottom:1px solid #1E2738;text-align:right">{{ s.win }}</td>
+                <td style="padding:10px 12px;border-bottom:1px solid #1E2738;text-align:right;color:#F87171">{{ s.mdd }}</td>
+                <td style="padding:10px 12px;border-bottom:1px solid #1E2738;text-align:right">{{ s.trades }}</td>
+                <td style="padding:10px 12px;border-bottom:1px solid #1E2738;white-space:nowrap;color:#94A3B8">{{ s.bt }}</td>
+                <td style="padding:10px 12px;border-bottom:1px solid #1E2738"><span style="display:inline-flex;align-items:center;gap:6px;height:22px;padding:0 8px;border-radius:6px;font-size:11px;font-weight:600;background:{{ s.st.bg }};color:{{ s.st.color }};white-space:nowrap"><span style="width:6px;height:6px;border-radius:9px;background:{{ s.st.color }}"></span>{{ s.st.label }}</span></td>
+                <td style="padding:6px 12px;border-bottom:1px solid #1E2738;white-space:nowrap;text-align:right">
+                  <button onClick="{{ s.backtest }}" title="Backtest" style="width:28px;height:28px;border-radius:7px;border:0;background:transparent;color:#CBD5E1;cursor:pointer" style-hover="background:#263244"><x-import component-from-global-scope="QL.Icon" icon="flask-conical" size="14" hint-size="14px,14px"></x-import></button>
+                  <button onClick="{{ s.duplicate }}" title="Nusxalash" style="width:28px;height:28px;border-radius:7px;border:0;background:transparent;color:#CBD5E1;cursor:pointer" style-hover="background:#263244"><x-import component-from-global-scope="QL.Icon" icon="copy" size="14" hint-size="14px,14px"></x-import></button>
+                  <button onClick="{{ s.remove }}" title="O'chirish" style="width:28px;height:28px;border-radius:7px;border:0;background:transparent;color:#F87171;cursor:pointer" style-hover="background:rgba(234,57,67,.12)"><x-import component-from-global-scope="QL.Icon" icon="trash-2" size="14" hint-size="14px,14px"></x-import></button>
+                </td>
+              </tr>
+            </sc-for>
+          </tbody>
+        </table>
+      </div>
+    </sc-if>
+  </div>
+  </sc-if>
+
+  <sc-if value="{{ hasDetail }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ closeDetail }}" style="position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:80"></div>
+    <aside style="position:fixed;top:0;right:0;bottom:0;width:min(560px,100vw);z-index:81;background:#111827;border-left:1px solid #263244;display:flex;flex-direction:column;box-shadow:-16px 0 48px rgba(0,0,0,.45)">
+      <div style="display:flex;align-items:flex-start;gap:12px;padding:16px;border-bottom:1px solid #263244">
+        <span style="width:10px;height:10px;border-radius:3px;background:{{ d.color }};margin-top:7px"></span>
+        <div style="flex:1;min-width:0">
+          <div style="font-family:var(--font-display);font-size:18px;font-weight:700">{{ d.name }}</div>
+          <div style="font-size:12px;color:#94A3B8;margin-top:3px">{{ d.meta }}</div>
+        </div>
+        <span style="display:inline-flex;align-items:center;gap:6px;height:22px;padding:0 8px;border-radius:6px;font-size:11px;font-weight:600;background:{{ d.st.bg }};color:{{ d.st.color }}"><span style="width:6px;height:6px;border-radius:9px;background:{{ d.st.color }}"></span>{{ d.st.label }}</span>
+        <button onClick="{{ closeDetail }}" aria-label="Yopish" style="width:30px;height:30px;border-radius:8px;border:0;background:transparent;color:#94A3B8;cursor:pointer;display:flex;align-items:center;justify-content:center" style-hover="background:#1B2435;color:#F1F5F9"><x-import component-from-global-scope="QL.Icon" icon="x" size="17" hint-size="17px,17px"></x-import></button>
+      </div>
+      <div style="flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:16px">
+        <p style="font-size:13px;line-height:20px;color:#CBD5E1;margin:0">{{ d.desc }}</p>
+        <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px">
+          <sc-for list="{{ d.kpis }}" as="k" hint-placeholder-count="6">
+            <div style="background:#151C2C;border:1px solid #263244;border-radius:10px;padding:10px 12px;font-variant-numeric:tabular-nums">
+              <div style="font-size:10px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:#94A3B8">{{ k.label }}</div>
+              <div style="font-size:16px;font-weight:700;margin-top:4px;color:{{ k.color }}">{{ k.value }}</div>
+            </div>
+          </sc-for>
+        </div>
+        <div style="background:#151C2C;border:1px solid #263244;border-radius:10px;padding:10px 8px 6px 10px">
+          <div style="font-size:12px;font-weight:600;padding:2px 4px 6px">Jamlangan daromad, % · $50 kapital</div>
+          <x-import component-from-global-scope="QL.Chart" data="{{ d.curve }}" kind="baseline" fmt="pct" name="Daromad" data-key="{{ d.id }}" height="200" hint-size="100%,200px"></x-import>
+        </div>
+        <div>
+          <div style="font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:#94A3B8;margin-bottom:8px">Versiyalar tarixi</div>
+          <sc-for list="{{ d.versions }}" as="h" hint-placeholder-count="4">
+            <div style="display:flex;gap:12px;padding:10px 0;border-bottom:1px solid #1E2738">
+              <span style="font-size:12px;font-weight:700;color:#60A5FA;width:38px;flex-shrink:0">{{ h.ver }}</span>
+              <div style="flex:1;min-width:0"><div style="font-size:13px">{{ h.text }}</div><div style="font-size:11px;color:#94A3B8;margin-top:2px">{{ h.when }}</div></div>
+              <span style="font-size:12px;font-weight:600;color:{{ h.tone }};font-variant-numeric:tabular-nums">{{ h.ret }}</span>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;padding:12px 16px;border-top:1px solid #263244">
+        <button onClick="{{ d.backtest }}" style="display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 14px;border-radius:8px;border:1px solid #3B82F6;background:#3B82F6;color:#fff;font-size:13px;font-weight:600;cursor:pointer" style-hover="background:#2563EB"><x-import component-from-global-scope="QL.Icon" icon="flask-conical" size="15" hint-size="15px,15px"></x-import>Backtest</button>
+        <button onClick="{{ d.paper }}" style="display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 14px;border-radius:8px;border:1px solid #263244;background:#1B2435;color:#F1F5F9;font-size:13px;font-weight:600;cursor:pointer" style-hover="background:#222D42"><x-import component-from-global-scope="QL.Icon" icon="circle-play" size="15" hint-size="15px,15px"></x-import>Paper trading</button>
+        <button onClick="{{ d.edit }}" style="display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 14px;border-radius:8px;border:1px solid #263244;background:#1B2435;color:#F1F5F9;font-size:13px;font-weight:600;cursor:pointer" style-hover="background:#222D42"><x-import component-from-global-scope="QL.Icon" icon="pencil" size="15" hint-size="15px,15px"></x-import>Tahrirlash</button>
+      </div>
+    </aside>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;nav&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;function&quot;},&quot;toast&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;function&quot;},&quot;confirm&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;function&quot;},&quot;demoState&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;normal&quot;,&quot;loading&quot;,&quot;empty&quot;,&quot;error&quot;],&quot;default&quot;:&quot;normal&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;params&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;object&quot;}}">
+class Component extends DCLogic {
+  state = { ready: false, q: '', filter: 'all', view: 'grid', sel: [], list: null, detail: (this.props.params && this.props.params.id) || null, sort: 'ret', dir: -1 };
+  componentDidMount() {
+    this._t = setInterval(() => { if (window.QL) { clearInterval(this._t); this.setState({ list: window.QL.STRATS.map(s => Object.assign({}, s)) }); this._r = setTimeout(() => this.setState({ ready: true }), 420); } }, 30);
+  }
+  componentWillUnmount() { clearInterval(this._t); clearTimeout(this._r); }
+  view() {
+    const d = this.props.demoState, loading = !this.state.ready || d === 'loading';
+    return { loading, error: !loading && d === 'error', empty: !loading && d === 'empty', ok: !loading && (!d || d === 'normal') };
+  }
+  toast(t, k) { if (this.props.toast) this.props.toast(t, k); }
+  nav(r, p) { if (this.props.nav) this.props.nav(r, p); }
+  setStatus(id, status) { this.setState(s => ({ list: s.list.map(x => x.id === id ? Object.assign({}, x, { status }) : x) })); }
+  duplicate(x) {
+    const copy = Object.assign({}, x, { id: x.id + '-' + Date.now().toString(36), name: x.name + ' (nusxa)', status: 'draft', engine: x.engine || x.id, bt: window.QL.NOW() });
+    this.setState(s => { const i = s.list.findIndex(y => y.id === x.id); const l = s.list.slice(); l.splice(i + 1, 0, copy); return { list: l }; });
+    this.toast('“' + x.name + '” nusxalandi · qoralama sifatida saqlandi', 'ok');
+  }
+  remove(x) {
+    if (!this.props.confirm) return;
+    this.props.confirm({
+      danger: true, title: "Strategiyani o'chirasizmi?", okLabel: "O'chirish",
+      text: '“' + x.name + "” va unga bog'liq " + x.trades + " ta backtest savdosi o'chiriladi. Faol paper sessiyalar to'xtatiladi. Bu amalni ortga qaytarib bo'lmaydi.",
+      onOk: () => { this.setState(s => ({ list: s.list.filter(y => y.id !== x.id), sel: s.sel.filter(i => i !== x.id), detail: s.detail === x.id ? null : s.detail })); this.toast('“' + x.name + "” o'chirildi", 'ok'); }
+    });
+  }
+  renderVals() {
+    const v = this.view(), s = this.state;
+    const base = { v, q: s.q, retry: () => { this.setState({ ready: false }); setTimeout(() => this.setState({ ready: true }), 600); }, goBuilder: () => this.nav('builder'), countLabel: 'Strategiyalarni boshqaring, faollashtiring va natijalarini kuzating' };
+    if (!v.ok || !s.list) return base;
+    const Q = window.QL, f = Q.fmt, all = s.list, q = s.q.trim().toLowerCase();
+    const counts = { all: all.length }; all.forEach(x => { counts[x.status] = (counts[x.status] || 0) + 1; });
+    let list = all.filter(x => (s.filter === 'all' || x.status === s.filter) && (!q || (x.name + ' ' + x.pair + ' ' + x.type).toLowerCase().includes(q)));
+    const key = s.sort;
+    list = list.slice().sort((a, b) => (typeof a[key] === 'string' ? a[key].localeCompare(b[key]) : a[key] - b[key]) * s.dir);
+    const cards = list.map(x => {
+      const on = x.status === 'active', sel = s.sel.includes(x.id);
+      return {
+        id: x.id, name: x.name, color: x.color, pair: x.pair, tf: x.tf, type: x.type, meta: x.pair + ' · ' + x.tf + ' · ' + x.type,
+        ret: f.pct(x.ret), retColor: f.tone(x.ret), win: x.win.toFixed(1) + '%', mdd: f.pct(x.mdd), trades: x.trades, spark: x.spark, bt: f.dt(x.bt), st: Q.status(x.status),
+        selected: sel, border: sel ? '#3B82F6' : '#263244',
+        toggleIcon: on ? 'pause' : 'play', toggleColor: on ? '#F0B90B' : '#16C784', toggleLabel: on ? "Nofaol qilish" : 'Faollashtirish',
+        select: () => this.setState(st => ({ sel: st.sel.includes(x.id) ? st.sel.filter(i => i !== x.id) : st.sel.concat([x.id]) })),
+        open: () => this.setState({ detail: x.id }),
+        toggle: () => { this.setStatus(x.id, on ? 'inactive' : 'active'); this.toast('“' + x.name + '” ' + (on ? 'nofaol qilindi' : 'faollashtirildi'), on ? 'info' : 'ok'); },
+        backtest: () => this.nav('backtest', { strat: x.engine || x.id }), edit: () => this.nav('builder', { strat: x.engine || x.id, name: x.name }),
+        duplicate: () => this.duplicate(x), remove: () => this.remove(x)
+      };
+    });
+    const heads = [['Strategiya', 'name', 'left'], ['Juftlik', 'pair', 'left'], ['TF', 'tf', 'left'], ['Turi', 'type', 'left'], ['Daromad', 'ret', 'right'], ["G'alaba", 'win', 'right'], ['Max DD', 'mdd', 'right'], ['Savdolar', 'trades', 'right'], ['Oxirgi backtest', 'bt', 'left'], ['Holat', 'status', 'left']].map(([label, k, align]) => ({ label, align, color: s.sort === k ? '#F1F5F9' : '#94A3B8', arrow: s.sort === k ? (s.dir < 0 ? ' ↓' : ' ↑') : '', go: () => this.setState(st => ({ sort: k, dir: st.sort === k ? -st.dir : -1 })) }));
+    const dx = all.find(x => x.id === s.detail);
+    let d = null;
+    if (dx) {
+      d = {
+        id: dx.id, name: dx.name, color: dx.color, meta: dx.pair + ' · ' + dx.tf + ' · ' + dx.type + ' · yaratilgan ' + f.date(dx.created || Q.END), st: Q.status(dx.status), desc: dx.desc, curve: dx.curve,
+        kpis: [['Daromad', f.pct(dx.ret), f.tone(dx.ret)], ['Sharpe', dx.sharpe.toFixed(2), '#F1F5F9'], ['Sortino', dx.sortino.toFixed(2), '#F1F5F9'], ['Max DD', f.pct(dx.mdd), '#F87171'], ['Profit faktor', dx.pf.toFixed(2), '#F1F5F9'], ["O'rt. davomiylik", f.dur(dx.avgDur), '#F1F5F9']].map(([label, value, color]) => ({ label, value, color })),
+        versions: [
+          ['v1.3', "Joriy · stop-loss " + (dx.sl || 0) + '%, take-profit ' + (dx.tp ? dx.tp + '%' : "o'chirilgan"), dx.bt, dx.ret],
+          ['v1.2', "Kirishdan keyin 2 sham kutish (CooldownPeriod) qo'shildi", (dx.bt || Q.END) - 9 * Q.DAY, dx.ret - 2.1],
+          ['v1.1', "Komissiya 0.1% va slippage 0.05% hisobga olindi", (dx.bt || Q.END) - 23 * Q.DAY, dx.ret + 3.4],
+          ['v1.0', 'Strategiya yaratildi', dx.created || Q.END - 60 * Q.DAY, dx.ret + 5.2]
+        ].map(([ver, text, t, r]) => ({ ver, text, when: f.dt(t), ret: f.pct(r), tone: f.tone(r) })),
+        backtest: () => this.nav('backtest', { strat: dx.engine || dx.id }), paper: () => this.nav('paper', { newSession: true, strat: dx.engine || dx.id }), edit: () => this.nav('builder', { strat: dx.engine || dx.id, name: dx.name })
+      };
+    }
+    const n = s.sel.length;
+    return Object.assign(base, {
+      countLabel: all.length + ' ta strategiya · ' + (counts.active || 0) + ' ta faol · natijalar oxirgi backtestdan ($50 boshlang\'ich kapital)',
+      setQ: (e) => this.setState({ q: e.target.value }), clearFilters: () => this.setState({ q: '', filter: 'all' }),
+      filters: [['all', 'Hammasi'], ['active', 'Faol'], ['paused', 'Pauza'], ['inactive', 'Nofaol'], ['draft', 'Qoralama']].map(([id, label]) => ({ label, n: counts[id] || 0, bg: s.filter === id ? '#263244' : 'transparent', fg: s.filter === id ? '#F1F5F9' : '#94A3B8', go: () => this.setState({ filter: id }) })),
+      views: [['grid', 'Kartochkalar', 'layout-grid'], ['table', 'Jadval', 'list']].map(([id, label, icon]) => ({ label, icon, bg: s.view === id ? '#263244' : 'transparent', fg: s.view === id ? '#F1F5F9' : '#94A3B8', go: () => this.setState({ view: id }) })),
+      isGrid: s.view === 'grid' && cards.length > 0, isTable: s.view === 'table' && cards.length > 0, noMatch: cards.length === 0, cards, heads,
+      cmpLabel: n ? 'Solishtirish (' + n + ')' : 'Solishtirish', cmpDisabled: n < 2, cmpColor: n < 2 ? '#64748B' : '#F1F5F9',
+      compare: () => { if (n < 2) { this.toast('Solishtirish uchun kamida 2 ta strategiyani belgilang', 'info'); return; } this.nav('compare', { ids: s.sel.map(id => { const x = all.find(y => y.id === id); return x.engine || x.id; }) }); },
+      hasDetail: !!d, d, closeDetail: () => this.setState({ detail: null })
+    });
+  }
+}
+</script>
+</body>
+</html>

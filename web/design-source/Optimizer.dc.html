@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/ican-business-design-system-64d11fa8-448a-41b1-9653-97041b289bb2/colors_and_type.css">
+<script src="_ds/ican-business-design-system-64d11fa8-448a-41b1-9653-97041b289bb2/_ds_bundle.js"></script>
+<script src="ql.js"></script>
+</helmet>
+<div style="font-family:var(--font-ui);color:#F1F5F9;display:flex;flex-direction:column;gap:16px">
+  <div style="display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px">
+    <div>
+      <h1 style="font-family:var(--font-display);font-size:22px;line-height:28px;font-weight:700;letter-spacing:-.01em;margin:0">Strategiya optimizatori</h1>
+      <p style="margin:4px 0 0;font-size:13px;color:#94A3B8">Parametrlar fazosida ko'p maqsadli qidiruv (Optuna) · faqat o'qitish davrida, natijani OOS da tekshiring</p>
+    </div>
+  </div>
+  <sc-if value="{{ v.loading }}" hint-placeholder-val="{{ true }}"><dc-import name="StateBlock" kind="loading" hint-size="100%,520px"></dc-import></sc-if>
+  <sc-if value="{{ v.error }}" hint-placeholder-val="{{ false }}"><dc-import name="StateBlock" kind="error" title="Optimizatsiya to'xtadi" text="Hyperopt ishchisi xotira chegarasiga yetdi (iteratsiya 312). Iteratsiyalar sonini kamaytiring yoki parametrlar diapazonini toraytiring." action-label="Qayta urinish" on-action="{{ retry }}" hint-size="100%,300px"></dc-import></sc-if>
+  <sc-if value="{{ v.empty }}" hint-placeholder-val="{{ false }}"><dc-import name="StateBlock" kind="empty" icon="sliders-horizontal" title="Optimizatsiya tarixi bo'sh" text="Strategiyani tanlang, parametr diapazonlarini va maqsad metrikalarini belgilab, birinchi qidiruvni boshlang." action-label="Sozlashni boshlash" on-action="{{ retry }}" hint-size="100%,300px"></dc-import></sc-if>
+  <sc-if value="{{ v.ok }}" hint-placeholder-val="{{ false }}">
+  <div style="display:flex;flex-direction:column;gap:16px">
+    <div style="display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start">
+      <section style="flex:1.4 1 520px;min-width:0;background:#151C2C;border:1px solid #263244;border-radius:12px">
+        <div style="padding:14px 16px;border-bottom:1px solid #263244;font-family:var(--font-display);font-size:14px;font-weight:600">Qidiruv sozlamalari</div>
+        <div style="padding:14px 16px;display:flex;flex-direction:column;gap:14px">
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px">
+            <label style="display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:500;color:#94A3B8">Strategiya
+              <select value="{{ strat }}" onChange="{{ setStrat }}" style="height:34px;padding:0 8px;background:#0F1522;border:1px solid #263244;border-radius:8px;color:#F1F5F9;font-size:13px;outline:none"><sc-for list="{{ strats }}" as="o" hint-placeholder-count="6"><option value="{{ o.id }}">{{ o.name }}</option></sc-for></select>
+            </label>
+            <label style="display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:500;color:#94A3B8">Sampler
+              <select value="{{ sampler }}" onChange="{{ setSampler }}" style="height:34px;padding:0 8px;background:#0F1522;border:1px solid #263244;border-radius:8px;color:#F1F5F9;font-size:13px;outline:none"><option value="NSGA-II">NSGA-II (ko'p maqsadli)</option><option value="NSGA-III">NSGA-III</option><option value="TPE">TPE</option><option value="CMA-ES">CMA-ES</option><option value="GP">Gaussian Process</option></select>
+            </label>
+            <label style="display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:500;color:#94A3B8">Iteratsiyalar
+              <input type="number" min="50" step="50" value="{{ iters }}" onChange="{{ setIters }}" style="height:34px;padding:0 10px;background:#0F1522;border:1px solid #263244;border-radius:8px;color:#F1F5F9;font-size:13px;outline:none">
+            </label>
+          </div>
+          <div>
+            <div style="font-size:12px;font-weight:500;color:#94A3B8;margin-bottom:6px">Maqsad metrikalari (bir nechtasini tanlang)</div>
+            <div style="display:flex;flex-wrap:wrap;gap:6px">
+              <sc-for list="{{ objectives }}" as="o" hint-placeholder-count="5"><button onClick="{{ o.go }}" style="display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 12px;border-radius:999px;border:1px solid {{ o.border }};background:{{ o.bg }};color:{{ o.fg }};font-size:12px;font-weight:600;cursor:pointer"><x-import component-from-global-scope="QL.Icon" icon="{{ o.icon }}" size="13" hint-size="13px,13px"></x-import>{{ o.label }}</button></sc-for>
+            </div>
+          </div>
+          <div style="overflow-x:auto;border:1px solid #263244;border-radius:10px">
+            <table style="width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric:tabular-nums">
+              <thead><tr>
+                <th style="text-align:left;padding:8px 12px;font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:#94A3B8;border-bottom:1px solid #263244">Parametr</th>
+                <th style="text-align:left;padding:8px 12px;font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:#94A3B8;border-bottom:1px solid #263244">Min</th>
+                <th style="text-align:left;padding:8px 12px;font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:#94A3B8;border-bottom:1px solid #263244">Maks</th>
+                <th style="text-align:left;padding:8px 12px;font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:#94A3B8;border-bottom:1px solid #263244">Qadam</th>
+                <th style="text-align:right;padding:8px 12px;font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:#94A3B8;border-bottom:1px solid #263244">Variantlar</th>
+              </tr></thead>
+              <tbody>
+                <sc-for list="{{ ranges }}" as="r" hint-placeholder-count="5">
+                  <tr>
+                    <td style="padding:6px 12px;border-bottom:1px solid #1E2738;white-space:nowrap"><code style="background:transparent;padding:0;color:#CBD5E1">{{ r.key }}</code><div style="font-size:11px;color:#94A3B8">{{ r.label }}</div></td>
+                    <td style="padding:6px 12px;border-bottom:1px solid #1E2738"><input type="number" step="any" value="{{ r.min }}" onChange="{{ r.setMin }}" style="width:76px;height:30px;padding:0 8px;background:#0F1522;border:1px solid #263244;border-radius:7px;color:#F1F5F9;font-size:12px;outline:none"></td>
+                    <td style="padding:6px 12px;border-bottom:1px solid #1E2738"><input type="number" step="any" value="{{ r.max }}" onChange="{{ r.setMax }}" style="width:76px;height:30px;padding:0 8px;background:#0F1522;border:1px solid #263244;border-radius:7px;color:#F1F5F9;font-size:12px;outline:none"></td>
+                    <td style="padding:6px 12px;border-bottom:1px solid #1E2738"><input type="number" step="any" value="{{ r.step }}" onChange="{{ r.setStep }}" style="width:64px;height:30px;padding:0 8px;background:#0F1522;border:1px solid #263244;border-radius:7px;color:#F1F5F9;font-size:12px;outline:none"></td>
+                    <td style="padding:6px 12px;border-bottom:1px solid #1E2738;text-align:right;color:#94A3B8">{{ r.n }}</td>
+                  </tr>
+                </sc-for>
+              </tbody>
+            </table>
+          </div>
+          <div style="font-size:12px;color:#94A3B8">{{ spaceNote }}</div>
+        </div>
+      </section>
+      <div style="flex:1 1 320px;min-width:0;display:flex;flex-direction:column;gap:16px">
+        <section style="background:#151C2C;border:1px solid #263244;border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:12px">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+            <span style="font-family:var(--font-display);font-size:14px;font-weight:600">Jarayon</span>
+            <span style="display:inline-flex;align-items:center;gap:6px;height:22px;padding:0 8px;border-radius:6px;font-size:11px;font-weight:700;background:{{ prog.st.bg }};color:{{ prog.st.color }}">{{ prog.st.label }}</span>
+          </div>
+          <div>
+            <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:6px;font-variant-numeric:tabular-nums"><span style="color:#CBD5E1">{{ prog.label }}</span><span style="font-weight:700">{{ prog.pct }}</span></div>
+            <div style="height:8px;border-radius:9px;background:#1B2435;overflow:hidden"><div style="height:100%;width:{{ prog.w }};background:#3B82F6;border-radius:9px"></div></div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px;font-variant-numeric:tabular-nums">
+            <div style="color:#94A3B8">Eng yaxshi Sharpe</div><div style="text-align:right;font-weight:700">{{ prog.bestSharpe }}</div>
+            <div style="color:#94A3B8">Pareto to'plami</div><div style="text-align:right;font-weight:700">{{ prog.pareto }}</div>
+            <div style="color:#94A3B8">Sarflangan vaqt</div><div style="text-align:right;font-weight:700">{{ prog.elapsed }}</div>
+          </div>
+          <sc-if value="{{ prog.running }}" hint-placeholder-val="{{ false }}"><button onClick="{{ stop }}" style="display:inline-flex;align-items:center;justify-content:center;gap:6px;height:36px;border-radius:8px;border:1px solid rgba(234,57,67,.45);background:rgba(234,57,67,.12);color:#F87171;font-size:13px;font-weight:700;cursor:pointer"><x-import component-from-global-scope="QL.Icon" icon="square" size="13" hint-size="13px,13px"></x-import>To'xtatish</button></sc-if>
+          <sc-if value="{{ prog.idle }}" hint-placeholder-val="{{ true }}"><button onClick="{{ start }}" style="display:inline-flex;align-items:center;justify-content:center;gap:6px;height:36px;border-radius:8px;border:1px solid #3B82F6;background:#3B82F6;color:#fff;font-size:13px;font-weight:700;cursor:pointer" style-hover="background:#2563EB"><x-import component-from-global-scope="QL.Icon" icon="play" size="14" hint-size="14px,14px"></x-import>Optimizatsiyani boshlash</button></sc-if>
+        </section>
+        <section style="background:#151C2C;border:1px solid #263244;border-radius:12px">
+          <div style="padding:14px 16px;border-bottom:1px solid #263244">
+            <div style="font-family:var(--font-display);font-size:14px;font-weight:600">Eng yaxshi kombinatsiya</div>
+            <div style="font-size:12px;color:#94A3B8;margin-top:2px">{{ best.sub }}</div>
+          </div>
+          <div style="padding:12px 16px;display:flex;flex-wrap:wrap;gap:6px">
+            <sc-for list="{{ best.params }}" as="p" hint-placeholder-count="5"><span style="display:inline-flex;gap:6px;padding:5px 9px;border-radius:7px;background:#111827;border:1px solid #263244;font-size:12px"><code style="background:transparent;padding:0;color:#94A3B8">{{ p.k }}</code><b style="font-variant-numeric:tabular-nums">{{ p.v }}</b></span></sc-for>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;padding:0 16px 14px;font-variant-numeric:tabular-nums">
+            <sc-for list="{{ best.metrics }}" as="m" hint-placeholder-count="4"><div><div style="font-size:10px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:#94A3B8">{{ m.k }}</div><div style="font-size:15px;font-weight:700;margin-top:3px;color:{{ m.color }}">{{ m.v }}</div></div></sc-for>
+          </div>
+          <div style="display:flex;gap:8px;padding:12px 16px;border-top:1px solid #263244">
+            <button onClick="{{ applyBest }}" style="flex:1;height:32px;border-radius:8px;border:1px solid #263244;background:#1B2435;color:#F1F5F9;font-size:12px;font-weight:600;cursor:pointer" style-hover="background:#222D42">Konstruktorga qo'llash</button>
+            <button onClick="{{ backtestBest }}" style="flex:1;height:32px;border-radius:8px;border:1px solid #3B82F6;background:#3B82F6;color:#fff;font-size:12px;font-weight:600;cursor:pointer" style-hover="background:#2563EB">OOS backtest</button>
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <div style="display:flex;flex-wrap:wrap;gap:16px">
+      <section style="flex:1.3 1 480px;min-width:0;background:#151C2C;border:1px solid #263244;border-radius:12px">
+        <div style="padding:14px 16px;border-bottom:1px solid #263244">
+          <div style="font-family:var(--font-display);font-size:14px;font-weight:600">Daromad va pasayish</div>
+          <div style="font-size:12px;color:#94A3B8;margin-top:2px">Har bir nuqta — bitta sinov · <span style="color:#F0B90B">●</span> Pareto fronti (bir metrikani yaxshilash boshqasini yomonlashtiradi)</div>
+        </div>
+        <div style="padding:16px 20px 30px 52px">
+          <div style="position:relative;height:260px;border-left:1px solid #334155;border-bottom:1px solid #334155">
+            <sc-for list="{{ yTicks }}" as="t" hint-placeholder-count="5"><div style="position:absolute;left:0;right:0;bottom:{{ t.pos }};border-top:1px dashed #1E2738"><span style="position:absolute;right:calc(100% + 8px);top:-8px;font-size:11px;color:#94A3B8">{{ t.label }}</span></div></sc-for>
+            <sc-for list="{{ xTicks }}" as="t" hint-placeholder-count="5"><span style="position:absolute;bottom:-20px;left:{{ t.pos }};transform:translateX(-50%);font-size:11px;color:#94A3B8">{{ t.label }}</span></sc-for>
+            <sc-for list="{{ dots }}" as="d" hint-placeholder-count="0"><span title="{{ d.title }}" style="position:absolute;left:{{ d.x }};bottom:{{ d.y }};width:{{ d.s }};height:{{ d.s }};transform:translate(-50%,50%);border-radius:50%;background:{{ d.c }}"></span></sc-for>
+          </div>
+        </div>
+      </section>
+      <section style="flex:1 1 380px;min-width:0;background:#151C2C;border:1px solid #263244;border-radius:12px">
+        <div style="padding:14px 16px;border-bottom:1px solid #263244">
+          <div style="font-family:var(--font-display);font-size:14px;font-weight:600">Parametr sezgirligi</div>
+          <div style="font-size:12px;color:#94A3B8;margin-top:2px">Sharpe: RSI davri × oversold chegarasi (SL 2.5%)</div>
+        </div>
+        <div style="padding:14px 16px;overflow-x:auto">
+          <table style="border-collapse:separate;border-spacing:3px;font-size:11px;font-variant-numeric:tabular-nums;margin:0 auto">
+            <thead><tr><th style="color:#94A3B8;font-weight:600;padding:2px 6px;text-align:right">os \ rsi</th><sc-for list="{{ gridCols }}" as="c" hint-placeholder-count="8"><th style="color:#94A3B8;font-weight:600;padding:2px 6px">{{ c }}</th></sc-for></tr></thead>
+            <tbody>
+              <sc-for list="{{ grid }}" as="r" hint-placeholder-count="8">
+                <tr><td style="color:#94A3B8;font-weight:600;padding:2px 6px;text-align:right">{{ r.os }}</td><sc-for list="{{ r.cells }}" as="x" hint-placeholder-count="8"><td title="{{ x.title }}" style="width:42px;height:30px;text-align:center;border-radius:5px;background:{{ x.bg }};color:#F1F5F9;font-weight:600">{{ x.v }}</td></sc-for></tr>
+              </sc-for>
+            </tbody>
+          </table>
+          <div style="font-size:12px;color:#94A3B8;margin-top:10px;line-height:17px">Keng «yashil plato» barqaror parametrlarni bildiradi. Yakka yorqin katak — ehtimoliy ortiqcha moslashish.</div>
+        </div>
+      </section>
+    </div>
+
+    <div style="display:flex;flex-wrap:wrap;gap:16px">
+      <section style="flex:2 1 560px;min-width:0;background:#151C2C;border:1px solid #263244;border-radius:12px;overflow:hidden">
+        <div style="padding:14px 16px;border-bottom:1px solid #263244;font-family:var(--font-display);font-size:14px;font-weight:600">Eng yaxshi konfiguratsiyalar (top-10)</div>
+        <div style="overflow-x:auto">
+          <table style="width:100%;border-collapse:collapse;font-size:12px;font-variant-numeric:tabular-nums">
+            <thead><tr><sc-for list="{{ topHeads }}" as="h" hint-placeholder-count="10"><th style="text-align:{{ h.a }};padding:9px 12px;font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:#94A3B8;border-bottom:1px solid #263244;white-space:nowrap">{{ h.l }}</th></sc-for></tr></thead>
+            <tbody>
+              <sc-for list="{{ top }}" as="r" hint-placeholder-count="10">
+                <tr style-hover="background:#1B2435">
+                  <td style="padding:8px 12px;border-bottom:1px solid #1E2738;color:#94A3B8">#{{ r.n }}</td>
+                  <td style="padding:8px 12px;border-bottom:1px solid #1E2738;text-align:right">{{ r.rsiP }}</td>
+                  <td style="padding:8px 12px;border-bottom:1px solid #1E2738;text-align:right">{{ r.os }}</td>
+                  <td style="padding:8px 12px;border-bottom:1px solid #1E2738;text-align:right">{{ r.ob }}</td>
+                  <td style="padding:8px 12px;border-bottom:1px solid #1E2738;text-align:right">{{ r.sl }}</td>
+                  <td style="padding:8px 12px;border-bottom:1px solid #1E2738;text-align:right">{{ r.tp }}</td>
+                  <td style="padding:8px 12px;border-bottom:1px solid #1E2738;text-align:right;font-weight:700">{{ r.sharpe }}</td>
+                  <td style="padding:8px 12px;border-bottom:1px solid #1E2738;text-align:right;color:{{ r.tone }}">{{ r.ret }}</td>
+                  <td style="padding:8px 12px;border-bottom:1px solid #1E2738;text-align:right;color:#F87171">{{ r.mdd }}</td>
+                  <td style="padding:8px 12px;border-bottom:1px solid #1E2738">{{ r.pareto }}</td>
+                </tr>
+              </sc-for>
+            </tbody>
+          </table>
+        </div>
+      </section>
+      <section style="flex:1 1 320px;min-width:0;background:#151C2C;border:1px solid #263244;border-radius:12px">
+        <div style="padding:14px 16px;border-bottom:1px solid #263244;font-family:var(--font-display);font-size:14px;font-weight:600">Optimizatsiya tarixi</div>
+        <sc-for list="{{ history }}" as="h" hint-placeholder-count="4">
+          <div style="display:flex;gap:12px;align-items:center;padding:10px 16px;border-bottom:1px solid #1E2738">
+            <div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600">{{ h.title }}</div><div style="font-size:11px;color:#94A3B8;margin-top:2px">{{ h.sub }}</div></div>
+            <span style="font-size:12px;font-weight:700;font-variant-numeric:tabular-nums">{{ h.val }}</span>
+          </div>
+        </sc-for>
+      </section>
+    </div>
+  </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;nav&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;function&quot;},&quot;toast&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;function&quot;},&quot;confirm&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;function&quot;},&quot;demoState&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;normal&quot;,&quot;loading&quot;,&quot;empty&quot;,&quot;error&quot;],&quot;default&quot;:&quot;normal&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;params&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;object&quot;}}">
+const RANGES = [['rsi_period', 'RSI davri', 7, 21, 1], ['rsi_oversold', 'Kirish chegarasi', 20, 35, 1], ['rsi_overbought', 'Chiqish chegarasi', 65, 80, 1], ['stoploss', 'Stop-loss, %', 1, 5, 0.5], ['take_profit', 'Take-profit, %', 2, 10, 0.5]];
+const OBJ = [['sharpe', 'Sharpe ↑', 'trending-up'], ['ret', 'Daromad ↑', 'chart-line'], ['mdd', 'Max DD ↓', 'shield-check'], ['pf', 'Profit faktor ↑', 'scale'], ['trades', 'Savdolar soni ≥ 50', 'hash']];
+class Component extends DCLogic {
+  state = { ready: false, strat: 'rsi', sampler: 'NSGA-II', iters: 500, obj: ['sharpe', 'mdd'], ranges: RANGES.map(r => ({ key: r[0], label: r[1], min: r[2], max: r[3], step: r[4] })), done: 500, running: false, elapsed: 754, hist: [] };
+  componentDidMount() { this._t = setInterval(() => { if (window.QL) { clearInterval(this._t); this._r = setTimeout(() => this.setState({ ready: true }), 420); } }, 30); }
+  componentWillUnmount() { clearInterval(this._t); clearTimeout(this._r); clearInterval(this._run); }
+  view() {
+    const d = this.props.demoState, loading = !this.state.ready || d === 'loading';
+    return { loading, error: !loading && d === 'error', empty: !loading && d === 'empty', ok: !loading && (!d || d === 'normal') };
+  }
+  start() {
+    clearInterval(this._run);
+    this.setState({ running: true, done: 0, elapsed: 0 });
+    this._run = setInterval(() => {
+      const n = Math.min(this.state.iters, this.state.done + 6 + Math.floor(Math.random() * 6));
+      this.setState(s => ({ done: n, elapsed: s.elapsed + 1.4 }));
+      if (n >= this.state.iters) {
+        clearInterval(this._run);
+        const Q = window.QL, best = this.rank(Q.optimizer().trials.slice(0, Math.min(500, n)))[0];
+        this.setState(s => ({ running: false, hist: [{ title: Q.strat(s.strat).name + ' · ' + s.sampler, sub: s.iters + ' iteratsiya · ' + Q.fmt.time(Q.NOW()), val: 'Sharpe ' + best.sharpe.toFixed(2) }].concat(s.hist) }));
+        if (this.props.toast) this.props.toast('Optimizatsiya yakunlandi: eng yaxshi Sharpe ' + best.sharpe.toFixed(2), 'ok');
+      }
+    }, 120);
+  }
+  rank(trials) {
+    const o = this.state.obj, score = (t) => (o.includes('sharpe') ? t.sharpe : 0) + (o.includes('ret') ? t.ret / 10 : 0) + (o.includes('mdd') ? t.mdd / 8 : 0) + (o.includes('pf') ? (t.pf - 1) * 2 : 0) - (o.includes('trades') && t.trades < 50 ? 5 : 0);
+    return trials.slice().sort((a, b) => score(b) - score(a));
+  }
+  renderVals() {
+    const v = this.view(), s = this.state;
+    const base = { v, retry: () => { this.setState({ ready: false }); setTimeout(() => this.setState({ ready: true }), 600); } };
+    if (!v.ok) return base;
+    const Q = window.QL, f = Q.fmt, O = Q.optimizer(), visible = O.trials.slice(0, Math.min(500, Math.round(s.done / s.iters * 500)));
+    const ranked = this.rank(visible.length ? visible : O.trials.slice(0, 1)), best = ranked[0], pareto = visible.filter(t => t.pareto);
+    const rs = s.ranges, space = rs.reduce((a, r) => a * Math.max(1, Math.floor((r.max - r.min) / (r.step || 1)) + 1), 1);
+    const upd = (i, k) => (e) => { const x = parseFloat(e.target.value); this.setState(st => ({ ranges: st.ranges.map((r, j) => j === i ? Object.assign({}, r, { [k]: isNaN(x) ? r[k] : x }) : r) })); };
+    const all = O.trials, maxX = Math.max(...all.map(t => -t.mdd)) * 1.05, minY = Math.min(...all.map(t => t.ret)), maxY = Math.max(...all.map(t => t.ret)), py = (maxY - minY) * 0.08, y0 = minY - py, y1 = maxY + py;
+    const dots = visible.map(t => ({ x: (-t.mdd / maxX * 100) + '%', y: ((t.ret - y0) / (y1 - y0) * 100) + '%', c: t === best ? '#3B82F6' : t.pareto ? '#F0B90B' : 'rgba(148,163,184,.35)', s: t === best ? '12px' : t.pareto ? '8px' : '5px', title: '#' + t.n + ' · RSI ' + t.rsiP + ', os ' + t.os + ', SL ' + t.sl + '% · daromad ' + f.pct(t.ret) + ', DD ' + f.pct(t.mdd) + ', Sharpe ' + t.sharpe.toFixed(2) }));
+    const gmax = Math.max(...O.grid.map(r => Math.max(...r.cells)));
+    return Object.assign(base, {
+      strat: s.strat, sampler: s.sampler, iters: s.iters, strats: Q.STRATS.map(x => ({ id: x.id, name: x.name })),
+      setStrat: (e) => this.setState({ strat: e.target.value }), setSampler: (e) => this.setState({ sampler: e.target.value }), setIters: (e) => this.setState({ iters: Math.max(50, parseInt(e.target.value, 10) || 50) }),
+      objectives: OBJ.map(([id, label, icon]) => { const on = s.obj.includes(id); return { label, icon, border: on ? '#3B82F6' : '#263244', bg: on ? 'rgba(59,130,246,.14)' : 'transparent', fg: on ? '#F1F5F9' : '#94A3B8', go: () => this.setState(st => ({ obj: on ? (st.obj.length > 1 ? st.obj.filter(x => x !== id) : st.obj) : st.obj.concat([id]) })) }; }),
+      ranges: rs.map((r, i) => ({ key: r.key, label: r.label, min: r.min, max: r.max, step: r.step, n: Math.max(1, Math.floor((r.max - r.min) / (r.step || 1)) + 1), setMin: upd(i, 'min'), setMax: upd(i, 'max'), setStep: upd(i, 'step') })),
+      spaceNote: 'Qidiruv fazosi: ' + f.num(space) + ' ta kombinatsiya · ' + s.iters + ' iteratsiya ≈ ' + (s.iters / space * 100).toFixed(2) + '% · ' + s.obj.length + ' ta maqsad',
+      prog: { st: Q.status(s.running ? 'training' : 'done'), running: s.running, idle: !s.running, label: f.num(s.done) + ' / ' + f.num(s.iters) + ' sinov', pct: Math.floor(s.done / s.iters * 100) + '%', w: (s.done / s.iters * 100) + '%', bestSharpe: best.sharpe.toFixed(2), pareto: pareto.length + ' ta', elapsed: f.dur(s.elapsed * 6) },
+      start: () => this.start(), stop: () => { clearInterval(this._run); this.setState({ running: false }); this.props.toast && this.props.toast("Optimizatsiya to'xtatildi · " + s.done + ' ta sinov saqlandi', 'warn'); },
+      best: { sub: 'Sinov #' + best.n + ' · ' + s.obj.map(o => OBJ.find(x => x[0] === o)[1]).join(', '), params: [['rsi_period', best.rsiP], ['rsi_oversold', best.os], ['rsi_overbought', best.ob], ['stoploss', '−' + best.sl + '%'], ['take_profit', '+' + best.tp + '%']].map(([k, val]) => ({ k, v: val })),
+        metrics: [['Sharpe', best.sharpe.toFixed(2), '#F1F5F9'], ['Daromad', f.pct(best.ret), f.tone(best.ret)], ['Max DD', f.pct(best.mdd), '#F87171'], ['Savdolar', String(best.trades), '#F1F5F9']].map(([k, val, color]) => ({ k, v: val, color })) },
+      applyBest: () => this.props.nav && this.props.nav('builder', { strat: s.strat, name: Q.strat(s.strat).name + ' (opt)' }),
+      backtestBest: () => this.props.nav && this.props.nav('backtest', { strat: s.strat, sl: best.sl, tp: best.tp, name: Q.strat(s.strat).name + ' · opt #' + best.n }),
+      dots, yTicks: [0, 1, 2, 3, 4].map(i => ({ pos: (i / 4 * 100) + '%', label: f.pct(y0 + (y1 - y0) * i / 4, 0) })), xTicks: [0, 1, 2, 3, 4].map(i => ({ pos: (i / 4 * 100) + '%', label: '−' + (maxX * i / 4).toFixed(0) + '%' })),
+      gridCols: O.gridCols, grid: O.grid.map(r => ({ os: r.os, cells: r.cells.map((x, i) => ({ v: x.toFixed(2), bg: x > 0 ? Q.hexA('#16C784', 0.08 + Math.max(0, x / gmax) * 0.6) : Q.hexA('#EA3943', 0.15 + Math.min(1, -x) * 0.5), title: 'RSI ' + O.gridCols[i] + ', oversold ' + r.os + ': Sharpe ' + x.toFixed(2) })) })),
+      topHeads: [['#', 'left'], ['RSI', 'right'], ['OS', 'right'], ['OB', 'right'], ['SL %', 'right'], ['TP %', 'right'], ['Sharpe', 'right'], ['Daromad', 'right'], ['Max DD', 'right'], ['Pareto', 'left']].map(([l, a]) => ({ l, a })),
+      top: ranked.slice(0, 10).map(t => ({ n: t.n, rsiP: t.rsiP, os: t.os, ob: t.ob, sl: t.sl, tp: t.tp, sharpe: t.sharpe.toFixed(2), ret: f.pct(t.ret), tone: f.tone(t.ret), mdd: f.pct(t.mdd), pareto: t.pareto ? '●' : '' })),
+      history: s.hist.concat([
+        { title: 'RSI Reversal · NSGA-II', sub: '500 iteratsiya · 02.11.2026 · Pareto: 9', val: 'Sharpe 1.67' },
+        { title: 'EMA Crossover · TPE', sub: '300 iteratsiya · 28.10.2026', val: 'Sharpe 1.41' },
+        { title: 'Multi-Indicator · NSGA-II', sub: '800 iteratsiya · 21.10.2026 · Pareto: 14', val: 'Sharpe 1.92' },
+        { title: 'Bollinger Bands · CMA-ES', sub: '200 iteratsiya · 15.10.2026', val: 'Sharpe 0.38' }
+      ])
+    });
+  }
+}
+</script>
+</body>
+</html>

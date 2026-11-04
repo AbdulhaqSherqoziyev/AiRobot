@@ -1,0 +1,27 @@
+{
+  "name": "quantlab-web",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev -H 127.0.0.1 -p 3100",
+    "build": "next build",
+    "start": "next start -H 127.0.0.1 -p 3100",
+    "test": "vitest run",
+    "gen:screens": "node scripts/dc2tsx.mjs"
+  },
+  "dependencies": {
+    "lightweight-charts": "4.2.0",
+    "lucide": "0.460.0",
+    "next": "16.4.5",
+    "react": "19.2.0",
+    "react-dom": "19.2.0"
+  },
+  "devDependencies": {
+    "@types/node": "22.10.0",
+    "@types/react": "19.2.0",
+    "@types/react-dom": "19.2.0",
+    "htmlparser2": "9.1.0",
+    "typescript": "5.7.2",
+    "vitest": "3.2.4"
+  }
+}

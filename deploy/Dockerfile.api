@@ -1,0 +1,12 @@
+# API and all workers (one image, different commands). Python 3.13 per the repo audit.
+FROM python:3.13-slim-bookworm
+RUN apt-get update && apt-get install -y --no-install-recommends libgomp1 && rm -rf /var/lib/apt/lists/*
+WORKDIR /app
+COPY quantlab/requirements.txt quantlab-requirements.txt
+RUN pip install --no-cache-dir -r quantlab-requirements.txt
+# Only the screening helper is used from Freqtrade, loaded by file path.
+COPY quantlab quantlab
+COPY freqtrade/islamic/screening.py freqtrade/islamic/screening.py
+RUN useradd -m -u 1000 app && mkdir -p /data && chown app /data
+USER app
+ENV QL_DATA_DIR=/data PYTHONUNBUFFERED=1

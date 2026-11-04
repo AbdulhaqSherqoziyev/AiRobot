@@ -1,0 +1,14 @@
+FROM node:20-bookworm-slim AS build
+WORKDIR /web
+COPY web/package.json web/package-lock.json ./
+RUN npm ci
+COPY web/ .
+RUN npm run build
+FROM node:20-bookworm-slim
+WORKDIR /web
+ENV NODE_ENV=production
+COPY --from=build /web/.next .next
+COPY --from=build /web/node_modules node_modules
+COPY --from=build /web/package.json package.json
+USER node
+CMD ["npx", "next", "start", "-H", "0.0.0.0", "-p", "3100"]

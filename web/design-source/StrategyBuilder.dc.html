@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/ican-business-design-system-64d11fa8-448a-41b1-9653-97041b289bb2/colors_and_type.css">
+<script src="_ds/ican-business-design-system-64d11fa8-448a-41b1-9653-97041b289bb2/_ds_bundle.js"></script>
+<script src="ql.js"></script>
+</helmet>
+<div style="font-family:var(--font-ui);color:#F1F5F9;display:flex;flex-direction:column;gap:16px">
+  <div style="display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px">
+    <div>
+      <h1 style="font-family:var(--font-display);font-size:22px;line-height:28px;font-weight:700;letter-spacing:-.01em;margin:0">Strategiya konstruktori</h1>
+      <p style="margin:4px 0 0;font-size:13px;color:#94A3B8">Shartlarni oddiy bloklar bilan yig'ing. Murakkab mantiq uchun kod rejimiga o'ting.</p>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+      <div style="display:inline-flex;gap:2px;padding:2px;background:#0F1522;border:1px solid #263244;border-radius:8px">
+        <sc-for list="{{ modes }}" as="t" hint-placeholder-count="2">
+          <button onClick="{{ t.go }}" style="display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 12px;border:0;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;background:{{ t.bg }};color:{{ t.fg }}"><x-import component-from-global-scope="QL.Icon" icon="{{ t.icon }}" size="14" hint-size="14px,14px"></x-import>{{ t.label }}</button>
+        </sc-for>
+      </div>
+      <button onClick="{{ save }}" style="display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 14px;border-radius:8px;border:1px solid #263244;background:#1B2435;color:#F1F5F9;font-size:13px;font-weight:600;cursor:pointer" style-hover="background:#222D42"><x-import component-from-global-scope="QL.Icon" icon="save" size="15" hint-size="15px,15px"></x-import>Saqlash</button>
+      <button onClick="{{ runBacktest }}" style="display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 14px;border-radius:8px;border:1px solid #3B82F6;background:#3B82F6;color:#fff;font-size:13px;font-weight:600;cursor:pointer" style-hover="background:#2563EB"><x-import component-from-global-scope="QL.Icon" icon="flask-conical" size="15" hint-size="15px,15px"></x-import>Backtest qilish</button>
+    </div>
+  </div>
+  <sc-if value="{{ v.loading }}" hint-placeholder-val="{{ true }}"><dc-import name="StateBlock" kind="loading" hint-size="100%,520px"></dc-import></sc-if>
+  <sc-if value="{{ v.error }}" hint-placeholder-val="{{ false }}"><dc-import name="StateBlock" kind="error" title="Indikatorlar katalogi yuklanmadi" text="Konstruktor uchun indikatorlar ro'yxatini serverdan olib bo'lmadi. Qayta urinib ko'ring." action-label="Qayta urinish" on-action="{{ retry }}" hint-size="100%,300px"></dc-import></sc-if>
+  <sc-if value="{{ v.empty }}" hint-placeholder-val="{{ false }}"><dc-import name="StateBlock" kind="empty" icon="blocks" title="Shablon tanlanmagan" text="Bo'sh strategiyadan boshlang yoki tayyor shablonni (RSI Reversal, EMA Crossover) tanlang." action-label="Bo'sh strategiya" on-action="{{ retry }}" hint-size="100%,300px"></dc-import></sc-if>
+  <sc-if value="{{ v.ok }}" hint-placeholder-val="{{ false }}">
+  <div style="display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start">
+    <div style="flex:2 1 600px;min-width:0;display:flex;flex-direction:column;gap:16px">
+      <section style="background:#151C2C;border:1px solid #263244;border-radius:12px">
+        <div style="padding:14px 16px;border-bottom:1px solid #263244;font-family:var(--font-display);font-size:14px;font-weight:600">Asosiy parametrlar</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px;padding:16px">
+          <label style="display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:500;color:#94A3B8;grid-column:span 2">Strategiya nomi
+            <input value="{{ s.name }}" onChange="{{ setName }}" style="height:36px;padding:0 10px;background:#0F1522;border:1px solid #263244;border-radius:8px;color:#F1F5F9;font-size:13px;outline:none" style-focus="border-color:#3B82F6;box-shadow:0 0 0 3px rgba(59,130,246,.22)">
+          </label>
+          <label style="display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:500;color:#94A3B8">Savdo juftligi
+            <select value="{{ s.pair }}" onChange="{{ setPair }}" style="height:36px;padding:0 8px;background:#0F1522;border:1px solid #263244;border-radius:8px;color:#F1F5F9;font-size:13px;outline:none">
+              <sc-for list="{{ pairs }}" as="p" hint-placeholder-count="6"><option value="{{ p }}">{{ p }}</option></sc-for>
+            </select>
+          </label>
+          <label style="display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:500;color:#94A3B8">Taymfreym
+            <select value="{{ s.tf }}" onChange="{{ setTf }}" style="height:36px;padding:0 8px;background:#0F1522;border:1px solid #263244;border-radius:8px;color:#F1F5F9;font-size:13px;outline:none">
+              <sc-for list="{{ tfs }}" as="t" hint-placeholder-count="5"><option value="{{ t.id }}">{{ t.id }}</option></sc-for>
+            </select>
+          </label>
+          <label style="display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:500;color:#94A3B8">Boshlang'ich virtual kapital, $
+            <input type="number" min="10" value="{{ s.capital }}" onChange="{{ setCapital }}" style="height:36px;padding:0 10px;background:#0F1522;border:1px solid #263244;border-radius:8px;color:#F1F5F9;font-size:13px;outline:none;font-variant-numeric:tabular-nums" style-focus="border-color:#3B82F6">
+          </label>
+        </div>
+      </section>
+
+      <sc-if value="{{ isVisual }}" hint-placeholder-val="{{ true }}">
+      <div style="display:flex;flex-direction:column;gap:16px">
+        <sc-for list="{{ blocks }}" as="b" hint-placeholder-count="2">
+          <section style="background:#151C2C;border:1px solid #263244;border-radius:12px">
+            <div style="display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid #263244">
+              <span style="display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:7px;background:{{ b.iconBg }};color:{{ b.color }}"><x-import component-from-global-scope="QL.Icon" icon="{{ b.icon }}" size="14" hint-size="14px,14px"></x-import></span>
+              <div style="flex:1;min-width:160px">
+                <div style="font-family:var(--font-display);font-size:14px;font-weight:600">{{ b.title }}</div>
+                <div style="font-size:12px;color:#94A3B8;margin-top:2px">{{ b.sub }}</div>
+              </div>
+              <div style="display:inline-flex;gap:2px;padding:2px;background:#0F1522;border:1px solid #263244;border-radius:8px">
+                <sc-for list="{{ b.joins }}" as="j" hint-placeholder-count="2">
+                  <button onClick="{{ j.go }}" style="height:26px;padding:0 12px;border:0;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;background:{{ j.bg }};color:{{ j.fg }}">{{ j.label }}</button>
+                </sc-for>
+              </div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:8px;padding:12px 16px">
+              <sc-for list="{{ b.rows }}" as="r" hint-placeholder-count="2">
+                <div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:8px;background:#111827;border:1px solid #263244;border-radius:10px">
+                  <span style="width:52px;text-align:center;font-size:11px;font-weight:800;letter-spacing:.06em;color:{{ r.joinColor }}">{{ r.joinLabel }}</span>
+                  <select value="{{ r.ind }}" onChange="{{ r.setInd }}" style="flex:1.4 1 150px;min-width:0;height:34px;padding:0 8px;background:#0F1522;border:1px solid #263244;border-radius:8px;color:#F1F5F9;font-size:13px;outline:none">
+                    <sc-for list="{{ r.opts }}" as="o" hint-placeholder-count="8"><option value="{{ o.id }}">{{ o.label }}</option></sc-for>
+                  </select>
+                  <select value="{{ r.op }}" onChange="{{ r.setOp }}" style="flex:1 1 130px;min-width:0;height:34px;padding:0 8px;background:#0F1522;border:1px solid #263244;border-radius:8px;color:#F1F5F9;font-size:13px;outline:none">
+                    <sc-for list="{{ r.ops }}" as="o" hint-placeholder-count="6"><option value="{{ o.id }}">{{ o.label }}</option></sc-for>
+                  </select>
+                  <select value="{{ r.kind }}" onChange="{{ r.setKind }}" style="flex:0 1 112px;min-width:0;height:34px;padding:0 8px;background:#0F1522;border:1px solid #263244;border-radius:8px;color:#94A3B8;font-size:12px;outline:none">
+                    <option value="num">Qiymat</option>
+                    <option value="ind">Indikator</option>
+                  </select>
+                  <sc-if value="{{ r.isNum }}" hint-placeholder-val="{{ true }}">
+                    <input type="number" step="any" value="{{ r.val }}" onChange="{{ r.setVal }}" style="flex:1 1 110px;min-width:0;height:34px;padding:0 10px;background:#0F1522;border:1px solid #263244;border-radius:8px;color:#F1F5F9;font-size:13px;outline:none;font-variant-numeric:tabular-nums" style-focus="border-color:#3B82F6">
+                  </sc-if>
+                  <sc-if value="{{ r.isInd }}" hint-placeholder-val="{{ false }}">
+                    <select value="{{ r.val }}" onChange="{{ r.setVal }}" style="flex:1 1 130px;min-width:0;height:34px;padding:0 8px;background:#0F1522;border:1px solid #263244;border-radius:8px;color:#F1F5F9;font-size:13px;outline:none">
+                      <sc-for list="{{ r.opts }}" as="o" hint-placeholder-count="8"><option value="{{ o.id }}">{{ o.label }}</option></sc-for>
+                    </select>
+                  </sc-if>
+                  <button onClick="{{ r.remove }}" title="Shartni o'chirish" style="width:32px;height:32px;border-radius:8px;border:0;background:transparent;color:#94A3B8;cursor:pointer;display:flex;align-items:center;justify-content:center" style-hover="background:rgba(234,57,67,.12);color:#F87171"><x-import component-from-global-scope="QL.Icon" icon="x" size="15" hint-size="15px,15px"></x-import></button>
+                </div>
+              </sc-for>
+              <sc-if value="{{ b.noRows }}" hint-placeholder-val="{{ false }}"><div style="padding:14px;border:1px dashed #334155;border-radius:10px;text-align:center;font-size:12px;color:#94A3B8">{{ b.emptyText }}</div></sc-if>
+              <div style="display:flex;flex-wrap:wrap;align-items:center;gap:10px;justify-content:space-between">
+                <button onClick="{{ b.add }}" style="display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 10px;border-radius:8px;border:1px dashed #334155;background:transparent;color:#CBD5E1;font-size:12px;font-weight:600;cursor:pointer" style-hover="background:#1B2435;color:#F1F5F9"><x-import component-from-global-scope="QL.Icon" icon="plus" size="14" hint-size="14px,14px"></x-import>Shart qo'shish</button>
+                <span style="display:inline-flex;align-items:center;gap:8px;font-size:12px;font-weight:700;color:{{ b.color }}">{{ b.then }}</span>
+              </div>
+            </div>
+          </section>
+        </sc-for>
+
+        <section style="background:#151C2C;border:1px solid #263244;border-radius:12px">
+          <div style="padding:14px 16px;border-bottom:1px solid #263244">
+            <div style="font-family:var(--font-display);font-size:14px;font-weight:600">Risk va pozitsiya hajmi</div>
+            <div style="font-size:12px;color:#94A3B8;margin-top:2px">Stop-loss va take-profit chiqish shartlariga qo'shimcha ravishda har doim tekshiriladi</div>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;padding:16px">
+            <sc-for list="{{ riskFields }}" as="x" hint-placeholder-count="7">
+              <label title="{{ x.tip }}" style="display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:500;color:#94A3B8">{{ x.label }}
+                <input type="number" step="any" min="0" value="{{ x.value }}" onChange="{{ x.set }}" style="height:36px;padding:0 10px;background:#0F1522;border:1px solid #263244;border-radius:8px;color:#F1F5F9;font-size:13px;outline:none;font-variant-numeric:tabular-nums" style-focus="border-color:#3B82F6">
+              </label>
+            </sc-for>
+            <label style="display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:500;color:#94A3B8">Pozitsiya hajmi rejimi
+              <select value="{{ s.sizing }}" onChange="{{ setSizing }}" style="height:36px;padding:0 8px;background:#0F1522;border:1px solid #263244;border-radius:8px;color:#F1F5F9;font-size:13px;outline:none">
+                <option value="pct">Balansning %</option>
+                <option value="fixed">Belgilangan summa, $</option>
+              </select>
+            </label>
+            <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:#CBD5E1;align-self:end;height:36px;cursor:pointer">
+              <input type="checkbox" checked="{{ s.trailing }}" onChange="{{ toggleTrailing }}" style="width:16px;height:16px">Trailing stop-loss
+            </label>
+          </div>
+        </section>
+
+        <section style="background:#151C2C;border:1px solid #263244;border-radius:12px">
+          <div style="padding:14px 16px;border-bottom:1px solid #263244">
+            <div style="font-family:var(--font-display);font-size:14px;font-weight:600">Indikator parametrlari</div>
+            <div style="font-size:12px;color:#94A3B8;margin-top:2px">O'zgartirilgan davrlar shartlar va kodda avtomatik yangilanadi</div>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:14px;padding:16px">
+            <sc-for list="{{ paramFields }}" as="x" hint-placeholder-count="7">
+              <label style="display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:500;color:#94A3B8">{{ x.label }}
+                <input type="number" step="any" min="1" value="{{ x.value }}" onChange="{{ x.set }}" style="height:36px;padding:0 10px;background:#0F1522;border:1px solid #263244;border-radius:8px;color:#F1F5F9;font-size:13px;outline:none;font-variant-numeric:tabular-nums" style-focus="border-color:#3B82F6">
+              </label>
+            </sc-for>
+          </div>
+        </section>
+      </div>
+      </sc-if>
+
+      <sc-if value="{{ isCode }}" hint-placeholder-val="{{ false }}">
+        <section style="background:#151C2C;border:1px solid #263244;border-radius:12px">
+          <div style="display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:12px 16px;border-bottom:1px solid #263244">
+            <div style="flex:1;min-width:200px">
+              <div style="font-family:var(--font-display);font-size:14px;font-weight:600">Kengaytirilgan rejim · Python (IStrategy)</div>
+              <div style="font-size:12px;color:#94A3B8;margin-top:2px">{{ codeNote }}</div>
+            </div>
+            <button onClick="{{ regen }}" style="display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 10px;border-radius:8px;border:1px solid #263244;background:#1B2435;color:#F1F5F9;font-size:12px;font-weight:600;cursor:pointer" style-hover="background:#222D42"><x-import component-from-global-scope="QL.Icon" icon="refresh-cw" size="13" hint-size="13px,13px"></x-import>Shartlardan qayta yaratish</button>
+          </div>
+          <textarea value="{{ code }}" onChange="{{ setCode }}" spellcheck="false" style="display:block;width:100%;min-height:560px;resize:vertical;border:0;outline:none;background:#0B0F19;color:#CBD5E1;padding:16px;font-family:'JetBrains Mono',Menlo,ui-monospace,monospace;font-size:12.5px;line-height:20px;border-radius:0 0 12px 12px;tab-size:4"></textarea>
+        </section>
+      </sc-if>
+    </div>
+
+    <aside style="flex:1 1 320px;min-width:0;position:sticky;top:0;display:flex;flex-direction:column;gap:16px">
+      <section style="background:#151C2C;border:1px solid #263244;border-radius:12px">
+        <div style="padding:14px 16px;border-bottom:1px solid #263244;font-family:var(--font-display);font-size:14px;font-weight:600">Strategiya mantiqi</div>
+        <div style="padding:14px 16px;display:flex;flex-direction:column;gap:12px;font-size:13px;line-height:20px">
+          <div style="padding:12px;border-radius:10px;background:rgba(22,199,132,.07);border:1px solid rgba(22,199,132,.22)">
+            <div style="font-size:11px;font-weight:700;letter-spacing:.06em;color:#16C784;margin-bottom:4px">KIRISH</div>
+            <div style="font-family:'JetBrains Mono',Menlo,monospace;font-size:12px;color:#E2E8F0;white-space:pre-wrap">{{ entryText }}</div>
+          </div>
+          <div style="padding:12px;border-radius:10px;background:rgba(234,57,67,.07);border:1px solid rgba(234,57,67,.22)">
+            <div style="font-size:11px;font-weight:700;letter-spacing:.06em;color:#F87171;margin-bottom:4px">CHIQISH</div>
+            <div style="font-family:'JetBrains Mono',Menlo,monospace;font-size:12px;color:#E2E8F0;white-space:pre-wrap">{{ exitText }}</div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px;font-variant-numeric:tabular-nums">
+            <div style="color:#94A3B8">Pozitsiya hajmi</div><div style="text-align:right;font-weight:600">{{ sizeText }}</div>
+            <div style="color:#94A3B8">Komissiya + slippage</div><div style="text-align:right;font-weight:600">{{ costText }}</div>
+            <div style="color:#94A3B8">Bir savdodagi maks. risk</div><div style="text-align:right;font-weight:600;color:#F87171">{{ riskText }}</div>
+          </div>
+        </div>
+      </section>
+      <section style="background:#151C2C;border:1px solid #263244;border-radius:12px">
+        <div style="padding:14px 16px;border-bottom:1px solid #263244;display:flex;align-items:center;justify-content:space-between">
+          <span style="font-family:var(--font-display);font-size:14px;font-weight:600">Tekshiruvlar</span>
+          <span style="font-size:12px;font-weight:600;color:{{ checkColor }}">{{ checkSummary }}</span>
+        </div>
+        <div style="padding:6px 16px 12px">
+          <sc-for list="{{ checks }}" as="c" hint-placeholder-count="6">
+            <div style="display:flex;gap:10px;padding:8px 0;border-bottom:1px solid #1E2738">
+              <span style="color:{{ c.color }};display:inline-flex;margin-top:2px"><x-import component-from-global-scope="QL.Icon" icon="{{ c.icon }}" size="15" hint-size="15px,15px"></x-import></span>
+              <div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600">{{ c.title }}</div><div style="font-size:12px;color:#94A3B8;margin-top:2px;line-height:17px">{{ c.text }}</div></div>
+            </div>
+          </sc-for>
+        </div>
+      </section>
+    </aside>
+  </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;nav&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;function&quot;},&quot;toast&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;function&quot;},&quot;confirm&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;function&quot;},&quot;demoState&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;normal&quot;,&quot;loading&quot;,&quot;empty&quot;,&quot;error&quot;],&quot;default&quot;:&quot;normal&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;params&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;object&quot;}}">
+const OPS = [['lt', '<', '<'], ['gt', '>', '>'], ['le', '≤', '<='], ['ge', '≥', '>='], ['xa', "yuqoriga kesib o'tadi", 'crossed_above'], ['xb', "pastga kesib o'tadi", 'crossed_below']];
+const PRESETS = {
+  rsi: { name: 'RSI Reversal', join: ['AND', 'OR'], entry: [['rsi', 'lt', 'num', '30']], exit: [['rsi', 'gt', 'num', '70']], sl: 3, tp: 6 },
+  ema: { name: 'EMA Crossover', join: ['AND', 'OR'], entry: [['emaF', 'xa', 'ind', 'emaS']], exit: [['emaF', 'xb', 'ind', 'emaS']], sl: 6, tp: 0 },
+  macd: { name: 'MACD Momentum', join: ['AND', 'OR'], entry: [['macd', 'xa', 'num', '0'], ['close', 'gt', 'ind', 'ema200']], exit: [['macd', 'lt', 'num', '0']], sl: 4, tp: 8 },
+  bb: { name: 'Bollinger Bands', join: ['AND', 'OR'], entry: [['close', 'lt', 'ind', 'bbl']], exit: [['close', 'gt', 'ind', 'bbm']], sl: 2, tp: 3 },
+  multi: { name: 'Multi-Indicator', join: ['AND', 'OR'], entry: [['rsi', 'lt', 'num', '42'], ['emaF', 'gt', 'ind', 'emaS']], exit: [['rsi', 'gt', 'num', '68'], ['emaF', 'lt', 'ind', 'emaS']], sl: 4, tp: 9 },
+  ai: { name: 'AI Prediction', join: ['AND', 'OR'], entry: [['ml', 'gt', 'num', '0.62']], exit: [['ml', 'lt', 'num', '0.45']], sl: 3, tp: 5 },
+  fresh: { name: 'Yangi strategiya', join: ['AND', 'OR'], entry: [['rsi', 'lt', 'num', '30'], ['emaF', 'gt', 'ind', 'emaS']], exit: [['rsi', 'gt', 'num', '70']], sl: 3, tp: 6 }
+};
+let RID = 0;
+const row = (a) => ({ id: ++RID, ind: a[0], op: a[1], kind: a[2], val: a[3] });
+
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    const p = props.params || {}, pr = PRESETS[p.strat] || PRESETS.fresh;
+    this.state = {
+      ready: false, mode: 'visual', name: p.name ? p.name + ' v2' : pr.name, pair: (window.QL && p.strat && window.QL.strat(p.strat).pair) || 'BTC/USDT', tf: (window.QL && p.strat && window.QL.strat(p.strat).tf) || '1h', capital: 50,
+      join: { entry: pr.join[0], exit: pr.join[1] }, entry: pr.entry.map(row), exit: pr.exit.map(row),
+      sl: pr.sl, tp: pr.tp, trailing: false, sizing: 'pct', size: 100, maxOpen: 1, fee: 0.1, slip: 0.05,
+      prm: { rsiP: 14, emaF: 20, emaS: 50, macdF: 12, macdS: 26, macdSig: 9, bbP: 20, bbK: 2 }, code: null, engine: p.strat || 'rsi'
+    };
+  }
+  componentDidMount() { this._t = setInterval(() => { if (window.QL) { clearInterval(this._t); this._r = setTimeout(() => this.setState({ ready: true }, () => { this._f = setTimeout(() => this.forceUpdate(), 80); }), 380); } }, 30); }
+  componentWillUnmount() { clearInterval(this._t); clearTimeout(this._r); }
+  view() {
+    const d = this.props.demoState, loading = !this.state.ready || d === 'loading';
+    return { loading, error: !loading && d === 'error', empty: !loading && d === 'empty', ok: !loading && (!d || d === 'normal') };
+  }
+  inds() {
+    const p = this.state.prm;
+    return [
+      ['rsi', 'RSI(' + p.rsiP + ')', 'df["rsi"]'], ['emaF', 'EMA(' + p.emaF + ')', 'df["ema_fast"]'], ['emaS', 'EMA(' + p.emaS + ')', 'df["ema_slow"]'], ['ema200', 'EMA(200)', 'df["ema_200"]'],
+      ['macd', 'MACD gistogramma', 'df["macdhist"]'], ['bbl', 'Bollinger pastki', 'df["bb_lower"]'], ['bbm', "Bollinger o'rta", 'df["bb_mid"]'], ['bbu', 'Bollinger yuqori', 'df["bb_upper"]'],
+      ['close', 'Narx (close)', 'df["close"]'], ['vol', 'Hajm', 'df["volume"]'], ['atr', 'ATR(14) %', 'df["atr_pct"]'], ['ml', 'ML ehtimoli (LGBM-Trend)', 'df["&-up_prob"]']
+    ];
+  }
+  upd(block, id, patch) { this.setState(s => ({ [block]: s[block].map(r => r.id === id ? Object.assign({}, r, patch) : r), code: s.code })); }
+  label(id) { const x = this.inds().find(i => i[0] === id); return x ? x[1] : id; }
+  col(id) { const x = this.inds().find(i => i[0] === id); return x ? x[2] : id; }
+  text(block) {
+    const s = this.state, rows = s[block], j = s.join[block] === 'AND' ? ' VA ' : ' YOKI ';
+    const parts = rows.map(r => this.label(r.ind) + ' ' + (OPS.find(o => o[0] === r.op) || OPS[0])[1] + ' ' + (r.kind === 'num' ? r.val : this.label(r.val)));
+    if (block === 'exit') { if (s.sl > 0) parts.push('stop-loss −' + s.sl + '%'); if (s.tp > 0) parts.push('take-profit +' + s.tp + '%'); }
+    return parts.length ? 'AGAR ' + parts.join(block === 'exit' ? ' YOKI ' : j) + '\n→ ' + (block === 'entry' ? 'SOTIB OLISH (spot, long)' : 'SOTISH') : "Shart belgilanmagan";
+  }
+  genCode() {
+    const s = this.state, p = s.prm, cls = (s.name.replace(/[^A-Za-z0-9 ]/g, ' ').split(/\s+/).filter(Boolean).map(w => w[0].toUpperCase() + w.slice(1)).join('') || 'MyStrategy');
+    const used = new Set(); ['entry', 'exit'].forEach(b => s[b].forEach(r => { used.add(r.ind); if (r.kind === 'ind') used.add(r.val); }));
+    const ind = [];
+    if (used.has('rsi')) ind.push('df["rsi"] = ta.RSI(df, timeperiod=' + p.rsiP + ')');
+    if (used.has('emaF')) ind.push('df["ema_fast"] = ta.EMA(df, timeperiod=' + p.emaF + ')');
+    if (used.has('emaS')) ind.push('df["ema_slow"] = ta.EMA(df, timeperiod=' + p.emaS + ')');
+    if (used.has('ema200')) ind.push('df["ema_200"] = ta.EMA(df, timeperiod=200)');
+    if (used.has('macd')) ind.push('macd = ta.MACD(df, fastperiod=' + p.macdF + ', slowperiod=' + p.macdS + ', signalperiod=' + p.macdSig + ')', 'df["macdhist"] = macd["macdhist"]');
+    if (used.has('bbl') || used.has('bbm') || used.has('bbu')) ind.push('bb = qtpylib.bollinger_bands(qtpylib.typical_price(df), window=' + p.bbP + ', stds=' + p.bbK + ')', 'df["bb_lower"], df["bb_mid"], df["bb_upper"] = bb["lower"], bb["mid"], bb["upper"]');
+    if (used.has('atr')) ind.push('df["atr_pct"] = ta.ATR(df, timeperiod=14) / df["close"] * 100');
+    const cond = (r) => { const o = OPS.find(x => x[0] === r.op) || OPS[0], a = this.col(r.ind), b = r.kind === 'num' ? String(r.val) : this.col(r.val); return o[0] === 'xa' || o[0] === 'xb' ? 'qtpylib.' + o[2] + '(' + a + ', ' + b + ')' : '(' + a + ' ' + o[2] + ' ' + b + ')'; };
+    const join = (b) => s[b].map(cond).join(s.join[b] === 'AND' ? ' &\n            ' : ' |\n            ') || 'False';
+    return [
+      'from freqtrade.strategy import IStrategy',
+      'import talib.abstract as ta',
+      'import freqtrade.vendor.qtpylib.indicators as qtpylib',
+      '',
+      '',
+      'class ' + cls + '(IStrategy):',
+      '    """' + s.name + ' — ' + s.pair + ' ' + s.tf + '. Avtomatik yaratildi."""',
+      '    INTERFACE_VERSION = 3',
+      '    timeframe = "' + s.tf + '"',
+      '    can_short = False          # Spot-only: short taqiqlangan (Shariat siyosati, L3)',
+      '    stoploss = ' + (s.sl > 0 ? (-s.sl / 100).toFixed(3) : '-0.99'),
+      '    trailing_stop = ' + (s.trailing ? 'True' : 'False'),
+      '    minimal_roi = {"0": ' + (s.tp > 0 ? (s.tp / 100).toFixed(3) : '100') + '}',
+      '    startup_candle_count = 200',
+      '',
+      '    def leverage(self, pair, **kwargs) -> float:',
+      '        return 1.0             # Leverage har doim 1.0',
+      '',
+      '    def populate_indicators(self, df, metadata):',
+      ind.map(l => '        ' + l).join('\n') || '        pass',
+      '        return df',
+      '',
+      '    def populate_entry_trend(self, df, metadata):',
+      '        df.loc[',
+      '            ' + join('entry') + ',',
+      '            "enter_long"] = 1',
+      '        return df',
+      '',
+      '    def populate_exit_trend(self, df, metadata):',
+      '        df.loc[',
+      '            ' + join('exit') + ',',
+      '            "exit_long"] = 1',
+      '        return df',
+      ''
+    ].join('\n');
+  }
+  guessEngine() {
+    const used = new Set(this.state.entry.map(r => r.ind));
+    if (used.has('ml')) return 'ai';
+    if (used.has('macd')) return 'macd';
+    if (used.has('bbl') || used.has('bbm')) return 'bb';
+    if (used.has('rsi') && (used.has('emaF') || used.has('emaS'))) return 'multi';
+    if (used.has('emaF')) return 'ema';
+    return 'rsi';
+  }
+  checks() {
+    const s = this.state, stake = s.sizing === 'pct' ? s.capital * s.size / 100 / Math.max(1, s.maxOpen) : s.size;
+    return [
+      s.entry.length ? ['ok', 'Kirish sharti belgilangan', s.entry.length + " ta shart · " + (s.join.entry === 'AND' ? 'barchasi bajarilishi kerak' : 'bittasi yetarli')] : ['err', 'Kirish sharti yo\'q', "Kamida bitta kirish shartini qo'shing"],
+      s.exit.length || s.sl > 0 ? ['ok', 'Chiqish mantiqi mavjud', (s.exit.length ? s.exit.length + ' ta shart' : 'Faqat stop-loss') + (s.sl > 0 ? ' + stop-loss' : '')] : ['err', "Chiqish sharti yo'q", "Chiqish sharti yoki stop-loss qo'shing"],
+      s.sl > 0 ? ['ok', 'Stop-loss o\'rnatilgan', 'Har bir savdoda maksimal yo\'qotish −' + s.sl + '%'] : ['warn', "Stop-loss o'rnatilmagan", "Kapitalni himoya qilish uchun stop-loss tavsiya etiladi"],
+      stake >= 10 ? ['ok', 'Buyurtma hajmi yetarli', 'Bir pozitsiya ≈ ' + window.QL.fmt.usd(stake) + ' · Binance minimal buyurtmasi ~5 USDT'] : ['warn', 'Buyurtma hajmi juda kichik', 'Bir pozitsiya ≈ ' + window.QL.fmt.usd(stake) + ". Binance minimal buyurtmasi (~5 USDT) tufayli ayrim signallar bajarilmasligi mumkin"],
+      ['ok', 'Shariat talablari: spot-only', "Short yo'q (can_short = False), leverage 1.0, margin va futures ishlatilmaydi"],
+      s.fee >= 0.1 ? ['ok', 'Komissiya realistik', s.fee + '% har bir buyurtmada (Binance spot standart)'] : ['warn', 'Komissiya past belgilangan', 'Binance spot standart komissiyasi 0.1%. Natijalar haddan tashqari optimistik bo\'lishi mumkin']
+    ];
+  }
+  renderVals() {
+    const v = this.view(), s = this.state;
+    const base = { v, retry: () => { this.setState({ ready: false }); setTimeout(() => this.setState({ ready: true }), 500); } };
+    if (!v.ok) return base;
+    const Q = window.QL, f = Q.fmt, inds = this.inds(), opts = inds.map(([id, label]) => ({ id, label })), ops = OPS.map(([id, label]) => ({ id, label }));
+    const mkBlock = (key) => {
+      const entry = key === 'entry', rows = s[key];
+      return {
+        title: entry ? 'Kirish shartlari' : 'Chiqish shartlari', sub: entry ? 'Barcha signal tekshiruvlari yopilgan sham bo\'yicha' : "Stop-loss va take-profit alohida tekshiriladi",
+        icon: entry ? 'log-in' : 'log-out', color: entry ? '#16C784' : '#F87171', iconBg: entry ? 'rgba(22,199,132,.12)' : 'rgba(234,57,67,.12)',
+        then: entry ? '→ SOTIB OLISH (spot)' : '→ SOTISH', noRows: !rows.length, emptyText: entry ? "Kirish sharti yo'q — strategiya hech qachon savdo ochmaydi" : "Chiqish sharti yo'q — faqat stop-loss / take-profit ishlaydi",
+        joins: [['AND', 'VA'], ['OR', 'YOKI']].map(([id, label]) => ({ label, bg: s.join[key] === id ? '#263244' : 'transparent', fg: s.join[key] === id ? '#F1F5F9' : '#94A3B8', go: () => this.setState(st => ({ join: Object.assign({}, st.join, { [key]: id }) })) })),
+        rows: rows.map((r, i) => ({
+          ind: r.ind, op: r.op, kind: r.kind, val: r.val, opts, ops, isNum: r.kind === 'num', isInd: r.kind === 'ind',
+          joinLabel: i === 0 ? 'AGAR' : (s.join[key] === 'AND' ? 'VA' : 'YOKI'), joinColor: i === 0 ? '#94A3B8' : '#60A5FA',
+          setInd: (e) => this.upd(key, r.id, { ind: e.target.value }), setOp: (e) => this.upd(key, r.id, { op: e.target.value }),
+          setKind: (e) => this.upd(key, r.id, { kind: e.target.value, val: e.target.value === 'num' ? '0' : 'emaS' }), setVal: (e) => this.upd(key, r.id, { val: e.target.value }),
+          remove: () => this.setState(st => ({ [key]: st[key].filter(x => x.id !== r.id) }))
+        })),
+        add: () => this.setState(st => ({ [key]: st[key].concat([row(entry ? ['close', 'gt', 'ind', 'emaS'] : ['rsi', 'gt', 'num', '70'])]) }))
+      };
+    };
+    const num = (k, min) => (e) => { const x = parseFloat(e.target.value); this.setState({ [k]: isNaN(x) ? 0 : Math.max(min || 0, x) }); };
+    const prm = (k) => (e) => { const x = parseFloat(e.target.value); this.setState(st => ({ prm: Object.assign({}, st.prm, { [k]: isNaN(x) ? 1 : Math.max(1, x) }) })); };
+    const checks = this.checks(), bad = checks.filter(c => c[0] === 'err').length, warn = checks.filter(c => c[0] === 'warn').length;
+    const stake = s.sizing === 'pct' ? s.capital * s.size / 100 / Math.max(1, s.maxOpen) : s.size;
+    return Object.assign(base, {
+      s, pairs: Q.MARKETS.map(m => m.sym), tfs: ['5m', '15m', '1h', '4h', '1d'].map(t => ({ id: t, sel: t === s.tf })),
+      modes: [['visual', 'Vizual', 'blocks'], ['code', 'Kod', 'code']].map(([id, label, icon]) => ({ label, icon, bg: s.mode === id ? '#263244' : 'transparent', fg: s.mode === id ? '#F1F5F9' : '#94A3B8', go: () => this.setState({ mode: id }) })),
+      isVisual: s.mode === 'visual', isCode: s.mode === 'code',
+      setName: (e) => this.setState({ name: e.target.value }), setPair: (e) => this.setState({ pair: e.target.value }), setTf: (e) => this.setState({ tf: e.target.value }), setCapital: num('capital', 0),
+      setSizing: (e) => this.setState({ sizing: e.target.value, size: e.target.value === 'pct' ? 100 : 25 }), toggleTrailing: () => this.setState(st => ({ trailing: !st.trailing })),
+      blocks: [mkBlock('entry'), mkBlock('exit')],
+      riskFields: [
+        ['Stop-loss, %', 'sl', s.sl, 'Kirish narxidan shu foizga tushganda pozitsiya yopiladi'], ['Take-profit, %', 'tp', s.tp, '0 = o\'chirilgan'],
+        [s.sizing === 'pct' ? 'Pozitsiya hajmi, % balans' : 'Pozitsiya hajmi, $', 'size', s.size, ''], ['Maks. ochiq pozitsiyalar', 'maxOpen', s.maxOpen, 'max_open_trades'],
+        ['Komissiya, %', 'fee', s.fee, 'Har bir buyurtma uchun (Binance spot: 0.1%)'], ['Slippage, %', 'slip', s.slip, 'Bajarilish narxining kutilgan og\'ishi']
+      ].map(([label, k, value, tip]) => ({ label, value, tip, set: num(k, k === 'maxOpen' ? 1 : 0) })),
+      paramFields: [['RSI davri', 'rsiP'], ['EMA tez', 'emaF'], ['EMA sekin', 'emaS'], ['MACD tez', 'macdF'], ['MACD sekin', 'macdS'], ['MACD signal', 'macdSig'], ['Bollinger davri', 'bbP'], ['Bollinger σ', 'bbK']].map(([label, k]) => ({ label, value: s.prm[k], set: prm(k) })),
+      code: s.code != null ? s.code : this.genCode(), setCode: (e) => this.setState({ code: e.target.value }), regen: () => this.setState({ code: null }),
+      codeNote: s.code != null ? "Kod qo'lda tahrirlangan — vizual shartlar bilan sinxron emas" : 'Vizual shartlardan avtomatik yaratilgan · tahrirlash mumkin',
+      entryText: this.text('entry'), exitText: this.text('exit'),
+      sizeText: s.sizing === 'pct' ? s.size + '% balans (≈ ' + f.usd(stake) + ')' : f.usd(s.size), costText: (s.fee * 2 + s.slip * 2).toFixed(2) + '% bir savdoga', riskText: s.sl > 0 ? '≈ ' + f.usd(stake * s.sl / 100) : 'Cheklanmagan',
+      checks: checks.map(([k, title, text]) => ({ title, text, icon: k === 'ok' ? 'circle-check' : k === 'warn' ? 'triangle-alert' : 'circle-x', color: k === 'ok' ? '#16C784' : k === 'warn' ? '#F0B90B' : '#EA3943' })),
+      checkSummary: bad ? bad + ' ta xato' : warn ? warn + ' ta ogohlantirish' : 'Hammasi joyida', checkColor: bad ? '#EA3943' : warn ? '#F0B90B' : '#16C784',
+      save: () => { if (bad) { this.props.toast && this.props.toast("Saqlab bo'lmadi: tekshiruvlardagi xatolarni tuzating", 'err'); return; } this.props.toast && this.props.toast('“' + s.name + '” qoralama sifatida saqlandi', 'ok'); },
+      runBacktest: () => { if (bad) { this.props.toast && this.props.toast('Backtestdan oldin xatolarni tuzating', 'err'); return; } this.props.nav && this.props.nav('backtest', { strat: this.guessEngine(), pair: s.pair, tf: ['15m', '1h', '4h'].includes(s.tf) ? s.tf : '1h', capital: s.capital, sl: s.sl, tp: s.tp, fee: s.fee, slip: s.slip, name: s.name }); }
+    });
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/ican-business-design-system-64d11fa8-448a-41b1-9653-97041b289bb2/colors_and_type.css">
+<script src="_ds/ican-business-design-system-64d11fa8-448a-41b1-9653-97041b289bb2/_ds_bundle.js"></script>
+<script src="ql.js"></script>
+</helmet>
+<div style="font-family:var(--font-ui);color:#F1F5F9;display:flex;flex-direction:column;gap:16px">
+  <div style="display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px">
+    <div>
+      <h1 style="font-family:var(--font-display);font-size:22px;line-height:28px;font-weight:700;letter-spacing:-.01em;margin:0">AI / ML laboratoriyasi</h1>
+      <p style="margin:4px 0 0;font-size:13px;color:#94A3B8">Modellar, o'qitish vazifalari, xususiyatlar va baholash · FreqAI asosida</p>
+    </div>
+    <button onClick="{{ newJob }}" style="display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 14px;border-radius:8px;border:1px solid #3B82F6;background:#3B82F6;color:#fff;font-size:13px;font-weight:600;cursor:pointer" style-hover="background:#2563EB"><x-import component-from-global-scope="QL.Icon" icon="plus" size="15" hint-size="15px,15px"></x-import>Yangi o'qitish</button>
+  </div>
+  <sc-if value="{{ v.loading }}" hint-placeholder-val="{{ true }}"><dc-import name="StateBlock" kind="loading" hint-size="100%,520px"></dc-import></sc-if>
+  <sc-if value="{{ v.error }}" hint-placeholder-val="{{ false }}"><dc-import name="StateBlock" kind="error" title="ML xizmatiga ulanib bo'lmadi" text="O'qitish ishchisi (freqai-worker) javob bermayapti. Vazifalar navbatda saqlanadi." action-label="Qayta urinish" on-action="{{ retry }}" hint-size="100%,300px"></dc-import></sc-if>
+  <sc-if value="{{ v.empty }}" hint-placeholder-val="{{ false }}"><dc-import name="StateBlock" kind="empty" icon="brain" title="Hali model o'qitilmagan" text="Xususiyatlar to'plamini tanlang va birinchi modelni o'qiting. LightGBM — tez va barqaror boshlang'ich nuqta." action-label="O'qitishni boshlash" on-action="{{ newJob }}" hint-size="100%,300px"></dc-import></sc-if>
+  <sc-if value="{{ v.ok }}" hint-placeholder-val="{{ false }}">
+  <div style="display:flex;flex-direction:column;gap:16px">
+    <div style="display:flex;gap:12px;padding:12px 14px;border-radius:12px;background:rgba(240,185,11,.07);border:1px solid rgba(240,185,11,.3)">
+      <span style="color:#F0B90B;display:inline-flex;margin-top:1px"><x-import component-from-global-scope="QL.Icon" icon="triangle-alert" size="17" hint-size="17px,17px"></x-import></span>
+      <div style="font-size:13px;line-height:20px;color:#E2E8F0"><b>Model aniqligi foydalilikni isbotlamaydi.</b> 55% aniqlik komissiya, slippage va noto'g'ri signallarning narxi bilan zararli strategiyaga aylanishi mumkin. Har bir modelni strategiya ichida backtest va OOS davrida baholang.</div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px">
+      <sc-for list="{{ kpis }}" as="k" hint-placeholder-count="4"><dc-import name="Metric" m="{{ k }}" hint-size="100%,96px"></dc-import></sc-for>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:16px">
+      <section style="flex:1.3 1 440px;min-width:0;background:#151C2C;border:1px solid #263244;border-radius:12px">
+        <div style="padding:14px 16px;border-bottom:1px solid #263244;font-family:var(--font-display);font-size:14px;font-weight:600">O'qitish vazifalari</div>
+        <sc-for list="{{ jobs }}" as="j" hint-placeholder-count="3">
+          <div style="display:flex;align-items:center;gap:14px;padding:12px 16px;border-bottom:1px solid #1E2738">
+            <div style="flex:1;min-width:0">
+              <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+                <span style="font-size:13px;font-weight:600">{{ j.model }}</span>
+                <span style="font-size:11px;color:#94A3B8">{{ j.algo }}</span>
+                <span style="display:inline-flex;align-items:center;gap:5px;height:20px;padding:0 7px;border-radius:5px;font-size:11px;font-weight:600;background:{{ j.st.bg }};color:{{ j.st.color }}">{{ j.st.label }}</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:10px;margin-top:8px">
+                <div style="flex:1;height:6px;border-radius:9px;background:#1B2435;overflow:hidden"><div style="height:100%;width:{{ j.w }};background:{{ j.bar }};border-radius:9px;transition:width .4s"></div></div>
+                <span style="font-size:12px;font-weight:700;width:40px;text-align:right;font-variant-numeric:tabular-nums">{{ j.pct }}</span>
+              </div>
+              <div style="font-size:11px;color:#94A3B8;margin-top:5px">{{ j.note }}</div>
+            </div>
+            <sc-if value="{{ j.canCancel }}" hint-placeholder-val="{{ true }}"><button onClick="{{ j.cancel }}" title="Bekor qilish" style="width:30px;height:30px;border-radius:8px;border:1px solid #263244;background:transparent;color:#94A3B8;cursor:pointer" style-hover="background:rgba(234,57,67,.12);color:#F87171"><x-import component-from-global-scope="QL.Icon" icon="x" size="14" hint-size="14px,14px"></x-import></button></sc-if>
+          </div>
+        </sc-for>
+      </section>
+      <section style="flex:1 1 360px;min-width:0;background:#151C2C;border:1px solid #263244;border-radius:12px">
+        <div style="padding:14px 16px;border-bottom:1px solid #263244">
+          <div style="font-family:var(--font-display);font-size:14px;font-weight:600">AI qaror qoidasi</div>
+          <div style="font-size:12px;color:#94A3B8;margin-top:2px">AI hech qachon buyurtma bermaydi — faqat tavsiya beradi</div>
+        </div>
+        <div style="padding:12px 16px;display:flex;flex-direction:column;gap:2px">
+          <sc-for list="{{ pipeline }}" as="p" hint-placeholder-count="5">
+            <div style="display:flex;gap:12px">
+              <div style="display:flex;flex-direction:column;align-items:center">
+                <span style="width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:{{ p.bg }};color:{{ p.color }};font-size:12px;font-weight:700">{{ p.n }}</span>
+                <sc-if value="{{ p.line }}" hint-placeholder-val="{{ true }}"><span style="width:1px;flex:1;min-height:14px;background:#263244"></span></sc-if>
+              </div>
+              <div style="padding:3px 0 12px"><div style="font-size:13px;font-weight:600">{{ p.title }}</div><div style="font-size:12px;color:#94A3B8;margin-top:2px;line-height:17px">{{ p.text }}</div></div>
+            </div>
+          </sc-for>
+        </div>
+      </section>
+    </div>
+
+    <section style="background:#151C2C;border:1px solid #263244;border-radius:12px;overflow:hidden">
+      <div style="padding:14px 16px;border-bottom:1px solid #263244;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap">
+        <div style="font-family:var(--font-display);font-size:14px;font-weight:600">Modellar va versiyalar</div>
+        <span style="font-size:12px;color:#94A3B8">Qatorni bosib batafsil baholashni oching</span>
+      </div>
+      <div style="overflow-x:auto">
+        <table style="width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric:tabular-nums">
+          <thead><tr>
+            <sc-for list="{{ heads }}" as="h" hint-placeholder-count="11"><th title="{{ h.tip }}" style="text-align:{{ h.a }};padding:9px 12px;font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:#94A3B8;border-bottom:1px solid #263244;white-space:nowrap">{{ h.l }}</th></sc-for>
+          </tr></thead>
+          <tbody>
+            <sc-for list="{{ rows }}" as="r" hint-placeholder-count="5">
+              <tr onClick="{{ r.go }}" style="cursor:pointer;background:{{ r.bg }}" style-hover="background:#1B2435">
+                <td style="padding:10px 12px;border-bottom:1px solid #1E2738;white-space:nowrap"><span style="font-weight:600">{{ r.name }}</span> <span style="color:#60A5FA;font-weight:600">{{ r.ver }}</span></td>
+                <td style="padding:10px 12px;border-bottom:1px solid #1E2738;white-space:nowrap">{{ r.algo }}</td>
+                <td style="padding:10px 12px;border-bottom:1px solid #1E2738;white-space:nowrap;color:#CBD5E1">{{ r.pair }}</td>
+                <td style="padding:10px 12px;border-bottom:1px solid #1E2738;text-align:right">{{ r.acc }}</td>
+                <td style="padding:10px 12px;border-bottom:1px solid #1E2738;text-align:right">{{ r.prec }}</td>
+                <td style="padding:10px 12px;border-bottom:1px solid #1E2738;text-align:right">{{ r.rec }}</td>
+                <td style="padding:10px 12px;border-bottom:1px solid #1E2738;text-align:right;font-weight:600">{{ r.f1 }}</td>
+                <td style="padding:10px 12px;border-bottom:1px solid #1E2738;text-align:right">{{ r.val }}</td>
+                <td style="padding:10px 12px;border-bottom:1px solid #1E2738;text-align:right;color:{{ r.oosColor }}">{{ r.oos }}</td>
+                <td style="padding:10px 12px;border-bottom:1px solid #1E2738;white-space:nowrap;color:#CBD5E1">{{ r.dur }}</td>
+                <td style="padding:10px 12px;border-bottom:1px solid #1E2738"><span style="display:inline-flex;align-items:center;gap:6px;height:22px;padding:0 8px;border-radius:6px;font-size:11px;font-weight:600;background:{{ r.st.bg }};color:{{ r.st.color }};white-space:nowrap">{{ r.st.label }}</span></td>
+              </tr>
+            </sc-for>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <div style="display:flex;flex-wrap:wrap;gap:16px">
+      <section style="flex:1 1 340px;min-width:0;background:#151C2C;border:1px solid #263244;border-radius:12px">
+        <div style="padding:14px 16px;border-bottom:1px solid #263244">
+          <div style="font-family:var(--font-display);font-size:14px;font-weight:600">{{ d.title }}</div>
+          <div style="font-size:12px;color:#94A3B8;margin-top:2px">{{ d.sub }}</div>
+        </div>
+        <div style="padding:14px 16px;display:flex;flex-direction:column;gap:12px">
+          <sc-for list="{{ d.bars }}" as="b" hint-placeholder-count="6">
+            <div>
+              <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px"><span style="color:#CBD5E1">{{ b.label }}</span><span style="font-weight:700;font-variant-numeric:tabular-nums">{{ b.text }}</span></div>
+              <div style="position:relative;height:8px;border-radius:9px;background:#1B2435"><div style="height:100%;width:{{ b.w }};border-radius:9px;background:{{ b.color }}"></div><div style="position:absolute;top:-3px;bottom:-3px;left:50%;width:1px;background:#64748B"></div></div>
+            </div>
+          </sc-for>
+          <div style="font-size:11px;color:#94A3B8">Vertikal chiziq — 50% (tasodifiy taxmin darajasi)</div>
+          <sc-if value="{{ d.isRl }}" hint-placeholder-val="{{ false }}"><div style="padding:10px 12px;border-radius:8px;background:#111827;border:1px solid #263244;font-size:12px;line-height:18px;color:#94A3B8">RL modellari klassifikatsiya metrikalari bilan baholanmaydi. Harakatlar: Kutish / Sotib olish / Sotish — short harakatlari Shariat siyosatiga ko'ra o'chirilgan.</div></sc-if>
+        </div>
+      </section>
+      <section style="flex:1 1 340px;min-width:0;background:#151C2C;border:1px solid #263244;border-radius:12px">
+        <div style="padding:14px 16px;border-bottom:1px solid #263244">
+          <div style="font-family:var(--font-display);font-size:14px;font-weight:600">Xususiyatlar ahamiyati</div>
+          <div style="font-size:12px;color:#94A3B8;margin-top:2px">Gain bo'yicha top-10 · {{ d.name }}</div>
+        </div>
+        <div style="padding:14px 16px;display:flex;flex-direction:column;gap:9px">
+          <sc-for list="{{ feats }}" as="x" hint-placeholder-count="10">
+            <div style="display:grid;grid-template-columns:130px minmax(0,1fr) 44px;align-items:center;gap:10px;font-size:12px">
+              <code style="background:transparent;padding:0;color:#CBD5E1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ x.name }}</code>
+              <div style="height:8px;border-radius:9px;background:#1B2435"><div style="height:100%;width:{{ x.w }};border-radius:9px;background:#3B82F6"></div></div>
+              <span style="text-align:right;font-weight:600;font-variant-numeric:tabular-nums">{{ x.v }}</span>
+            </div>
+          </sc-for>
+        </div>
+      </section>
+      <section style="flex:1 1 300px;min-width:0;background:#151C2C;border:1px solid #263244;border-radius:12px">
+        <div style="padding:14px 16px;border-bottom:1px solid #263244">
+          <div style="font-family:var(--font-display);font-size:14px;font-weight:600">Xatoliklar matritsasi (OOS)</div>
+          <div style="font-size:12px;color:#94A3B8;margin-top:2px">Nishon: keyingi 6 shamda +0.8% o'sish</div>
+        </div>
+        <div style="padding:16px">
+          <div style="display:grid;grid-template-columns:70px 1fr 1fr;gap:6px;font-size:12px;text-align:center;font-variant-numeric:tabular-nums">
+            <span></span><span style="color:#94A3B8">Taxmin: o'sish</span><span style="color:#94A3B8">Taxmin: yo'q</span>
+            <span style="color:#94A3B8;align-self:center;text-align:left">Haqiqiy: o'sish</span>
+            <div style="padding:14px 6px;border-radius:8px;background:rgba(22,199,132,.18)"><div style="font-size:18px;font-weight:700">{{ cm.tp }}</div><div style="font-size:11px;color:#94A3B8">TP</div></div>
+            <div style="padding:14px 6px;border-radius:8px;background:rgba(234,57,67,.12)"><div style="font-size:18px;font-weight:700">{{ cm.fn }}</div><div style="font-size:11px;color:#94A3B8">FN</div></div>
+            <span style="color:#94A3B8;align-self:center;text-align:left">Haqiqiy: yo'q</span>
+            <div style="padding:14px 6px;border-radius:8px;background:rgba(234,57,67,.12)"><div style="font-size:18px;font-weight:700">{{ cm.fp }}</div><div style="font-size:11px;color:#94A3B8">FP</div></div>
+            <div style="padding:14px 6px;border-radius:8px;background:rgba(22,199,132,.18)"><div style="font-size:18px;font-weight:700">{{ cm.tn }}</div><div style="font-size:11px;color:#94A3B8">TN</div></div>
+          </div>
+          <div style="font-size:12px;color:#94A3B8;margin-top:12px;line-height:17px">{{ cm.note }}</div>
+        </div>
+      </section>
+    </div>
+
+    <div style="display:flex;flex-wrap:wrap;gap:16px">
+      <section style="flex:1.3 1 460px;min-width:0;background:#151C2C;border:1px solid #263244;border-radius:12px">
+        <div style="padding:14px 16px;border-bottom:1px solid #263244">
+          <div style="font-family:var(--font-display);font-size:14px;font-weight:600">Xususiyatlar konfiguratsiyasi</div>
+          <div style="font-size:12px;color:#94A3B8;margin-top:2px">Keyingi o'qitishda ishlatiladigan guruhlar · {{ featCount }} ta xususiyat</div>
+        </div>
+        <div style="padding:6px 16px 12px">
+          <sc-for list="{{ groups }}" as="g" hint-placeholder-count="6">
+            <label style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid #1E2738;cursor:pointer">
+              <input type="checkbox" checked="{{ g.on }}" onChange="{{ g.toggle }}" style="width:15px;height:15px">
+              <div style="flex:1;min-width:0"><div style="font-size:13px;font-weight:600">{{ g.name }}</div><div style="font-size:12px;color:#94A3B8;margin-top:2px">{{ g.desc }}</div></div>
+              <span style="font-size:12px;color:#94A3B8;font-variant-numeric:tabular-nums">{{ g.n }} ta</span>
+            </label>
+          </sc-for>
+        </div>
+      </section>
+      <section style="flex:1 1 340px;min-width:0;background:#151C2C;border:1px solid #263244;border-radius:12px">
+        <div style="padding:14px 16px;border-bottom:1px solid #263244;font-family:var(--font-display);font-size:14px;font-weight:600">O'qitish ma'lumotlar to'plami</div>
+        <div style="padding:8px 16px 14px;display:grid;grid-template-columns:auto 1fr;gap:10px 16px;font-size:13px">
+          <sc-for list="{{ dataset }}" as="x" hint-placeholder-count="7">
+            <span style="color:#94A3B8">{{ x.k }}</span><span style="text-align:right;font-weight:600;font-variant-numeric:tabular-nums">{{ x.v }}</span>
+          </sc-for>
+        </div>
+      </section>
+    </div>
+  </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;nav&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;function&quot;},&quot;toast&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;function&quot;},&quot;confirm&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;function&quot;},&quot;demoState&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;normal&quot;,&quot;loading&quot;,&quot;empty&quot;,&quot;error&quot;],&quot;default&quot;:&quot;normal&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;live&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;},&quot;params&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;object&quot;}}">
+const GROUPS = [['ret', 'Narx qaytishlari', 'Lag 1, 3, 6, 12 shamlik log-qaytishlar', 8], ['tech', 'Texnik indikatorlar', 'RSI, EMA nisbatlari, MACD, Bollinger kengligi, ATR %', 14], ['vol', 'Hajm xususiyatlari', 'Hajm z-ballari, OBV qiyaligi', 6], ['time', 'Vaqt xususiyatlari', 'Kun soati, hafta kuni (sikl kodlash)', 4], ['corr', 'Bozor konteksti', 'BTC korrelyatsiyasi (48 sham), BTC dominant trend', 6], ['ob', 'Buyurtmalar kitobi', 'Bid/ask nomutanosibligi (faqat jonli rejimda)', 4]];
+class Component extends DCLogic {
+  state = { ready: false, sel: 'm1', jobs: null, groups: { ret: true, tech: true, vol: true, time: true, corr: true, ob: false } };
+  componentDidMount() {
+    this._t = setInterval(() => { if (window.QL) { clearInterval(this._t); this.setState({ jobs: window.QL.JOBS.map(j => Object.assign({}, j)) }); this._r = setTimeout(() => this.setState({ ready: true }), 420); } }, 30);
+    this._p = setInterval(() => this.tick(), 1500);
+  }
+  componentWillUnmount() { clearInterval(this._t); clearTimeout(this._r); clearInterval(this._p); }
+  tick() {
+    if (!this.state.jobs || this.props.live === false) return;
+    let done = null;
+    const jobs = this.state.jobs.map(j => {
+      if (j.status !== 'training') return j;
+      const p = Math.min(100, j.progress + 0.6 + Math.random() * 1.4);
+      if (p >= 100 && j.progress < 100) { done = j; return Object.assign({}, j, { progress: 100, status: 'done', note: 'Yakunlandi · natijalar modellar jadvaliga qo\'shildi', eta: '—' }); }
+      return Object.assign({}, j, { progress: p, eta: Math.max(1, Math.round((100 - p) / 6)) + ' daq' });
+    });
+    if (done) { const q = jobs.find(j => j.status === 'queued'); if (q) Object.assign(q, { status: 'training', note: 'Fold 1 / 5 (walk-forward)' }); if (this.props.toast) this.props.toast("ML o'qitish yakunlandi: " + done.model, 'ok'); }
+    this.setState({ jobs });
+  }
+  view() {
+    const d = this.props.demoState, loading = !this.state.ready || d === 'loading';
+    return { loading, error: !loading && d === 'error', empty: !loading && d === 'empty', ok: !loading && (!d || d === 'normal') };
+  }
+  renderVals() {
+    const v = this.view(), s = this.state;
+    const newJob = () => { if (!s.jobs) return; const n = s.jobs.filter(j => j.model.startsWith('LGBM')).length; this.setState(st => ({ jobs: st.jobs.concat([{ id: 'j' + Date.now(), model: 'LGBM-Trend v1.' + (5 + n), algo: 'LightGBM', progress: 0, status: 'queued', note: "Navbatda · " + Object.keys(st.groups).filter(k => st.groups[k]).length + " ta xususiyat guruhi", eta: '—' }]) })); this.props.toast && this.props.toast("Yangi o'qitish vazifasi navbatga qo'shildi", 'ok'); };
+    const base = { v, newJob, retry: () => { this.setState({ ready: false }); setTimeout(() => this.setState({ ready: true }), 600); } };
+    if (!v.ok || !s.jobs) return base;
+    const Q = window.QL, f = Q.fmt, M = Q.MODELS, m = M.find(x => x.id === s.sel) || M[0];
+    const pc = (x) => x == null ? '—' : x.toFixed(1) + '%';
+    const best = M.filter(x => x.oos != null).sort((a, b) => b.oos - a.oos)[0];
+    const kpis = [
+      { label: 'Modellar', value: String(M.length), sub: M.filter(x => x.status === 'prod').length + ' asosiy · ' + M.filter(x => x.status === 'staging').length + ' sinovda' },
+      { label: "Faol o'qitish", value: String(s.jobs.filter(j => j.status === 'training').length), sub: s.jobs.filter(j => j.status === 'queued').length + ' ta navbatda' },
+      { label: 'Eng yaxshi OOS F1', value: pc(best.oos), sub: best.name + ' ' + best.ver, tip: "Namunadan tashqari (OOS) davrdagi F1 — model o'qitishda ko'rmagan ma'lumotdagi natija. Validatsiyadan ancha past bo'lsa, ortiqcha moslashish belgisi." },
+      { label: 'Ishonch chegarasi', value: '0.62', sub: 'Pastida tavsiya rad etiladi', tip: "Model ehtimoli shu qiymatdan past bo'lsa, tavsiya strategiyaga uzatilmaydi." }
+    ];
+    const jobs = s.jobs.map(j => ({ model: j.model, algo: j.algo, st: Q.status(j.status), w: j.progress + '%', pct: Math.floor(j.progress) + '%', bar: j.status === 'done' ? '#16C784' : '#3B82F6', note: j.note + (j.status === 'training' ? ' · qolgan vaqt ≈ ' + j.eta : ''), canCancel: j.status === 'training' || j.status === 'queued',
+      cancel: () => this.props.confirm && this.props.confirm({ danger: true, title: "O'qitishni bekor qilasizmi?", okLabel: 'Bekor qilish', text: j.model + " uchun hisoblangan natijalar saqlanmaydi.", onOk: () => { this.setState(st => ({ jobs: st.jobs.filter(x => x.id !== j.id) })); this.props.toast && this.props.toast(j.model + ' bekor qilindi', 'info'); } }) }));
+    const pipeline = [['Model tavsiyasi', "LGBM-Trend ehtimol beradi: «keyingi 6 shamda o'sish»"], ['Bozor tekshiruvi', "Ma'lumot yangi, spread va likvidlik me'yorda"], ['Risk tekshiruvi', 'Kunlik/haftalik zarar, drawdown, cooldown chegaralari'], ['Shariat tekshiruvi (L4)', 'Spot, long, leverage 1.0, leveraged token emas'], ['Ishonch chegarasi', "Ehtimol ≥ 0.62 bo'lsagina dvigatel odatiy kirish yo'li orqali bajaradi"]]
+      .map(([title, text], i, a) => ({ n: i + 1, title, text, line: i < a.length - 1, bg: i === 0 ? 'rgba(59,130,246,.15)' : i === a.length - 1 ? 'rgba(22,199,132,.15)' : '#1B2435', color: i === 0 ? '#60A5FA' : i === a.length - 1 ? '#16C784' : '#CBD5E1' }));
+    const heads = [['Model', 'left'], ['Algoritm', 'left'], ['Juftlik', 'left'], ['Aniqlik', 'right', "To'g'ri taxminlar ulushi"], ['Precision', 'right', "«O'sish» deb taxmin qilinganlarning to'g'ri ulushi"], ['Recall', 'right', "Haqiqiy o'sishlarning topilgan ulushi"], ['F1', 'right', 'Precision va recall garmonik o\'rtachasi'], ['Val. F1', 'right'], ['OOS F1', 'right'], ["O'qitish", 'left'], ['Holat', 'left']].map(([l, a, tip]) => ({ l, a, tip: tip || '' }));
+    const rows = M.map(x => ({ name: x.name, ver: x.ver, algo: x.algo, pair: x.pair + ' · ' + x.tf, acc: pc(x.acc), prec: pc(x.prec), rec: pc(x.rec), f1: pc(x.f1), val: pc(x.val), oos: pc(x.oos), oosColor: x.oos != null && x.val - x.oos > 1.4 ? '#F0B90B' : '#F1F5F9', dur: x.dur, st: Q.status(x.status), bg: x.id === m.id ? 'rgba(59,130,246,.08)' : 'transparent', go: () => this.setState({ sel: x.id }) }));
+    const isRl = m.acc == null;
+    const bars = isRl ? [{ label: "O'rtacha epizod mukofoti", text: m.reward.toFixed(2), w: (m.reward * 100) + '%', color: '#9747FF' }] : [['Aniqlik', m.acc], ['Precision', m.prec], ['Recall', m.rec], ['F1', m.f1], ['Validatsiya F1', m.val], ['OOS F1', m.oos]].map(([label, x], i) => ({ label, text: pc(x), w: x + '%', color: i >= 4 ? (i === 5 ? '#FFA841' : '#9747FF') : '#3B82F6' }));
+    const N = 4000, P = Math.round(N * 0.44), tp = isRl ? 0 : Math.round(P * m.rec / 100), predPos = isRl ? 0 : Math.round(tp / (m.prec / 100)), fp = predPos - tp, fn = P - tp, tn = N - P - fp;
+    const mf = Math.max(...Q.FEATURES.map(x => x[1]));
+    const gOn = Object.keys(s.groups).filter(k => s.groups[k]);
+    return Object.assign(base, {
+      kpis, jobs, pipeline, heads, rows,
+      d: { name: m.name + ' ' + m.ver, title: m.name + ' ' + m.ver + ' · baholash', sub: m.algo + ' · ' + m.pair + ' ' + m.tf + ' · ' + (m.trained ? "o'qitilgan " + f.dt(m.trained) : "o'qitilmoqda") + ' · ' + m.features + ' ta xususiyat', bars, isRl },
+      feats: Q.FEATURES.map(([name, x]) => ({ name, v: (x * 100).toFixed(1) + '%', w: (x / mf * 100) + '%' })),
+      cm: isRl ? { tp: '—', fn: '—', fp: '—', tn: '—', note: 'RL modeli uchun qo\'llanilmaydi.' } : { tp: f.num(tp), fn: f.num(fn), fp: f.num(fp), tn: f.num(tn), note: f.num(N) + " ta OOS namuna. Har bir FP — komissiya to'langan, lekin foyda keltirmagan virtual savdo." },
+      groups: GROUPS.map(([k, name, desc, n]) => ({ name, desc, n, on: s.groups[k], toggle: () => this.setState(st => ({ groups: Object.assign({}, st.groups, { [k]: !st.groups[k] }) })) })),
+      featCount: GROUPS.filter(g => s.groups[g[0]]).reduce((a, g) => a + g[3], 0),
+      dataset: [['Juftliklar', 'ETH/USDT, BTC/USDT'], ['Taymfreym', '1h (+ 4h kontekst)'], ["O'qitish oynasi", '90 kun (sirpanuvchi)'], ['Validatsiya', '14 kun'], ['OOS test', '30 kun · o\'qitishda ishlatilmaydi'], ['Namunalar', f.num(m.samples || 18400)], ['Nishon (label)', "+0.8% / 6 sham"], ['Qayta o\'qitish', 'Har 24 soatda']].map(([k, val]) => ({ k, v: val }))
+    });
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="_ds/ican-business-design-system-64d11fa8-448a-41b1-9653-97041b289bb2/colors_and_type.css">
+<script src="_ds/ican-business-design-system-64d11fa8-448a-41b1-9653-97041b289bb2/_ds_bundle.js"></script>
+<script src="ql.js"></script>
+<style>
+html,body{margin:0;background:#0B0F19;color:#F1F5F9;font-family:"Inter Tight",system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+*{box-sizing:border-box}
+h1,h2,h3,h4,h5,p{color:inherit;margin:0}
+a{color:#60A5FA;text-decoration:none}
+a:hover{color:#93C5FD;text-decoration:underline}
+input,select,textarea,button{font-family:Manrope,"Inter Tight",sans-serif;color:inherit}
+select option{background:#111827;color:#F1F5F9}
+input[type=date],input[type=datetime-local]{color-scheme:dark}
+input[type=range],input[type=checkbox],input[type=radio]{accent-color:#3B82F6}
+::placeholder{color:#64748B}
+::selection{background:rgba(59,130,246,.35)}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-thumb{background:#263244;border-radius:10px;border:2px solid #0B0F19}
+::-webkit-scrollbar-track{background:transparent}
+code{font-family:"JetBrains Mono",Menlo,ui-monospace,monospace;font-size:12px;background:#1B2435;color:#CBD5E1;padding:1px 6px;border-radius:4px}
+</style>
+</helmet>
+<sc-if value="{{ isAuth }}" hint-placeholder-val="{{ false }}">
+  <dc-import name="Auth" on-enter="{{ enterApp }}" hint-size="100%,100vh"></dc-import>
+</sc-if>
+<sc-if value="{{ isApp }}" hint-placeholder-val="{{ true }}">
+<div style="display:flex;height:100vh;overflow:hidden;background:#0B0F19;color:#F1F5F9">
+  <sc-if value="{{ mobileNav }}" hint-placeholder-val="{{ false }}"><div onClick="{{ closeMobileNav }}" style="position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:69"></div></sc-if>
+  <aside style="width:{{ sideW }};position:{{ sidePos }};left:0;top:0;bottom:0;z-index:70;transform:{{ sideTf }};flex-shrink:0;background:#111827;border-right:1px solid #263244;display:flex;flex-direction:column;transition:width .2s cubic-bezier(.2,.8,.2,1),transform .2s cubic-bezier(.2,.8,.2,1)">
+    <div style="height:64px;flex-shrink:0;display:flex;align-items:center;gap:10px;padding:0 12px 0 15px;border-bottom:1px solid #263244">
+      <div onClick="{{ markClick }}" title="{{ markTitle }}" style="width:34px;height:34px;border-radius:9px;background:#3B82F6;display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-weight:800;font-size:13px;letter-spacing:-.02em;color:#fff;flex-shrink:0;cursor:pointer">QL</div>
+      <sc-if value="{{ expanded }}" hint-placeholder-val="{{ true }}">
+        <div style="min-width:0;flex:1">
+          <div style="font-family:var(--font-display);font-weight:700;font-size:14px;line-height:16px;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">QUANT LAB</div>
+          <div style="font-family:var(--font-display);font-size:11px;font-weight:700;letter-spacing:.04em;color:#94A3B8;margin-top:1px;white-space:nowrap">AI TRADING</div>
+        </div>
+        <sc-if value="{{ showCollapseBtn }}" hint-placeholder-val="{{ true }}">
+          <button onClick="{{ toggleCollapse }}" title="Panelni yig'ish" style="width:30px;height:30px;border-radius:8px;border:0;background:transparent;color:#64748B;cursor:pointer;display:flex;align-items:center;justify-content:center" style-hover="background:#1B2435;color:#F1F5F9"><x-import component-from-global-scope="QL.Icon" icon="chevrons-left" size="18" hint-size="18px,18px"></x-import></button>
+        </sc-if>
+      </sc-if>
+    </div>
+    <nav style="flex:1;overflow-y:auto;overflow-x:hidden;padding:12px 10px;display:flex;flex-direction:column;gap:2px;font-family:var(--font-ui)">
+      <sc-for list="{{ navGroups }}" as="g" hint-placeholder-count="5">
+        <div>
+          <sc-if value="{{ g.showHeader }}" hint-placeholder-val="{{ true }}">
+            <div onClick="{{ g.toggle }}" style="display:flex;align-items:center;gap:12px;height:42px;padding:0 12px;border-radius:10px;cursor:pointer;background:{{ g.bg }};color:{{ g.fg }};font-size:14px;font-weight:{{ g.fw }};transition:background .15s" style-hover="background:#1B2435;color:#F1F5F9">
+              <x-import component-from-global-scope="QL.Icon" icon="{{ g.icon }}" size="19" color="{{ g.ic }}" hint-size="19px,19px"></x-import>
+              <span style="flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ g.label }}</span>
+              <sc-if value="{{ g.hasBadge }}" hint-placeholder-val="{{ false }}"><span style="min-width:20px;height:18px;padding:0 6px;border-radius:999px;background:#EA3943;color:#fff;font-size:11px;font-weight:700;display:inline-flex;align-items:center;justify-content:center">{{ g.badge }}</span></sc-if>
+              <span style="display:inline-flex;color:#64748B;transform:{{ g.rot }};transition:transform .2s cubic-bezier(.2,.8,.2,1)"><x-import component-from-global-scope="QL.Icon" icon="chevron-right" size="16" hint-size="16px,16px"></x-import></span>
+            </div>
+          </sc-if>
+          <sc-if value="{{ g.open }}" hint-placeholder-val="{{ false }}">
+            <div style="margin:2px 0 6px 21px;padding-left:12px;border-left:1px solid #263244;display:flex;flex-direction:column;gap:2px">
+              <sc-for list="{{ g.items }}" as="it" hint-placeholder-count="3">
+                <div onClick="{{ it.go }}" style="display:flex;align-items:center;gap:8px;height:38px;padding:0 12px;border-radius:8px;cursor:pointer;background:{{ it.bg }};color:{{ it.fg }};font-size:13px;font-weight:{{ it.fw }};transition:background .15s" style-hover="color:#F1F5F9;background:{{ it.hbg }}">
+                  <span style="flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ it.label }}</span>
+                  <sc-if value="{{ it.hasBadge }}" hint-placeholder-val="{{ false }}"><span style="min-width:20px;height:18px;padding:0 6px;border-radius:999px;background:#EA3943;color:#fff;font-size:11px;font-weight:700;display:inline-flex;align-items:center;justify-content:center">{{ it.badge }}</span></sc-if>
+                </div>
+              </sc-for>
+            </div>
+          </sc-if>
+          <sc-if value="{{ g.flat }}" hint-placeholder-val="{{ false }}">
+            <div style="display:flex;flex-direction:column;gap:2px">
+              <sc-if value="{{ g.divider }}" hint-placeholder-val="{{ false }}"><div style="height:1px;background:#263244;margin:8px 8px"></div></sc-if>
+              <sc-for list="{{ g.items }}" as="it" hint-placeholder-count="3">
+                <div onClick="{{ it.go }}" title="{{ it.label }}" style="position:relative;display:flex;align-items:center;justify-content:center;height:38px;border-radius:9px;cursor:pointer;background:{{ it.bg }};color:{{ it.fg }}" style-hover="color:#F1F5F9;background:{{ it.hbg }}">
+                  <x-import component-from-global-scope="QL.Icon" icon="{{ it.icon }}" size="18" color="{{ it.ic }}" hint-size="18px,18px"></x-import>
+                  <sc-if value="{{ it.hasBadge }}" hint-placeholder-val="{{ false }}"><span style="position:absolute;top:8px;right:10px;width:7px;height:7px;border-radius:99px;background:#EA3943"></span></sc-if>
+                </div>
+              </sc-for>
+            </div>
+          </sc-if>
+        </div>
+      </sc-for>
+    </nav>
+    <div style="flex-shrink:0;border-top:1px solid #263244;padding:10px;display:flex;flex-direction:column;gap:8px">
+      <sc-if value="{{ expanded }}" hint-placeholder-val="{{ true }}">
+        <div onClick="{{ goCompliance }}" style="display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:8px;background:rgba(22,199,132,.07);border:1px solid rgba(22,199,132,.22);cursor:pointer">
+          <x-import component-from-global-scope="QL.Icon" icon="shield-check" size="17" color="#16C784" hint-size="17px,17px"></x-import>
+          <div style="min-width:0;font-family:var(--font-ui)">
+            <div style="font-size:12px;font-weight:600;color:#F1F5F9;white-space:nowrap">Spot-only · Shariat filtri</div>
+            <div style="font-size:11px;color:#94A3B8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Leverage, short va margin bloklangan</div>
+          </div>
+        </div>
+      </sc-if>
+    </div>
+  </aside>
+  <div style="flex:1;min-width:0;display:flex;flex-direction:column">
+    <header style="height:56px;flex-shrink:0;display:flex;align-items:center;gap:10px;padding:0 16px 0 18px;border-bottom:1px solid #263244;background:#111827;font-family:var(--font-ui)">
+      <sc-if value="{{ isMobile }}" hint-placeholder-val="{{ false }}">
+        <button onClick="{{ openMobileNav }}" aria-label="Menyu" style="width:36px;height:36px;border-radius:8px;border:1px solid #263244;background:#1B2435;color:#F1F5F9;display:flex;align-items:center;justify-content:center;cursor:pointer">
+          <x-import component-from-global-scope="QL.Icon" icon="menu" size="18" hint-size="18px,18px"></x-import>
+        </button>
+      </sc-if>
+      <div style="flex:1;min-width:0;display:flex;align-items:center;gap:8px;font-size:13px;white-space:nowrap;overflow:hidden">
+        <span style="color:#94A3B8">{{ crumb }}</span>
+        <span style="color:#475569">/</span>
+        <span style="color:#F1F5F9;font-weight:600;overflow:hidden;text-overflow:ellipsis">{{ title }}</span>
+      </div>
+      <sc-if value="{{ showWide }}" hint-placeholder-val="{{ true }}">
+        <button onClick="{{ openCmd }}" style="display:flex;align-items:center;gap:8px;width:280px;height:34px;padding:0 8px 0 10px;border-radius:8px;border:1px solid #263244;background:#0F1522;color:#94A3B8;font-size:13px;cursor:pointer;text-align:left" style-hover="border-color:#334155">
+          <x-import component-from-global-scope="QL.Icon" icon="search" size="15" hint-size="15px,15px"></x-import>
+          <span style="flex:1">Qidirish yoki o'tish…</span>
+          <span style="font-size:11px;font-weight:600;padding:1px 6px;border-radius:4px;border:1px solid #263244;background:#151C2C;color:#94A3B8">⌘K</span>
+        </button>
+        <div title="Barcha ko'rsatkichlar namunaviy (demo) ma'lumotlar asosida" style="display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 9px;border-radius:6px;background:rgba(240,185,11,.12);border:1px solid rgba(240,185,11,.3);color:#F0B90B;font-size:11px;font-weight:700;letter-spacing:.05em;white-space:nowrap">DEMO MA'LUMOT</div>
+        <div onClick="{{ goIntegrations }}" title="Binance ommaviy bozor ma'lumotlari" style="display:inline-flex;align-items:center;gap:7px;height:30px;padding:0 10px;border-radius:8px;border:1px solid #263244;color:#94A3B8;font-size:12px;white-space:nowrap;cursor:pointer" style-hover="background:#1B2435">
+          <x-import component-from-global-scope="QL.LiveDot" color="#16C784" size="7" hint-size="7px,7px"></x-import>
+          <span>Binance · <span style="color:#F1F5F9;font-variant-numeric:tabular-nums">{{ latency }} ms</span></span>
+        </div>
+      </sc-if>
+      <sc-if value="{{ isMobile }}" hint-placeholder-val="{{ false }}">
+        <button onClick="{{ openCmd }}" aria-label="Qidirish" style="width:36px;height:36px;border-radius:8px;border:1px solid #263244;background:#1B2435;color:#F1F5F9;display:flex;align-items:center;justify-content:center;cursor:pointer">
+          <x-import component-from-global-scope="QL.Icon" icon="search" size="17" hint-size="17px,17px"></x-import>
+        </button>
+      </sc-if>
+      <button onClick="{{ openNotif }}" aria-label="Bildirishnomalar" style="position:relative;width:36px;height:36px;border-radius:8px;border:1px solid #263244;background:#1B2435;color:#F1F5F9;display:flex;align-items:center;justify-content:center;cursor:pointer" style-hover="background:#222D42">
+        <x-import component-from-global-scope="QL.Icon" icon="bell" size="17" hint-size="17px,17px"></x-import>
+        <sc-if value="{{ hasUnread }}" hint-placeholder-val="{{ true }}"><span style="position:absolute;top:-5px;right:-5px;min-width:18px;height:18px;padding:0 5px;border-radius:999px;background:#EA3943;color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;border:2px solid #111827">{{ unread }}</span></sc-if>
+      </button>
+      <div style="position:relative">
+        <button onClick="{{ toggleUser }}" aria-label="Hisob" style="width:34px;height:34px;border-radius:999px;border:1px solid #334155;background:#1B2435;color:#F1F5F9;font-family:var(--font-display);font-size:12px;font-weight:700;cursor:pointer">AS</button>
+        <sc-if value="{{ userMenu }}" hint-placeholder-val="{{ false }}">
+          <div onClick="{{ closeUser }}" style="position:fixed;inset:0;z-index:60"></div>
+          <div style="position:absolute;right:0;top:42px;z-index:61;width:240px;background:#151C2C;border:1px solid #263244;border-radius:10px;box-shadow:0 16px 40px rgba(0,0,0,.5);padding:6px;font-size:13px">
+            <div style="padding:10px 10px 12px;border-bottom:1px solid #263244;margin-bottom:6px">
+              <div style="font-weight:600;color:#F1F5F9">Abdulhaq Sh.</div>
+              <div style="font-size:12px;color:#94A3B8;margin-top:2px">Tadqiqotchi · Demo hisob</div>
+            </div>
+            <div onClick="{{ goProfile }}" style="display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:6px;cursor:pointer;color:#CBD5E1" style-hover="background:#1B2435;color:#F1F5F9"><x-import component-from-global-scope="QL.Icon" icon="user" size="15" hint-size="15px,15px"></x-import>Profil va xavfsizlik</div>
+            <div onClick="{{ goIntegrations }}" style="display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:6px;cursor:pointer;color:#CBD5E1" style-hover="background:#1B2435;color:#F1F5F9"><x-import component-from-global-scope="QL.Icon" icon="plug" size="15" hint-size="15px,15px"></x-import>Integratsiyalar</div>
+            <div onClick="{{ logout }}" style="display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:6px;cursor:pointer;color:#F87171" style-hover="background:rgba(234,57,67,.1)"><x-import component-from-global-scope="QL.Icon" icon="log-out" size="15" hint-size="15px,15px"></x-import>Chiqish</div>
+          </div>
+        </sc-if>
+      </div>
+    </header>
+    <main ref="{{ mainRef }}" style="flex:1;min-height:0;overflow:auto;padding:{{ mainPad }}">
+      <div style="max-width:1640px;margin:0 auto">
+        <sc-if value="{{ r.dashboard }}" hint-placeholder-val="{{ true }}"><dc-import name="Dashboard" nav="{{ nav }}" toast="{{ toast }}" confirm="{{ confirm }}" demo-state="{{ demoState }}" live="{{ live }}" params="{{ params }}" hint-size="100%,1600px"></dc-import></sc-if>
+        <sc-if value="{{ r.market }}" hint-placeholder-val="{{ false }}"><dc-import name="MarketExplorer" nav="{{ nav }}" toast="{{ toast }}" confirm="{{ confirm }}" demo-state="{{ demoState }}" live="{{ live }}" params="{{ params }}" hint-size="100%,900px"></dc-import></sc-if>
+        <sc-if value="{{ r.strategies }}" hint-placeholder-val="{{ false }}"><dc-import name="Strategies" nav="{{ nav }}" toast="{{ toast }}" confirm="{{ confirm }}" demo-state="{{ demoState }}" live="{{ live }}" params="{{ params }}" hint-size="100%,900px"></dc-import></sc-if>
+        <sc-if value="{{ r.builder }}" hint-placeholder-val="{{ false }}"><dc-import name="StrategyBuilder" nav="{{ nav }}" toast="{{ toast }}" confirm="{{ confirm }}" demo-state="{{ demoState }}" live="{{ live }}" params="{{ params }}" hint-size="100%,1100px"></dc-import></sc-if>
+        <sc-if value="{{ r.compare }}" hint-placeholder-val="{{ false }}"><dc-import name="Comparison" nav="{{ nav }}" toast="{{ toast }}" confirm="{{ confirm }}" demo-state="{{ demoState }}" live="{{ live }}" params="{{ params }}" hint-size="100%,1200px"></dc-import></sc-if>
+        <sc-if value="{{ r.backtest }}" hint-placeholder-val="{{ false }}"><dc-import name="BacktestLab" nav="{{ nav }}" toast="{{ toast }}" confirm="{{ confirm }}" demo-state="{{ demoState }}" live="{{ live }}" params="{{ params }}" hint-size="100%,1300px"></dc-import></sc-if>
+        <sc-if value="{{ r.paper }}" hint-placeholder-val="{{ false }}"><dc-import name="PaperTrading" nav="{{ nav }}" toast="{{ toast }}" confirm="{{ confirm }}" demo-state="{{ demoState }}" live="{{ live }}" params="{{ params }}" hint-size="100%,1200px"></dc-import></sc-if>
+        <sc-if value="{{ r.ml }}" hint-placeholder-val="{{ false }}"><dc-import name="MLLab" nav="{{ nav }}" toast="{{ toast }}" confirm="{{ confirm }}" demo-state="{{ demoState }}" live="{{ live }}" params="{{ params }}" hint-size="100%,1200px"></dc-import></sc-if>
+        <sc-if value="{{ r.optimizer }}" hint-placeholder-val="{{ false }}"><dc-import name="Optimizer" nav="{{ nav }}" toast="{{ toast }}" confirm="{{ confirm }}" demo-state="{{ demoState }}" live="{{ live }}" params="{{ params }}" hint-size="100%,1200px"></dc-import></sc-if>
+        <sc-if value="{{ r.portfolio }}" hint-placeholder-val="{{ false }}"><dc-import name="Portfolio" nav="{{ nav }}" toast="{{ toast }}" confirm="{{ confirm }}" demo-state="{{ demoState }}" live="{{ live }}" params="{{ params }}" hint-size="100%,1200px"></dc-import></sc-if>
+        <sc-if value="{{ r.trades }}" hint-placeholder-val="{{ false }}"><dc-import name="TradeHistory" nav="{{ nav }}" toast="{{ toast }}" confirm="{{ confirm }}" demo-state="{{ demoState }}" live="{{ live }}" params="{{ params }}" hint-size="100%,1000px"></dc-import></sc-if>
+        <sc-if value="{{ r.reports }}" hint-placeholder-val="{{ false }}"><dc-import name="Reports" nav="{{ nav }}" toast="{{ toast }}" confirm="{{ confirm }}" demo-state="{{ demoState }}" live="{{ live }}" params="{{ params }}" hint-size="100%,1100px"></dc-import></sc-if>
+        <sc-if value="{{ r.whatif }}" hint-placeholder-val="{{ false }}"><dc-import name="WhatIf" nav="{{ nav }}" toast="{{ toast }}" confirm="{{ confirm }}" demo-state="{{ demoState }}" live="{{ live }}" params="{{ params }}" hint-size="100%,1000px"></dc-import></sc-if>
+        <sc-if value="{{ r.notifications }}" hint-placeholder-val="{{ false }}"><dc-import name="Notifications" nav="{{ nav }}" toast="{{ toast }}" confirm="{{ confirm }}" demo-state="{{ demoState }}" notifs="{{ notifs }}" on-read="{{ markRead }}" on-read-all="{{ markAll }}" on-remove="{{ removeNotif }}" hint-size="100%,900px"></dc-import></sc-if>
+        <sc-if value="{{ r.integrations }}" hint-placeholder-val="{{ false }}"><dc-import name="Integrations" nav="{{ nav }}" toast="{{ toast }}" confirm="{{ confirm }}" demo-state="{{ demoState }}" params="{{ params }}" hint-size="100%,1100px"></dc-import></sc-if>
+        <sc-if value="{{ r.settings }}" hint-placeholder-val="{{ false }}"><dc-import name="Settings" nav="{{ nav }}" toast="{{ toast }}" confirm="{{ confirm }}" demo-state="{{ demoState }}" params="{{ params }}" hint-size="100%,1000px"></dc-import></sc-if>
+      </div>
+    </main>
+  </div>
+</div>
+
+<sc-if value="{{ notifOpen }}" hint-placeholder-val="{{ false }}">
+  <div onClick="{{ closeNotif }}" style="position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:80"></div>
+  <aside style="position:fixed;top:0;right:0;bottom:0;width:min(410px,100vw);z-index:81;background:#111827;border-left:1px solid #263244;display:flex;flex-direction:column;box-shadow:-16px 0 48px rgba(0,0,0,.45);font-family:var(--font-ui)">
+    <div style="display:flex;align-items:center;gap:10px;padding:16px 16px 12px">
+      <div style="flex:1;min-width:0">
+        <div style="font-family:var(--font-display);font-size:16px;font-weight:600">Bildirishnomalar</div>
+        <div style="font-size:12px;color:#94A3B8;margin-top:2px">{{ unreadLabel }}</div>
+      </div>
+      <button onClick="{{ markAll }}" style="height:30px;padding:0 10px;border-radius:8px;border:1px solid #263244;background:#1B2435;color:#F1F5F9;font-size:12px;font-weight:600;cursor:pointer" style-hover="background:#222D42">Hammasini o'qildi</button>
+      <button onClick="{{ closeNotif }}" aria-label="Yopish" style="width:30px;height:30px;border-radius:8px;border:0;background:transparent;color:#94A3B8;display:flex;align-items:center;justify-content:center;cursor:pointer" style-hover="background:#1B2435;color:#F1F5F9"><x-import component-from-global-scope="QL.Icon" icon="x" size="17" hint-size="17px,17px"></x-import></button>
+    </div>
+    <div style="display:flex;gap:2px;margin:0 16px 10px;padding:2px;background:#0F1522;border:1px solid #263244;border-radius:8px;align-self:flex-start">
+      <sc-for list="{{ notifTabs }}" as="t" hint-placeholder-count="2">
+        <button onClick="{{ t.go }}" style="height:26px;padding:0 12px;border:0;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;background:{{ t.bg }};color:{{ t.fg }}">{{ t.label }}</button>
+      </sc-for>
+    </div>
+    <div style="flex:1;overflow-y:auto;border-top:1px solid #263244">
+      <sc-for list="{{ drawerItems }}" as="n" hint-placeholder-count="5">
+        <div onClick="{{ n.go }}" style="display:flex;gap:12px;padding:14px 16px;border-bottom:1px solid #1E2738;cursor:pointer;background:{{ n.bg }}" style-hover="background:#151C2C">
+          <div style="width:32px;height:32px;border-radius:8px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:{{ n.iconBg }};color:{{ n.tone }}"><x-import component-from-global-scope="QL.Icon" icon="{{ n.icon }}" size="16" hint-size="16px,16px"></x-import></div>
+          <div style="flex:1;min-width:0">
+            <div style="display:flex;align-items:center;gap:8px">
+              <span style="flex:1;min-width:0;font-size:13px;font-weight:600;color:#F1F5F9">{{ n.title }}</span>
+              <sc-if value="{{ n.unread }}" hint-placeholder-val="{{ false }}"><span style="width:7px;height:7px;border-radius:99px;background:#3B82F6;flex-shrink:0"></span></sc-if>
+            </div>
+            <div style="font-size:12px;line-height:17px;color:#94A3B8;margin-top:3px;text-wrap:pretty">{{ n.text }}</div>
+            <div style="font-size:11px;color:#64748B;margin-top:5px">{{ n.when }}</div>
+          </div>
+        </div>
+      </sc-for>
+      <sc-if value="{{ drawerEmpty }}" hint-placeholder-val="{{ false }}"><div style="padding:48px 24px;text-align:center;color:#94A3B8;font-size:13px">O'qilmagan bildirishnoma yo'q.</div></sc-if>
+    </div>
+    <div style="padding:12px 16px;border-top:1px solid #263244;display:flex;gap:8px">
+      <button onClick="{{ goNotifications }}" style="flex:1;height:34px;border-radius:8px;border:1px solid #263244;background:#1B2435;color:#F1F5F9;font-size:13px;font-weight:600;cursor:pointer" style-hover="background:#222D42">Barchasini ko'rish</button>
+      <button onClick="{{ goNotifSettings }}" style="height:34px;padding:0 12px;border-radius:8px;border:1px solid transparent;background:transparent;color:#94A3B8;font-size:13px;font-weight:600;cursor:pointer" style-hover="background:#1B2435;color:#F1F5F9">Sozlash</button>
+    </div>
+  </aside>
+</sc-if>
+
+<sc-if value="{{ cmdOpen }}" hint-placeholder-val="{{ false }}">
+  <div onClick="{{ closeCmd }}" style="position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:90"></div>
+  <div style="position:fixed;top:12vh;left:50%;transform:translateX(-50%);width:min(580px,92vw);z-index:91;background:#151C2C;border:1px solid #263244;border-radius:12px;box-shadow:0 24px 64px rgba(0,0,0,.6);overflow:hidden;font-family:var(--font-ui)">
+    <div style="display:flex;align-items:center;gap:10px;padding:0 14px;height:52px;border-bottom:1px solid #263244;color:#94A3B8">
+      <x-import component-from-global-scope="QL.Icon" icon="search" size="17" hint-size="17px,17px"></x-import>
+      <input autoFocus="{{ true }}" value="{{ cmdQ }}" onChange="{{ setCmdQ }}" onKeyDown="{{ cmdKey }}" placeholder="Sahifa yoki amalni qidiring…" style="flex:1;height:100%;border:0;outline:none;background:transparent;color:#F1F5F9;font-size:14px">
+      <span style="font-size:11px;font-weight:600;padding:1px 6px;border-radius:4px;border:1px solid #263244;color:#94A3B8">ESC</span>
+    </div>
+    <div style="max-height:52vh;overflow-y:auto;padding:6px">
+      <sc-for list="{{ cmdItems }}" as="c" hint-placeholder-count="6">
+        <div onClick="{{ c.go }}" onMouseEnter="{{ c.hover }}" style="display:flex;align-items:center;gap:12px;height:38px;padding:0 10px;border-radius:8px;cursor:pointer;background:{{ c.bg }};color:#F1F5F9;font-size:13px">
+          <span style="color:#94A3B8;display:inline-flex"><x-import component-from-global-scope="QL.Icon" icon="{{ c.icon }}" size="16" hint-size="16px,16px"></x-import></span>
+          <span style="flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ c.label }}</span>
+          <span style="font-size:11px;color:#64748B">{{ c.group }}</span>
+        </div>
+      </sc-for>
+      <sc-if value="{{ cmdEmpty }}" hint-placeholder-val="{{ false }}"><div style="padding:28px;text-align:center;font-size:13px;color:#94A3B8">Hech narsa topilmadi.</div></sc-if>
+    </div>
+    <div style="display:flex;gap:16px;padding:9px 14px;border-top:1px solid #263244;font-size:11px;color:#64748B">
+      <span>↑ ↓ tanlash</span><span>↩ ochish</span><span>⌘K ochish/yopish</span>
+    </div>
+  </div>
+</sc-if>
+
+<sc-if value="{{ hasConfirm }}" hint-placeholder-val="{{ false }}">
+  <div onClick="{{ cancelConfirm }}" style="position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:95"></div>
+  <div role="dialog" style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:min(440px,92vw);z-index:96;background:#151C2C;border:1px solid #263244;border-radius:14px;box-shadow:0 24px 64px rgba(0,0,0,.6);padding:20px;font-family:var(--font-ui)">
+    <div style="display:flex;gap:14px">
+      <div style="width:40px;height:40px;border-radius:10px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:{{ cf.iconBg }};color:{{ cf.iconColor }}"><x-import component-from-global-scope="QL.Icon" icon="{{ cf.icon }}" size="19" hint-size="19px,19px"></x-import></div>
+      <div style="flex:1;min-width:0">
+        <div style="font-family:var(--font-display);font-size:16px;font-weight:600;color:#F1F5F9">{{ cf.title }}</div>
+        <div style="font-size:13px;line-height:20px;color:#94A3B8;margin-top:6px;text-wrap:pretty">{{ cf.text }}</div>
+      </div>
+    </div>
+    <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:20px">
+      <button onClick="{{ cancelConfirm }}" style="height:34px;padding:0 14px;border-radius:8px;border:1px solid #263244;background:#1B2435;color:#F1F5F9;font-size:13px;font-weight:600;cursor:pointer" style-hover="background:#222D42">Bekor qilish</button>
+      <button onClick="{{ okConfirm }}" style="height:34px;padding:0 14px;border-radius:8px;border:1px solid {{ cf.okBg }};background:{{ cf.okBg }};color:#fff;font-size:13px;font-weight:600;cursor:pointer">{{ cf.okLabel }}</button>
+    </div>
+  </div>
+</sc-if>
+
+<div style="position:fixed;right:16px;bottom:16px;z-index:100;display:flex;flex-direction:column;gap:8px;width:min(360px,calc(100vw - 32px));pointer-events:none">
+  <sc-for list="{{ toasts }}" as="t" hint-placeholder-count="0">
+    <div style="pointer-events:auto;display:flex;align-items:flex-start;gap:10px;padding:12px 12px 12px 14px;background:#1B2435;border:1px solid #334155;border-radius:10px;box-shadow:0 12px 32px rgba(0,0,0,.5);font-family:var(--font-ui);font-size:13px;line-height:18px;color:#F1F5F9">
+      <span style="color:{{ t.color }};display:inline-flex;margin-top:1px"><x-import component-from-global-scope="QL.Icon" icon="{{ t.icon }}" size="16" hint-size="16px,16px"></x-import></span>
+      <span style="flex:1;min-width:0">{{ t.text }}</span>
+      <button onClick="{{ t.close }}" aria-label="Yopish" style="border:0;background:transparent;color:#64748B;cursor:pointer;padding:0;display:inline-flex"><x-import component-from-global-scope="QL.Icon" icon="x" size="14" hint-size="14px,14px"></x-import></button>
+    </div>
+  </sc-for>
+</div>
+</sc-if>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;demoState&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;normal&quot;,&quot;loading&quot;,&quot;empty&quot;,&quot;error&quot;],&quot;default&quot;:&quot;normal&quot;,&quot;tsType&quot;:&quot;'normal'|'loading'|'empty'|'error'&quot;,&quot;section&quot;:&quot;Demo holati&quot;},&quot;liveTicking&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Demo holati&quot;}}">
+const NAV = [
+  { group: 'Umumiy', icon: 'layout-dashboard', items: [['dashboard', 'Boshqaruv paneli', 'layout-dashboard'], ['market', 'Bozor tadqiqoti', 'chart-candlestick']] },
+  { group: 'Strategiyalar', icon: 'layers', items: [['strategies', 'Mening strategiyalarim', 'layers'], ['builder', 'Strategiya konstruktori', 'blocks'], ['compare', 'Solishtirish', 'git-compare']] },
+  { group: 'Tadqiqot', icon: 'flask-conical', items: [['backtest', 'Backtest laboratoriyasi', 'flask-conical'], ['paper', 'Paper trading', 'circle-play'], ['ml', 'AI / ML laboratoriyasi', 'brain'], ['optimizer', 'Optimizator', 'sliders-horizontal']] },
+  { group: 'Tahlil', icon: 'chart-pie', items: [['portfolio', 'Portfel tahlili', 'chart-pie'], ['trades', 'Savdolar tarixi', 'history'], ['reports', 'Hisobotlar', 'file-text'], ['whatif', 'What-If kalkulyatori', 'calculator']] },
+  { group: 'Tizim', icon: 'settings', items: [['notifications', 'Bildirishnomalar', 'bell'], ['integrations', 'Integratsiyalar', 'plug'], ['settings', 'Sozlamalar', 'settings']] }
+];
+const META = {};
+NAV.forEach(g => g.items.forEach(([id, label]) => { META[id] = [g.group, label]; }));
+const ACTIONS = [
+  ['Yangi backtest ishga tushirish', 'play', 'backtest', null],
+  ['Yangi strategiya yaratish', 'plus', 'builder', null],
+  ['Paper trading sessiyasini boshlash', 'circle-play', 'paper', { newSession: true }],
+  ['Savdolar tarixini CSV ga eksport', 'download', 'trades', null],
+  ['Telegram botni ulash', 'send', 'integrations', null],
+  ['Hisobdan chiqish', 'log-out', 'auth', null]
+];
+const TOAST = { ok: ['circle-check', '#16C784'], err: ['circle-x', '#EA3943'], info: ['info', '#60A5FA'], warn: ['triangle-alert', '#F0B90B'] };
+
+class Component extends DCLogic {
+  state = {
+    route: (() => { try { return localStorage.getItem('ql-route') || 'dashboard'; } catch (e) { return 'dashboard'; } })(),
+    params: {}, collapsed: null, mobileNav: false, notifOpen: false, notifTab: 'all', cmdOpen: false, cmdQ: '', cmdIdx: 0,
+    confirm: null, toasts: [], w: window.innerWidth, notifs: [], userMenu: false, latency: 182
+  };
+  mainRef = React.createRef();
+
+  componentDidMount() {
+    this.onResize = () => this.setState({ w: window.innerWidth });
+    this.onKey = (e) => {
+      if ((e.metaKey || e.ctrlKey) && String(e.key).toLowerCase() === 'k') { e.preventDefault(); this.setState(s => ({ cmdOpen: !s.cmdOpen, cmdQ: '', cmdIdx: 0 })); }
+      else if (e.key === 'Escape') this.setState({ cmdOpen: false, notifOpen: false, confirm: null, userMenu: false, mobileNav: false });
+    };
+    window.addEventListener('resize', this.onResize);
+    window.addEventListener('keydown', this.onKey);
+    const wait = () => { if (window.QL) this.setState({ notifs: window.QL.NOTIFS.map(n => Object.assign({}, n)) }); else this._w = setTimeout(wait, 40); };
+    wait();
+    this._lat = setInterval(() => this.setState({ latency: 150 + Math.round(Math.random() * 70) }), 5000);
+  }
+  componentWillUnmount() { window.removeEventListener('resize', this.onResize); window.removeEventListener('keydown', this.onKey); clearTimeout(this._w); clearInterval(this._lat); }
+
+  nav = (route, params) => {
+    const g = NAV.find(x => x.items.some(([id]) => id === route));
+    this.setState({ route, params: params || {}, mobileNav: false, cmdOpen: false, notifOpen: false, userMenu: false, openGroup: g ? g.group : null });
+    try { localStorage.setItem('ql-route', route); } catch (e) { }
+    if (this.mainRef.current) this.mainRef.current.scrollTop = 0;
+  };
+  toast = (text, tone) => {
+    const id = Math.random().toString(36).slice(2);
+    this.setState(s => ({ toasts: s.toasts.concat([{ id, text, tone: tone || 'ok' }]).slice(-4) }));
+    setTimeout(() => this.setState(s => ({ toasts: s.toasts.filter(t => t.id !== id) })), 3800);
+  };
+  confirm = (opts) => this.setState({ confirm: opts });
+  markRead = (id) => this.setState(s => ({ notifs: s.notifs.map(n => n.id === id ? Object.assign({}, n, { read: true }) : n) }));
+  markAll = () => { this.setState(s => ({ notifs: s.notifs.map(n => Object.assign({}, n, { read: true })) })); this.toast("Barcha bildirishnomalar o'qilgan deb belgilandi", 'ok'); };
+  removeNotif = (id) => this.setState(s => ({ notifs: s.notifs.filter(n => n.id !== id) }));
+
+  cmdList() {
+    const q = this.state.cmdQ.trim().toLowerCase(), out = [];
+    NAV.forEach(g => g.items.forEach(([id, label, icon]) => out.push({ label, icon, group: g.group, run: () => this.nav(id) })));
+    ACTIONS.forEach(([label, icon, route, params]) => out.push({ label, icon, group: 'Amal', run: () => this.nav(route, params) }));
+    return q ? out.filter(c => c.label.toLowerCase().includes(q) || c.group.toLowerCase().includes(q)) : out;
+  }
+
+  renderVals() {
+    const s = this.state, route = s.route, isAuth = route === 'auth';
+    const isMobile = s.w < 900, collapsed = isMobile ? false : (s.collapsed == null ? s.w < 1200 : s.collapsed), expanded = !collapsed;
+    const unread = s.notifs.filter(n => !n.read).length;
+    const r = {}; Object.keys(META).forEach(id => { r[id] = route === id; });
+    if (!META[route] && !isAuth) r.dashboard = true;
+    const meta = META[route] || META.dashboard;
+    const activeGroup = (NAV.find(g => g.items.some(([id]) => r[id])) || NAV[0]).group;
+    const openGroup = s.openGroup === undefined ? activeGroup : s.openGroup;
+    const nav = NAV.map((g, gi) => {
+      const hasActive = g.group === activeGroup, open = expanded && openGroup === g.group;
+      const gUnread = g.items.some(([id]) => id === 'notifications') && unread > 0;
+      return {
+        label: g.label || g.group, icon: g.icon, showHeader: expanded, open, flat: !expanded, divider: !expanded && gi > 0,
+        bg: hasActive && !open ? 'rgba(59,130,246,.15)' : 'transparent', fg: hasActive ? '#F1F5F9' : '#CBD5E1', ic: hasActive ? '#60A5FA' : '#94A3B8', fw: hasActive ? 600 : 500,
+        rot: open ? 'rotate(90deg)' : 'none', hasBadge: gUnread && !open, badge: unread,
+        toggle: () => this.setState({ openGroup: open ? null : g.group }),
+        items: g.items.map(([id, label, icon]) => {
+          const on = r[id];
+          return { label, icon, go: () => this.nav(id), bg: on ? 'rgba(59,130,246,.15)' : 'transparent', hbg: on ? 'rgba(59,130,246,.2)' : '#1B2435', fg: on ? '#60A5FA' : '#94A3B8', ic: on ? '#60A5FA' : '#94A3B8', fw: on ? 600 : 500, hasBadge: id === 'notifications' && unread > 0, badge: unread };
+        })
+      };
+    });
+    const fmtAgo = (sec) => window.QL ? window.QL.fmt.ago(sec) : '';
+    const shown = s.notifs.filter(n => s.notifTab === 'all' || !n.read);
+    const drawerItems = shown.map(n => ({
+      title: n.title, text: n.text, icon: n.icon, tone: n.tone, iconBg: n.tone + '22', unread: !n.read, when: fmtAgo(n.ago),
+      bg: n.read ? 'transparent' : 'rgba(59,130,246,.05)', go: () => { this.markRead(n.id); this.nav(n.route); }
+    }));
+    const list = this.cmdList(), idx = Math.min(s.cmdIdx, Math.max(0, list.length - 1));
+    const cmdItems = list.map((c, i) => ({ label: c.label, icon: c.icon, group: c.group, bg: i === idx ? '#1B2435' : 'transparent', go: c.run, hover: () => this.setState({ cmdIdx: i }) }));
+    const c = s.confirm || {}, danger = !!c.danger;
+    const cf = { title: c.title || '', text: c.text || '', okLabel: c.okLabel || 'Tasdiqlash', icon: danger ? 'triangle-alert' : (c.icon || 'circle-alert'), iconBg: danger ? 'rgba(234,57,67,.14)' : 'rgba(59,130,246,.14)', iconColor: danger ? '#EA3943' : '#60A5FA', okBg: danger ? '#DC2F3A' : '#3B82F6' };
+    return {
+      isAuth, isApp: !isAuth, r, params: s.params, crumb: meta[0], title: meta[1], navGroups: nav, expanded, isMobile, showWide: !isMobile && s.w >= 1100,
+      sideW: isMobile ? '264px' : (expanded ? '248px' : '64px'), sidePos: isMobile ? 'fixed' : 'relative', sideTf: isMobile ? (s.mobileNav ? 'translateX(0)' : 'translateX(-100%)') : 'none',
+      mainPad: isMobile ? '16px 14px 40px' : '22px 24px 48px', mobileNav: s.mobileNav,
+      showCollapseBtn: !isMobile, collapseIcon: expanded ? 'panel-left-close' : 'panel-left-open', collapseLabel: expanded ? "Panelni yig'ish" : 'Panelni ochish', collapseJc: expanded ? 'flex-start' : 'center',
+      toggleCollapse: () => this.setState({ collapsed: !collapsed }),
+      markClick: () => expanded || isMobile ? this.nav('dashboard') : this.setState({ collapsed: false }), markTitle: expanded || isMobile ? 'Boshqaruv paneli' : 'Panelni ochish', openMobileNav: () => this.setState({ mobileNav: true }), closeMobileNav: () => this.setState({ mobileNav: false }),
+      mainRef: this.mainRef, latency: s.latency,
+      unread, hasUnread: unread > 0, unreadLabel: unread ? unread + " ta o'qilmagan" : "Barchasi o'qilgan",
+      notifOpen: s.notifOpen, openNotif: () => this.setState({ notifOpen: true, userMenu: false }), closeNotif: () => this.setState({ notifOpen: false }),
+      notifTabs: [['all', 'Hammasi'], ['unread', "O'qilmagan"]].map(([id, label]) => ({ label, bg: s.notifTab === id ? '#263244' : 'transparent', fg: s.notifTab === id ? '#F1F5F9' : '#94A3B8', go: () => this.setState({ notifTab: id }) })),
+      drawerItems, drawerEmpty: !drawerItems.length, notifs: s.notifs, markRead: this.markRead, markAll: this.markAll, removeNotif: this.removeNotif,
+      goNotifications: () => this.nav('notifications'), goNotifSettings: () => this.nav('settings', { tab: 'notif' }),
+      cmdOpen: s.cmdOpen, cmdQ: s.cmdQ, cmdItems, cmdEmpty: !cmdItems.length,
+      openCmd: () => this.setState({ cmdOpen: true, cmdQ: '', cmdIdx: 0 }), closeCmd: () => this.setState({ cmdOpen: false }),
+      setCmdQ: (e) => this.setState({ cmdQ: e.target.value, cmdIdx: 0 }),
+      cmdKey: (e) => {
+        if (e.key === 'ArrowDown') { e.preventDefault(); this.setState({ cmdIdx: Math.min(idx + 1, list.length - 1) }); }
+        else if (e.key === 'ArrowUp') { e.preventDefault(); this.setState({ cmdIdx: Math.max(idx - 1, 0) }); }
+        else if (e.key === 'Enter' && list[idx]) list[idx].run();
+      },
+      hasConfirm: !!s.confirm, cf, cancelConfirm: () => this.setState({ confirm: null }),
+      okConfirm: () => { const k = this.state.confirm; this.setState({ confirm: null }); if (k && k.onOk) k.onOk(); },
+      toasts: s.toasts.map(t => ({ text: t.text, icon: (TOAST[t.tone] || TOAST.info)[0], color: (TOAST[t.tone] || TOAST.info)[1], close: () => this.setState(st => ({ toasts: st.toasts.filter(x => x.id !== t.id) })) })),
+      userMenu: s.userMenu, toggleUser: () => this.setState(st => ({ userMenu: !st.userMenu })), closeUser: () => this.setState({ userMenu: false }),
+      goProfile: () => this.nav('settings', { tab: 'security' }), goIntegrations: () => this.nav('integrations'), goCompliance: () => this.nav('settings', { tab: 'risk' }), goHome: () => this.nav('dashboard'),
+      logout: () => this.nav('auth'), enterApp: () => { this.nav('dashboard'); this.toast('Xush kelibsiz! Demo hisobga kirdingiz.', 'ok'); },
+      nav: this.nav, toast: this.toast, confirm: this.confirm,
+      demoState: this.props.demoState || 'normal', live: this.props.liveTicking !== false
+    };
+  }
+}
+</script>
+</body>
+</html>

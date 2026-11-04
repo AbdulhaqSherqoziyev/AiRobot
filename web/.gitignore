@@ -1,0 +1,12 @@
+node_modules/
+.next/
+out/
+*.tsbuildinfo
+next-env.d.ts
+.env
+.env.*
+!.env.example
+
+# Root .gitignore ignores lib/ (Python packaging); this one is source code.
+!src/lib/
+!src/lib/**

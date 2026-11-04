@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/ican-business-design-system-64d11fa8-448a-41b1-9653-97041b289bb2/colors_and_type.css">
+<script src="_ds/ican-business-design-system-64d11fa8-448a-41b1-9653-97041b289bb2/_ds_bundle.js"></script>
+<script src="ql.js"></script>
+</helmet>
+<div style="font-family:var(--font-ui);color:#F1F5F9;display:flex;flex-direction:column;gap:16px">
+  <div style="display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px">
+    <div>
+      <h1 style="font-family:var(--font-display);font-size:22px;line-height:28px;font-weight:700;letter-spacing:-.01em;margin:0">Paper trading</h1>
+      <p style="margin:4px 0 0;font-size:13px;color:#94A3B8">Strategiyalar joriy bozor narxlari bilan virtual pulda ishlaydi. Birjaga hech qanday real buyurtma yuborilmaydi.</p>
+    </div>
+    <button onClick="{{ openNew }}" style="display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 14px;border-radius:8px;border:1px solid #3B82F6;background:#3B82F6;color:#fff;font-size:13px;font-weight:600;cursor:pointer" style-hover="background:#2563EB"><x-import component-from-global-scope="QL.Icon" icon="plus" size="15" hint-size="15px,15px"></x-import>Yangi sessiya</button>
+  </div>
+  <sc-if value="{{ v.loading }}" hint-placeholder-val="{{ true }}"><dc-import name="StateBlock" kind="loading" hint-size="100%,520px"></dc-import></sc-if>
+  <sc-if value="{{ v.error }}" hint-placeholder-val="{{ false }}"><dc-import name="StateBlock" kind="error" title="Jonli narx oqimiga ulanib bo'lmadi" text="Binance WebSocket ulanishi uzildi. Sessiyalar pauzada; ulanish tiklangach avtomatik davom etadi." action-label="Qayta ulanish" on-action="{{ retry }}" hint-size="100%,300px"></dc-import></sc-if>
+  <sc-if value="{{ v.empty }}" hint-placeholder-val="{{ false }}"><dc-import name="StateBlock" kind="empty" icon="circle-play" title="Faol sessiya yo'q" text="Strategiyani virtual kapital bilan ishga tushiring. Masalan: RSI Reversal · BTC/USDT · $50." action-label="Sessiya boshlash" on-action="{{ openNew }}" hint-size="100%,300px"></dc-import></sc-if>
+  <sc-if value="{{ v.ok }}" hint-placeholder-val="{{ false }}">
+  <div style="display:flex;flex-direction:column;gap:16px">
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px">
+      <sc-for list="{{ cards }}" as="s" hint-placeholder-count="4">
+        <div onClick="{{ s.go }}" style="padding:12px 14px;border-radius:12px;background:{{ s.bg }};border:1px solid {{ s.border }};cursor:pointer;display:flex;flex-direction:column;gap:8px" style-hover="border-color:#3B82F6">
+          <div style="display:flex;align-items:center;gap:8px">
+            <x-import component-from-global-scope="QL.LiveDot" color="{{ s.dot }}" pulse="{{ s.pulse }}" hint-size="8px,8px"></x-import>
+            <span style="flex:1;min-width:0;font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ s.name }}</span>
+            <span style="font-size:11px;font-weight:600;color:{{ s.st.color }}">{{ s.st.label }}</span>
+          </div>
+          <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:8px;font-variant-numeric:tabular-nums">
+            <div><div style="font-size:11px;color:#94A3B8">{{ s.meta }}</div><div style="font-size:18px;font-weight:700;margin-top:2px">{{ s.equity }}</div></div>
+            <div style="font-size:12px;font-weight:700;color:{{ s.tone }}">{{ s.pnl }}</div>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+
+    <section style="background:#151C2C;border:1px solid #263244;border-radius:12px">
+      <div style="display:flex;flex-wrap:wrap;align-items:center;gap:12px;padding:14px 16px;border-bottom:1px solid #263244">
+        <span style="width:10px;height:10px;border-radius:3px;background:{{ cur.color }}"></span>
+        <div style="flex:1;min-width:220px">
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+            <span style="font-family:var(--font-display);font-size:16px;font-weight:700">{{ cur.title }}</span>
+            <span style="display:inline-flex;align-items:center;gap:6px;height:22px;padding:0 8px;border-radius:6px;font-size:11px;font-weight:700;background:{{ cur.st.bg }};color:{{ cur.st.color }}"><x-import component-from-global-scope="QL.LiveDot" color="{{ cur.st.color }}" pulse="{{ cur.pulse }}" size="6" hint-size="6px,6px"></x-import>{{ cur.st.label }}</span>
+            <span style="font-size:11px;font-weight:700;letter-spacing:.05em;color:#F0B90B;border:1px solid rgba(240,185,11,.35);border-radius:5px;padding:2px 6px">PAPER</span>
+          </div>
+          <div style="font-size:12px;color:#94A3B8;margin-top:3px;font-variant-numeric:tabular-nums">{{ cur.sub }}</div>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px">
+          <sc-if value="{{ cur.canPause }}" hint-placeholder-val="{{ true }}"><button onClick="{{ pause }}" style="display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 12px;border-radius:8px;border:1px solid #263244;background:#1B2435;color:#F0B90B;font-size:12px;font-weight:700;cursor:pointer" style-hover="background:#222D42"><x-import component-from-global-scope="QL.Icon" icon="pause" size="14" hint-size="14px,14px"></x-import>Pauza</button></sc-if>
+          <sc-if value="{{ cur.canResume }}" hint-placeholder-val="{{ false }}"><button onClick="{{ resume }}" style="display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 12px;border-radius:8px;border:1px solid #263244;background:#1B2435;color:#16C784;font-size:12px;font-weight:700;cursor:pointer" style-hover="background:#222D42"><x-import component-from-global-scope="QL.Icon" icon="play" size="14" hint-size="14px,14px"></x-import>Davom ettirish</button></sc-if>
+          <sc-if value="{{ cur.canStop }}" hint-placeholder-val="{{ true }}"><button onClick="{{ stop }}" style="display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 12px;border-radius:8px;border:1px solid rgba(234,57,67,.4);background:rgba(234,57,67,.1);color:#F87171;font-size:12px;font-weight:700;cursor:pointer" style-hover="background:rgba(234,57,67,.18)"><x-import component-from-global-scope="QL.Icon" icon="square" size="13" hint-size="13px,13px"></x-import>To'xtatish</button></sc-if>
+          <button onClick="{{ reset }}" style="display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 12px;border-radius:8px;border:1px solid #263244;background:transparent;color:#CBD5E1;font-size:12px;font-weight:700;cursor:pointer" style-hover="background:#1B2435"><x-import component-from-global-scope="QL.Icon" icon="rotate-ccw" size="13" hint-size="13px,13px"></x-import>Qayta boshlash</button>
+        </div>
+      </div>
+      <sc-if value="{{ cur.hasNote }}" hint-placeholder-val="{{ false }}"><div style="display:flex;gap:8px;align-items:center;padding:9px 16px;background:rgba(240,185,11,.08);border-bottom:1px solid #263244;font-size:12px;color:#F0B90B"><x-import component-from-global-scope="QL.Icon" icon="triangle-alert" size="14" hint-size="14px,14px"></x-import>{{ cur.note }}</div></sc-if>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));border-bottom:1px solid #263244">
+        <sc-for list="{{ stats }}" as="k" hint-placeholder-count="6">
+          <div style="padding:12px 16px;border-right:1px solid #1E2738;font-variant-numeric:tabular-nums">
+            <div style="font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:#94A3B8">{{ k.label }}</div>
+            <div style="font-size:18px;font-weight:700;margin-top:4px;color:{{ k.color }}">{{ k.value }}</div>
+            <div style="font-size:11px;color:#94A3B8;margin-top:2px">{{ k.sub }}</div>
+          </div>
+        </sc-for>
+      </div>
+      <div style="display:flex;flex-wrap:wrap">
+        <div style="flex:3 1 520px;min-width:0;padding:10px 8px 8px 12px;border-right:1px solid #1E2738">
+          <div style="display:flex;justify-content:space-between;font-size:12px;color:#94A3B8;padding:0 4px 6px"><span>{{ cur.pair }} · 1m · jonli</span><span style="font-variant-numeric:tabular-nums;color:{{ cur.pxTone }};font-weight:700">{{ cur.px }}</span></div>
+          <x-import component-from-global-scope="QL.Chart" candles="{{ cs }}" markers="{{ markers }}" name="{{ cur.pair }}" data-key="{{ key }}" live="{{ live }}" intraday="{{ true }}" bars="{{ 120 }}" height="330" hint-size="100%,330px"></x-import>
+        </div>
+        <div style="flex:2 1 340px;min-width:0;padding:10px 8px 8px 12px">
+          <div style="font-size:12px;color:#94A3B8;padding:0 4px 6px">Sessiya equity, $</div>
+          <x-import component-from-global-scope="QL.Chart" data="{{ eq }}" kind="area" fmt="usd" color="#3B82F6" name="Equity" data-key="{{ key }}" live="{{ live }}" intraday="{{ true }}" height="330" hint-size="100%,330px"></x-import>
+        </div>
+      </div>
+    </section>
+
+    <section style="background:#151C2C;border:1px solid #263244;border-radius:12px">
+      <div style="display:flex;flex-wrap:wrap;gap:2px;padding:6px 8px;border-bottom:1px solid #263244">
+        <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="4">
+          <button onClick="{{ t.go }}" style="height:34px;padding:0 12px;border:0;border-bottom:2px solid {{ t.line }};background:transparent;color:{{ t.fg }};font-size:13px;font-weight:600;cursor:pointer">{{ t.label }}</button>
+        </sc-for>
+      </div>
+      <sc-if value="{{ tab.open }}" hint-placeholder-val="{{ true }}">
+        <div style="overflow-x:auto">
+          <table style="width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric:tabular-nums">
+            <thead><tr>
+              <sc-for list="{{ posHeads }}" as="h" hint-placeholder-count="8"><th style="text-align:{{ h.a }};padding:9px 14px;font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:#94A3B8;border-bottom:1px solid #263244;white-space:nowrap">{{ h.l }}</th></sc-for>
+            </tr></thead>
+            <tbody>
+              <sc-for list="{{ positions }}" as="p" hint-placeholder-count="1">
+                <tr>
+                  <td style="padding:10px 14px;border-bottom:1px solid #1E2738;font-weight:600">{{ p.pair }}</td>
+                  <td style="padding:10px 14px;border-bottom:1px solid #1E2738"><span style="color:#16C784;font-weight:700">LONG</span> <span style="color:#94A3B8">· spot</span></td>
+                  <td style="padding:10px 14px;border-bottom:1px solid #1E2738;text-align:right">{{ p.qty }}</td>
+                  <td style="padding:10px 14px;border-bottom:1px solid #1E2738;text-align:right">{{ p.entry }}</td>
+                  <td style="padding:10px 14px;border-bottom:1px solid #1E2738;text-align:right">{{ p.mark }}</td>
+                  <td style="padding:10px 14px;border-bottom:1px solid #1E2738;text-align:right">{{ p.value }}</td>
+                  <td style="padding:10px 14px;border-bottom:1px solid #1E2738;text-align:right;font-weight:700;color:{{ p.tone }}">{{ p.pnl }}</td>
+                  <td style="padding:10px 14px;border-bottom:1px solid #1E2738;white-space:nowrap;color:#CBD5E1">{{ p.sltp }}</td>
+                </tr>
+              </sc-for>
+            </tbody>
+          </table>
+          <sc-if value="{{ noPos }}" hint-placeholder-val="{{ false }}"><div style="padding:28px;text-align:center;font-size:13px;color:#94A3B8">Ochiq virtual pozitsiya yo'q. Strategiya kirish signalini kutmoqda.</div></sc-if>
+        </div>
+      </sc-if>
+      <sc-if value="{{ tab.closed }}" hint-placeholder-val="{{ false }}">
+        <div style="overflow-x:auto;max-height:420px;overflow-y:auto">
+          <table style="width:100%;border-collapse:collapse;font-size:12px;font-variant-numeric:tabular-nums">
+            <thead><tr>
+              <sc-for list="{{ closedHeads }}" as="h" hint-placeholder-count="8"><th style="position:sticky;top:0;background:#151C2C;text-align:{{ h.a }};padding:9px 14px;font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:#94A3B8;border-bottom:1px solid #263244;white-space:nowrap">{{ h.l }}</th></sc-for>
+            </tr></thead>
+            <tbody>
+              <sc-for list="{{ closed }}" as="r" hint-placeholder-count="8">
+                <tr style-hover="background:#1B2435">
+                  <td style="padding:8px 14px;border-bottom:1px solid #1E2738;white-space:nowrap">{{ r.inT }}</td>
+                  <td style="padding:8px 14px;border-bottom:1px solid #1E2738;white-space:nowrap">{{ r.outT }}</td>
+                  <td style="padding:8px 14px;border-bottom:1px solid #1E2738;text-align:right">{{ r.entry }}</td>
+                  <td style="padding:8px 14px;border-bottom:1px solid #1E2738;text-align:right">{{ r.exit }}</td>
+                  <td style="padding:8px 14px;border-bottom:1px solid #1E2738;text-align:right">{{ r.fees }}</td>
+                  <td style="padding:8px 14px;border-bottom:1px solid #1E2738;text-align:right;font-weight:600;color:{{ r.tone }}">{{ r.pnl }}</td>
+                  <td style="padding:8px 14px;border-bottom:1px solid #1E2738;text-align:right;color:{{ r.tone }}">{{ r.pct }}</td>
+                  <td style="padding:8px 14px;border-bottom:1px solid #1E2738;white-space:nowrap;color:#CBD5E1">{{ r.why }}</td>
+                </tr>
+              </sc-for>
+            </tbody>
+          </table>
+          <sc-if value="{{ noClosed }}" hint-placeholder-val="{{ false }}"><div style="padding:28px;text-align:center;font-size:13px;color:#94A3B8">Bu sessiyada hali yopilgan savdo yo'q.</div></sc-if>
+        </div>
+      </sc-if>
+      <sc-if value="{{ tab.log }}" hint-placeholder-val="{{ false }}">
+        <div style="max-height:420px;overflow-y:auto;padding:6px 0;font-family:'JetBrains Mono',Menlo,ui-monospace,monospace;font-size:12px">
+          <sc-for list="{{ log }}" as="e" hint-placeholder-count="6">
+            <div style="display:flex;gap:12px;padding:7px 16px;border-bottom:1px solid #1A2333">
+              <span style="color:#64748B;flex-shrink:0">{{ e.time }}</span>
+              <span style="color:{{ e.color }};flex-shrink:0;width:56px;font-weight:700">{{ e.tag }}</span>
+              <span style="flex:1;min-width:0;color:#E2E8F0">{{ e.text }}<span style="color:#64748B"> · {{ e.sub }}</span></span>
+            </div>
+          </sc-for>
+        </div>
+      </sc-if>
+      <sc-if value="{{ tab.history }}" hint-placeholder-val="{{ false }}">
+        <div style="overflow-x:auto">
+          <table style="width:100%;border-collapse:collapse;font-size:13px;font-variant-numeric:tabular-nums">
+            <thead><tr>
+              <sc-for list="{{ histHeads }}" as="h" hint-placeholder-count="8"><th style="text-align:{{ h.a }};padding:9px 14px;font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:#94A3B8;border-bottom:1px solid #263244;white-space:nowrap">{{ h.l }}</th></sc-for>
+            </tr></thead>
+            <tbody>
+              <sc-for list="{{ history }}" as="r" hint-placeholder-count="6">
+                <tr onClick="{{ r.go }}" style="cursor:pointer" style-hover="background:#1B2435">
+                  <td style="padding:10px 14px;border-bottom:1px solid #1E2738;color:#94A3B8">{{ r.id }}</td>
+                  <td style="padding:10px 14px;border-bottom:1px solid #1E2738;font-weight:600;white-space:nowrap">{{ r.name }}</td>
+                  <td style="padding:10px 14px;border-bottom:1px solid #1E2738;white-space:nowrap">{{ r.period }}</td>
+                  <td style="padding:10px 14px;border-bottom:1px solid #1E2738;text-align:right">{{ r.start }}</td>
+                  <td style="padding:10px 14px;border-bottom:1px solid #1E2738;text-align:right">{{ r.equity }}</td>
+                  <td style="padding:10px 14px;border-bottom:1px solid #1E2738;text-align:right;font-weight:600;color:{{ r.tone }}">{{ r.pnl }}</td>
+                  <td style="padding:10px 14px;border-bottom:1px solid #1E2738;text-align:right">{{ r.trades }}</td>
+                  <td style="padding:10px 14px;border-bottom:1px solid #1E2738"><span style="font-size:11px;font-weight:700;color:{{ r.st.color }}">{{ r.st.label }}</span></td>
+                </tr>
+              </sc-for>
+            </tbody>
+          </table>
+        </div>
+      </sc-if>
+    </section>
+  </div>
+  </sc-if>
+
+  <sc-if value="{{ newOpen }}" hint-placeholder-val="{{ false }}">
+    <div onClick="{{ closeNew }}" style="position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:90"></div>
+    <div role="dialog" style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:min(480px,94vw);max-height:92vh;overflow-y:auto;z-index:91;background:#151C2C;border:1px solid #263244;border-radius:14px;box-shadow:0 24px 64px rgba(0,0,0,.6)">
+      <div style="display:flex;align-items:center;gap:10px;padding:16px 18px;border-bottom:1px solid #263244">
+        <div style="flex:1"><div style="font-family:var(--font-display);font-size:16px;font-weight:600">Yangi paper trading sessiyasi</div><div style="font-size:12px;color:#94A3B8;margin-top:2px">Virtual kapital · real buyurtma yuborilmaydi</div></div>
+        <button onClick="{{ closeNew }}" aria-label="Yopish" style="width:30px;height:30px;border-radius:8px;border:0;background:transparent;color:#94A3B8;cursor:pointer" style-hover="background:#1B2435"><x-import component-from-global-scope="QL.Icon" icon="x" size="17" hint-size="17px,17px"></x-import></button>
+      </div>
+      <div style="padding:16px 18px;display:flex;flex-direction:column;gap:14px">
+        <label style="display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:500;color:#94A3B8">Strategiya
+          <select value="{{ nf.strat }}" onChange="{{ setNfStrat }}" style="height:36px;padding:0 8px;background:#0F1522;border:1px solid #263244;border-radius:8px;color:#F1F5F9;font-size:13px;outline:none">
+            <sc-for list="{{ strats }}" as="o" hint-placeholder-count="6"><option value="{{ o.id }}">{{ o.name }}</option></sc-for>
+          </select>
+        </label>
+        <label style="display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:500;color:#94A3B8">Savdo juftligi
+          <select value="{{ nf.pair }}" onChange="{{ setNfPair }}" style="height:36px;padding:0 8px;background:#0F1522;border:1px solid #263244;border-radius:8px;color:#F1F5F9;font-size:13px;outline:none">
+            <sc-for list="{{ pairs }}" as="p" hint-placeholder-count="6"><option value="{{ p }}">{{ p }}</option></sc-for>
+          </select>
+        </label>
+        <div>
+          <div style="font-size:12px;font-weight:500;color:#94A3B8;margin-bottom:6px">Boshlang'ich virtual balans</div>
+          <div style="display:flex;flex-wrap:wrap;gap:6px">
+            <sc-for list="{{ caps }}" as="c" hint-placeholder-count="5"><button onClick="{{ c.go }}" style="height:32px;padding:0 12px;border-radius:8px;border:1px solid {{ c.border }};background:{{ c.bg }};color:{{ c.fg }};font-size:13px;font-weight:600;cursor:pointer;font-variant-numeric:tabular-nums">{{ c.label }}</button></sc-for>
+            <input type="number" min="10" value="{{ nf.capital }}" onChange="{{ setNfCap }}" style="width:110px;height:32px;padding:0 10px;background:#0F1522;border:1px solid #263244;border-radius:8px;color:#F1F5F9;font-size:13px;outline:none">
+          </div>
+        </div>
+        <div style="padding:12px;border-radius:10px;background:#111827;border:1px solid #263244;font-size:12px;line-height:18px;color:#94A3B8">
+          Risk himoyalari faol: MaxDailyLoss 5%, MaxDrawdown 10%, ConsecutiveLossGuard (4). Shariat darvozasi har bir kirishni tekshiradi: spot, long, leverage 1.0.
+        </div>
+      </div>
+      <div style="display:flex;justify-content:flex-end;gap:8px;padding:12px 18px;border-top:1px solid #263244">
+        <button onClick="{{ closeNew }}" style="height:34px;padding:0 14px;border-radius:8px;border:1px solid #263244;background:#1B2435;color:#F1F5F9;font-size:13px;font-weight:600;cursor:pointer">Bekor qilish</button>
+        <button onClick="{{ startNew }}" style="display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 14px;border-radius:8px;border:1px solid #3B82F6;background:#3B82F6;color:#fff;font-size:13px;font-weight:600;cursor:pointer" style-hover="background:#2563EB"><x-import component-from-global-scope="QL.Icon" icon="play" size="14" hint-size="14px,14px"></x-import>Sessiyani boshlash</button>
+      </div>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;nav&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;function&quot;},&quot;toast&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;function&quot;},&quot;confirm&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;function&quot;},&quot;demoState&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;normal&quot;,&quot;loading&quot;,&quot;empty&quot;,&quot;error&quot;],&quot;default&quot;:&quot;normal&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;live&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;},&quot;params&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;object&quot;}}">
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    const p = props.params || {};
+    this.state = { ready: false, sessions: null, sel: p.id || 's1', tab: 'open', px: null, cs: null, eq: null, log: null, key: '', newOpen: !!p.newSession, nf: { strat: p.strat || 'rsi', pair: 'BTC/USDT', capital: 50 }, now: Math.floor(Date.now() / 1000) };
+  }
+  componentDidMount() {
+    this._t = setInterval(() => {
+      if (!window.QL) return;
+      clearInterval(this._t);
+      const Q = window.QL;
+      const sessions = Q.SESS.map(s => Object.assign({}, s, { closed: Q.sessTrades(s) }));
+      const nf = Object.assign({}, this.state.nf, { pair: Q.strat(this.state.nf.strat).pair });
+      this.setState({ sessions, nf }, () => this.select(this.state.sel));
+      this._r = setTimeout(() => this.setState({ ready: true }), 420);
+      this.sub();
+    }, 30);
+    this._clock = setInterval(() => this.setState({ now: Math.floor(Date.now() / 1000) }), 1000);
+  }
+  componentDidUpdate(pp) {
+    if (pp.live !== this.props.live) this.sub();
+    const a = pp.params || {}, b = this.props.params || {};
+    if (b.id && a.id !== b.id && this.state.sessions) this.select(b.id);
+    if (b.newSession && !a.newSession) this.setState({ newOpen: true });
+  }
+  componentWillUnmount() { clearInterval(this._t); clearTimeout(this._r); clearInterval(this._clock); if (this._u) this._u(); }
+  sess(id) { return (this.state.sessions || []).find(s => s.id === (id || this.state.sel)); }
+  equityOf(s, px) { const Q = window.QL, p = (px || Q.stream.px)[s.pair] || Q.MK[s.pair].price; return s.start + s.realized + (s.pos ? s.pos.qty * (p - s.pos.entry) : 0); }
+  select(id) {
+    const Q = window.QL, s = this.sess(id); if (!s) return;
+    const cs = Q.candles(s.pair, '1m', 180), now = Q.NOW(), r = Q.rng(Q.hash(s.id + 'eq'));
+    const endT = s.ended || now, cur = s.status === 'stopped' ? s.start + s.realized : this.equityOf(s), n = 160, eq = [];
+    let L = 0; const Ls = [0]; for (let i = 1; i < n; i++) { L += 0.004 * Q.gauss(r); Ls.push(L); }
+    const adj = Math.log(cur / s.start) - Ls[n - 1];
+    for (let i = 0; i < n; i++) eq.push({ time: Math.floor(s.started + (endT - s.started) * i / (n - 1)), value: s.start * Math.exp(Ls[i] + adj * i / (n - 1)) });
+    const log = Q.sessEvents(s).map(e => Object.assign({}, e));
+    this.setState({ sel: id, cs, eq, log, key: id + '|' + now });
+  }
+  sub() {
+    if (this._u) { this._u(); this._u = null; }
+    if (this.props.live === false || !window.QL) return;
+    let tickN = 0;
+    this._u = window.QL.stream.subscribe(px => {
+      const s = this.sess(), Q = window.QL; tickN++;
+      if (!s || !this.state.cs) { this.setState({ px: Object.assign({}, px) }); return; }
+      const p = px[s.pair], bucket = Math.floor(Q.NOW() / 60) * 60, cs = this.state.cs, last = cs[cs.length - 1];
+      let next;
+      if (bucket > last.time) next = cs.slice(1).concat([{ time: bucket, open: last.close, high: Math.max(last.close, p), low: Math.min(last.close, p), close: p, volume: last.volume * 0.1 }]);
+      else next = cs.slice(0, -1).concat([Object.assign({}, last, { close: p, high: Math.max(last.high, p), low: Math.min(last.low, p) })]);
+      const patch = { px: Object.assign({}, px), cs: next };
+      if (s.status === 'running') {
+        const t = Q.NOW(), eq = this.state.eq, lastEq = eq[eq.length - 1], val = this.equityOf(s, px);
+        patch.eq = lastEq && lastEq.time >= t ? eq.slice(0, -1).concat([{ time: lastEq.time, value: val }]) : eq.concat([{ time: t, value: val }]);
+        if (tickN % 12 === 0) {
+          const rs = 35 + Math.random() * 30;
+          patch.log = [{ t, kind: 'info', text: 'Signal tekshiruvi: RSI(14) = ' + rs.toFixed(1) + ' — kirish sharti bajarilmadi', sub: Q.strat(s.strat).name + ' · ' + s.pair }].concat(this.state.log).slice(0, 60);
+        }
+      }
+      this.setState(patch);
+    });
+  }
+  patchSess(id, patch) { this.setState(st => ({ sessions: st.sessions.map(s => s.id === id ? Object.assign({}, s, patch) : s) })); }
+  addLog(kind, text, sub) { const t = window.QL.NOW(); this.setState(st => ({ log: [{ t, kind, text, sub }].concat(st.log || []) })); }
+  view() {
+    const d = this.props.demoState, loading = !this.state.ready || d === 'loading';
+    return { loading, error: !loading && d === 'error', empty: !loading && d === 'empty', ok: !loading && (!d || d === 'normal') };
+  }
+  renderVals() {
+    const v = this.view(), st = this.state;
+    const openNew = () => this.setState({ newOpen: true });
+    const base = { v, openNew, retry: () => { this.setState({ ready: false }); setTimeout(() => this.setState({ ready: true }), 600); }, newOpen: st.newOpen && !!st.sessions, closeNew: () => this.setState({ newOpen: false }) };
+    if (!st.sessions) return base;
+    const Q = window.QL, f = Q.fmt, px = st.px || Q.stream.px, now = st.now, live = this.props.live !== false;
+    const toast = (t, k) => this.props.toast && this.props.toast(t, k), confirm = (o) => this.props.confirm && this.props.confirm(o);
+    const nf = st.nf;
+    Object.assign(base, {
+      nf, strats: Q.STRATS.map(x => ({ id: x.id, name: x.name })), pairs: Q.MARKETS.map(m => m.sym),
+      setNfStrat: (e) => this.setState({ nf: Object.assign({}, nf, { strat: e.target.value, pair: Q.strat(e.target.value).pair }) }), setNfPair: (e) => this.setState({ nf: Object.assign({}, nf, { pair: e.target.value }) }),
+      setNfCap: (e) => this.setState({ nf: Object.assign({}, nf, { capital: Math.max(10, parseFloat(e.target.value) || 10) }) }),
+      caps: [50, 100, 500, 1000, 5000].map(c => ({ label: '$' + f.num(c), bg: nf.capital === c ? 'rgba(59,130,246,.15)' : '#111827', border: nf.capital === c ? '#3B82F6' : '#263244', fg: nf.capital === c ? '#F1F5F9' : '#CBD5E1', go: () => this.setState({ nf: Object.assign({}, nf, { capital: c }) }) })),
+      startNew: () => {
+        const id = 's' + (st.sessions.length + 1) + Date.now().toString(36).slice(-3), x = Q.strat(nf.strat);
+        const ns = { id, strat: x.id, pair: nf.pair, tf: x.tf, start: nf.capital, realized: 0, pos: null, status: 'running', started: Q.NOW(), trades: 0, closed: [] };
+        this.setState(s2 => ({ sessions: [ns].concat(s2.sessions), newOpen: false, tab: 'log' }), () => this.select(id));
+        toast('Paper sessiya boshlandi: ' + x.name + ' · ' + nf.pair + ' · ' + f.usd(nf.capital), 'ok');
+      }
+    });
+    if (!v.ok) return base;
+    const s = this.sess() || st.sessions[0], strat = Q.strat(s.strat), eqNow = s.status === 'stopped' ? s.start + s.realized : this.equityOf(s, px), pnl = eqNow - s.start;
+    const unreal = s.pos && s.status !== 'stopped' ? s.pos.qty * ((px[s.pair] || Q.MK[s.pair].price) - s.pos.entry) : 0;
+    const wins = s.closed.filter(t => t.pnl > 0).length;
+    const cards = st.sessions.filter(x => x.status !== 'stopped').map(x => { const e = this.equityOf(x, px), d = e - x.start; return { name: Q.strat(x.strat).name + ' · ' + x.pair, meta: f.usd(x.start, 0) + " → joriy equity", equity: f.usd(e), pnl: f.susd(d) + ' (' + f.pct(d / x.start * 100) + ')', tone: f.tone(d), st: Q.status(x.status), dot: x.status === 'running' ? '#16C784' : '#F0B90B', pulse: x.status === 'running', bg: x.id === s.id ? 'rgba(59,130,246,.08)' : '#151C2C', border: x.id === s.id ? '#3B82F6' : '#263244', go: () => this.select(x.id) }; });
+    const dur = (s.ended || now) - s.started, p = px[s.pair] || Q.MK[s.pair].price, m = Q.MK[s.pair], ch = (p / (m.price / (1 + m.ch / 100)) - 1);
+    const markers = [];
+    if (s.pos && st.cs && s.pos.t >= st.cs[0].time) markers.push({ time: Math.floor(s.pos.t / 60) * 60, position: 'belowBar', color: '#16C784', shape: 'arrowUp', text: 'B ' + f.price(s.pos.entry) });
+    const KIND = { info: ['INFO', '#94A3B8'], buy: ['BUY', '#16C784'], sell: ['SELL', '#EA3943'], ok: ['CHECK', '#60A5FA'], start: ['START', '#F0B90B'], warn: ['RISK', '#F0B90B'] };
+    const T = [['open', 'Ochiq pozitsiyalar (' + (s.pos && s.status !== 'stopped' ? 1 : 0) + ')'], ['closed', 'Yopilgan savdolar (' + s.closed.length + ')'], ['log', 'Hodisalar jurnali'], ['history', 'Sessiyalar tarixi']];
+    const tab = {}; T.forEach(([id]) => { tab[id] = st.tab === id; });
+    return Object.assign(base, {
+      cards, live, key: st.key, cs: st.cs, eq: st.eq, markers,
+      cur: { title: strat.name + ' · ' + s.pair, color: strat.color, st: Q.status(s.status), pulse: s.status === 'running', pair: s.pair, px: f.price(p) + ' (' + f.pct(ch * 100) + ')', pxTone: f.tone(ch),
+        sub: 'Sessiya ' + s.id.toUpperCase() + ' · ' + s.tf + ' signallar · davomiylik ' + f.clock(dur) + ' · boshlangan ' + f.dt(s.started) + ' UTC',
+        canPause: s.status === 'running', canResume: s.status === 'paused', canStop: s.status !== 'stopped', hasNote: !!s.note && s.status === 'paused', note: s.note },
+      stats: [
+        { label: "Boshlang'ich balans", value: f.usd(s.start), sub: 'Virtual USDT', color: '#F1F5F9' },
+        { label: 'Joriy equity', value: f.usd(eqNow), sub: f.pct(pnl / s.start * 100) + ' umumiy', color: f.tone(pnl) === '#94A3B8' ? '#F1F5F9' : f.tone(pnl) },
+        { label: 'Realizatsiya qilinmagan', value: f.susd(unreal, 3), sub: s.pos ? 'Ochiq pozitsiya bo\'yicha' : "Pozitsiya yo'q", color: f.tone(unreal) },
+        { label: 'Realizatsiya qilingan', value: f.susd(s.realized), sub: s.closed.length + ' ta yopilgan savdo', color: f.tone(s.realized) },
+        { label: "G'alaba ulushi", value: s.closed.length ? (wins / s.closed.length * 100).toFixed(1) + '%' : '—', sub: wins + ' yutuq / ' + (s.closed.length - wins) + ' zarar', color: '#F1F5F9' },
+        { label: 'Bo\'sh virtual USDT', value: f.usd(s.start + s.realized - (s.pos && s.status !== 'stopped' ? s.pos.qty * s.pos.entry : 0)), sub: 'Keyingi signal uchun', color: '#F1F5F9' }
+      ],
+      tabs: T.map(([id, label]) => ({ label, line: st.tab === id ? '#3B82F6' : 'transparent', fg: st.tab === id ? '#F1F5F9' : '#94A3B8', go: () => this.setState({ tab: id }) })), tab,
+      posHeads: [['Juftlik', 'left'], ['Yo\'nalish', 'left'], ['Miqdor', 'right'], ['Kirish narxi', 'right'], ['Joriy narx', 'right'], ['Qiymat', 'right'], ['PnL', 'right'], ['SL / TP', 'left']].map(([l, a]) => ({ l, a })),
+      positions: s.pos && s.status !== 'stopped' ? [{ pair: s.pair, qty: f.num(s.pos.qty, 6), entry: f.price(s.pos.entry), mark: f.price(p), value: f.usd(s.pos.qty * p), pnl: f.susd(unreal, 3) + ' (' + f.pct((p / s.pos.entry - 1) * 100) + ')', tone: f.tone(unreal), sltp: f.price(s.pos.entry * (1 - (strat.sl || 3) / 100)) + ' / ' + (strat.tp ? f.price(s.pos.entry * (1 + strat.tp / 100)) : '—') }] : [],
+      noPos: !(s.pos && s.status !== 'stopped'),
+      closedHeads: [['Kirish', 'left'], ['Chiqish', 'left'], ['Kirish narxi', 'right'], ['Chiqish narxi', 'right'], ['Komissiya', 'right'], ['PnL', 'right'], ['PnL %', 'right'], ['Sabab', 'left']].map(([l, a]) => ({ l, a })),
+      closed: s.closed.map(t => ({ inT: f.dt(t.entryT), outT: f.dt(t.exitT), entry: f.price(t.entry), exit: f.price(t.exit), fees: f.usd(t.fees, 3), pnl: f.susd(t.pnl, 3), pct: f.pct(t.pnlPct), tone: f.tone(t.pnl), why: t.why })), noClosed: !s.closed.length,
+      log: (st.log || []).map(e => ({ time: f.time(e.t), tag: (KIND[e.kind] || KIND.info)[0], color: (KIND[e.kind] || KIND.info)[1], text: e.text, sub: e.sub })),
+      histHeads: [['ID', 'left'], ['Sessiya', 'left'], ['Davr', 'left'], ["Boshlang'ich", 'right'], ['Yakuniy / joriy', 'right'], ['PnL', 'right'], ['Savdolar', 'right'], ['Holat', 'left']].map(([l, a]) => ({ l, a })),
+      history: st.sessions.map(x => { const e = x.status === 'stopped' ? x.start + x.realized : this.equityOf(x, px), d = e - x.start; return { id: x.id.toUpperCase(), name: Q.strat(x.strat).name + ' · ' + x.pair, period: f.date(x.started) + ' – ' + (x.ended ? f.date(x.ended) : 'hozir'), start: f.usd(x.start), equity: f.usd(e), pnl: f.susd(d) + ' (' + f.pct(d / x.start * 100) + ')', tone: f.tone(d), trades: x.closed.length, st: Q.status(x.status), go: () => this.select(x.id) }; }),
+      pause: () => { this.patchSess(s.id, { status: 'paused', note: "Foydalanuvchi tomonidan pauzaga qo'yildi. Ochiq pozitsiya saqlanadi, yangi kirishlar to'xtatildi." }); this.addLog('warn', "Sessiya pauzaga qo'yildi", 'Yangi kirishlar to\'xtatildi'); toast(strat.name + ' sessiyasi pauzada', 'warn'); },
+      resume: () => { this.patchSess(s.id, { status: 'running', note: null }); this.addLog('start', 'Sessiya davom ettirildi', s.pair); toast(strat.name + ' sessiyasi davom etmoqda', 'ok'); },
+      stop: () => confirm({ danger: true, title: "Sessiyani to'xtatasizmi?", okLabel: "To'xtatish", text: (s.pos ? "Ochiq pozitsiya joriy narxda (" + f.price(p) + ") virtual yopiladi. " : '') + "Sessiya tarixga o'tkaziladi va qayta davom ettirib bo'lmaydi.", onOk: () => { const rl = s.realized + unreal; this.patchSess(s.id, { status: 'stopped', ended: Q.NOW(), realized: rl, pos: null }); this.addLog('sell', "Sessiya to'xtatildi" + (s.pos ? ' · pozitsiya yopildi @ ' + f.price(p) : ''), 'Yakuniy equity ' + f.usd(s.start + rl)); toast("Sessiya to'xtatildi. Yakuniy natija: " + f.susd(rl), 'info'); } }),
+      reset: () => confirm({ danger: true, title: 'Sessiyani qayta boshlaysizmi?', okLabel: 'Qayta boshlash', text: 'Balans ' + f.usd(s.start) + " ga qaytariladi, ochiq pozitsiya va " + s.closed.length + " ta yopilgan savdo tarixi o'chiriladi.", onOk: () => { this.patchSess(s.id, { status: 'running', realized: 0, pos: null, started: Q.NOW(), ended: null, closed: [], note: null }); setTimeout(() => this.select(s.id), 0); toast('Sessiya qayta boshlandi · balans ' + f.usd(s.start), 'ok'); } })
+    });
+  }
+}
+</script>
+</body>
+</html>

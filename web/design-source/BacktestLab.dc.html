@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="_ds/ican-business-design-system-64d11fa8-448a-41b1-9653-97041b289bb2/colors_and_type.css">
+<script src="_ds/ican-business-design-system-64d11fa8-448a-41b1-9653-97041b289bb2/_ds_bundle.js"></script>
+<script src="ql.js"></script>
+</helmet>
+<div style="font-family:var(--font-ui);color:#F1F5F9;display:flex;flex-direction:column;gap:16px">
+  <div style="display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px">
+    <div>
+      <h1 style="font-family:var(--font-display);font-size:22px;line-height:28px;font-weight:700;letter-spacing:-.01em;margin:0">Backtest laboratoriyasi</h1>
+      <p style="margin:4px 0 0;font-size:13px;color:#94A3B8">Strategiyani tarixiy Binance Spot ma'lumotlarida sinang · simulyatsiya brauzerda demo shamlar asosida bajariladi</p>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button onClick="{{ save }}" style="display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 12px;border-radius:8px;border:1px solid #263244;background:#1B2435;color:#F1F5F9;font-size:13px;font-weight:600;cursor:pointer" style-hover="background:#222D42"><x-import component-from-global-scope="QL.Icon" icon="save" size="15" hint-size="15px,15px"></x-import>Saqlash</button>
+      <button onClick="{{ compare }}" style="display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 12px;border-radius:8px;border:1px solid #263244;background:#1B2435;color:#F1F5F9;font-size:13px;font-weight:600;cursor:pointer" style-hover="background:#222D42"><x-import component-from-global-scope="QL.Icon" icon="git-compare" size="15" hint-size="15px,15px"></x-import>Solishtirish</button>
+      <button onClick="{{ exportCsv }}" style="display:inline-flex;align-items:center;gap:6px;height:34px;padding:0 12px;border-radius:8px;border:1px solid #263244;background:#1B2435;color:#F1F5F9;font-size:13px;font-weight:600;cursor:pointer" style-hover="background:#222D42"><x-import component-from-global-scope="QL.Icon" icon="download" size="15" hint-size="15px,15px"></x-import>Hisobotni eksport</button>
+    </div>
+  </div>
+  <sc-if value="{{ v.loading }}" hint-placeholder-val="{{ true }}"><dc-import name="StateBlock" kind="loading" hint-size="100%,520px"></dc-import></sc-if>
+  <sc-if value="{{ v.error }}" hint-placeholder-val="{{ false }}"><dc-import name="StateBlock" kind="error" title="Backtest bajarilmadi" text="BTC/USDT 1h uchun tarixiy ma'lumotda bo'shliq topildi (12.10 – 14.10). Ma'lumotlarni qayta yuklab, backtestni takrorlang." action-label="Qayta urinish" on-action="{{ retry }}" hint-size="100%,300px"></dc-import></sc-if>
+  <sc-if value="{{ v.empty }}" hint-placeholder-val="{{ false }}"><dc-import name="StateBlock" kind="empty" icon="flask-conical" title="Hali backtest bajarilmagan" text="Strategiya, juftlik va tarixiy davrni tanlang, so'ng “Backtestni boshlash” tugmasini bosing." action-label="Standart sozlamalar bilan boshlash" on-action="{{ retry }}" hint-size="100%,300px"></dc-import></sc-if>
+  <sc-if value="{{ v.ok }}" hint-placeholder-val="{{ false }}">
+  <div style="display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start">
+    <aside style="flex:1 1 290px;max-width:100%;min-width:0;background:#151C2C;border:1px solid #263244;border-radius:12px;display:flex;flex-direction:column">
+      <div style="padding:14px 16px;border-bottom:1px solid #263244;font-family:var(--font-display);font-size:14px;font-weight:600">Konfiguratsiya</div>
+      <div style="padding:14px 16px;display:flex;flex-direction:column;gap:12px">
+        <label style="display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:500;color:#94A3B8">Strategiya
+          <select value="{{ c.strat }}" onChange="{{ setStrat }}" style="height:34px;padding:0 8px;background:#0F1522;border:1px solid #263244;border-radius:8px;color:#F1F5F9;font-size:13px;outline:none">
+            <sc-for list="{{ strats }}" as="o" hint-placeholder-count="6"><option value="{{ o.id }}">{{ o.name }}</option></sc-for>
+          </select>
+        </label>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <label style="display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:500;color:#94A3B8">Juftlik
+            <select value="{{ c.pair }}" onChange="{{ setPair }}" style="height:34px;padding:0 6px;background:#0F1522;border:1px solid #263244;border-radius:8px;color:#F1F5F9;font-size:13px;outline:none">
+              <sc-for list="{{ pairs }}" as="p" hint-placeholder-count="6"><option value="{{ p }}">{{ p }}</option></sc-for>
+            </select>
+          </label>
+          <label style="display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:500;color:#94A3B8">Taymfreym
+            <select value="{{ c.tf }}" onChange="{{ setTf }}" style="height:34px;padding:0 6px;background:#0F1522;border:1px solid #263244;border-radius:8px;color:#F1F5F9;font-size:13px;outline:none">
+              <option value="15m">15m</option><option value="1h">1h</option><option value="4h">4h</option>
+            </select>
+          </label>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <label style="display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:500;color:#94A3B8">Boshlanish
+            <input type="date" value="{{ fromDate }}" min="2025-01-01" max="{{ maxFrom }}" onChange="{{ setFrom }}" style="height:34px;padding:0 8px;background:#0F1522;border:1px solid #263244;border-radius:8px;color:#F1F5F9;font-size:12px;outline:none">
+          </label>
+          <label style="display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:500;color:#94A3B8">Tugash
+            <input type="date" value="{{ toDate }}" min="2025-02-01" max="2026-11-04" onChange="{{ setTo }}" style="height:34px;padding:0 8px;background:#0F1522;border:1px solid #263244;border-radius:8px;color:#F1F5F9;font-size:12px;outline:none">
+          </label>
+        </div>
+        <div style="font-size:11px;color:#94A3B8;margin-top:-4px">{{ rangeNote }}</div>
+        <div>
+          <div style="font-size:12px;font-weight:500;color:#94A3B8;margin-bottom:6px">Davrlarni bo'lish: o'qitish / validatsiya / OOS</div>
+          <div style="display:flex;gap:4px;margin-bottom:6px">
+            <sc-for list="{{ splits }}" as="t" hint-placeholder-count="3">
+              <button onClick="{{ t.go }}" style="flex:1;height:26px;border-radius:6px;border:1px solid {{ t.border }};background:{{ t.bg }};color:{{ t.fg }};font-size:11px;font-weight:600;cursor:pointer">{{ t.label }}</button>
+            </sc-for>
+          </div>
+          <div style="display:flex;height:8px;border-radius:9px;overflow:hidden;gap:2px">
+            <sc-for list="{{ splitBar }}" as="b" hint-placeholder-count="3"><div style="width:{{ b.w }};background:{{ b.color }}"></div></sc-for>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <sc-for list="{{ numFields }}" as="x" hint-placeholder-count="6">
+            <label title="{{ x.tip }}" style="display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:500;color:#94A3B8">{{ x.label }}
+              <input type="number" step="any" min="0" value="{{ x.value }}" onChange="{{ x.set }}" style="height:34px;padding:0 10px;background:#0F1522;border:1px solid #263244;border-radius:8px;color:#F1F5F9;font-size:13px;outline:none;font-variant-numeric:tabular-nums" style-focus="border-color:#3B82F6">
+            </label>
+          </sc-for>
+        </div>
+        <div>
+          <div style="font-size:12px;font-weight:500;color:#94A3B8;margin-bottom:6px">Risk himoyalari</div>
+          <div style="display:flex;flex-direction:column;gap:2px">
+            <sc-for list="{{ protections }}" as="p" hint-placeholder-count="6">
+              <label title="{{ p.tip }}" style="display:flex;align-items:center;gap:8px;padding:5px 2px;font-size:12px;color:#CBD5E1;cursor:pointer">
+                <input type="checkbox" checked="{{ p.on }}" onChange="{{ p.toggle }}" style="width:14px;height:14px">
+                <span style="flex:1">{{ p.label }}</span>
+                <span style="color:#94A3B8;font-variant-numeric:tabular-nums">{{ p.val }}</span>
+              </label>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+      <div style="padding:12px 16px;border-top:1px solid #263244;display:flex;flex-direction:column;gap:10px">
+        <sc-if value="{{ running }}" hint-placeholder-val="{{ false }}">
+          <div>
+            <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:6px"><span style="color:#CBD5E1">{{ stage }}</span><span style="font-weight:700;font-variant-numeric:tabular-nums">{{ progressLabel }}</span></div>
+            <div style="height:6px;border-radius:9px;background:#1B2435;overflow:hidden"><div style="height:100%;width:{{ progressW }};background:#3B82F6;border-radius:9px;transition:width .12s linear"></div></div>
+          </div>
+          <button onClick="{{ stop }}" style="display:inline-flex;align-items:center;justify-content:center;gap:6px;height:38px;border-radius:8px;border:1px solid rgba(234,57,67,.45);background:rgba(234,57,67,.12);color:#F87171;font-size:13px;font-weight:700;cursor:pointer" style-hover="background:rgba(234,57,67,.2)"><x-import component-from-global-scope="QL.Icon" icon="square" size="14" hint-size="14px,14px"></x-import>Backtestni to'xtatish</button>
+        </sc-if>
+        <sc-if value="{{ idle }}" hint-placeholder-val="{{ true }}">
+          <button onClick="{{ run }}" style="display:inline-flex;align-items:center;justify-content:center;gap:6px;height:38px;border-radius:8px;border:1px solid #3B82F6;background:#3B82F6;color:#fff;font-size:13px;font-weight:700;cursor:pointer" style-hover="background:#2563EB"><x-import component-from-global-scope="QL.Icon" icon="play" size="15" hint-size="15px,15px"></x-import>Backtestni boshlash</button>
+        </sc-if>
+        <div style="font-size:11px;line-height:16px;color:#94A3B8">Tarixiy natijalar kelajakdagi daromadni kafolatlamaydi. Real bajarilishda likvidlik va narx og'ishi natijani o'zgartirishi mumkin.</div>
+      </div>
+    </aside>
+
+    <div style="flex:3 1 600px;min-width:0;display:flex;flex-direction:column;gap:16px">
+      <div style="display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:12px 14px;background:#151C2C;border:1px solid #263244;border-radius:12px">
+        <span style="width:10px;height:10px;border-radius:3px;background:{{ head.color }}"></span>
+        <div style="flex:1;min-width:200px">
+          <div style="font-family:var(--font-display);font-size:15px;font-weight:600">{{ head.title }}</div>
+          <div style="font-size:12px;color:#94A3B8;margin-top:2px">{{ head.sub }}</div>
+        </div>
+        <span style="display:inline-flex;align-items:center;gap:6px;height:24px;padding:0 9px;border-radius:6px;font-size:11px;font-weight:700;background:{{ head.st.bg }};color:{{ head.st.color }}">{{ head.st.label }}</span>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px">
+        <sc-for list="{{ kpis }}" as="k" hint-placeholder-count="13">
+          <dc-import name="Metric" m="{{ k }}" hint-size="100%,92px"></dc-import>
+        </sc-for>
+      </div>
+      <section style="background:#151C2C;border:1px solid #263244;border-radius:12px">
+        <div style="padding:12px 16px;border-bottom:1px solid #263244;display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px">
+          <div>
+            <div style="font-family:var(--font-display);font-size:14px;font-weight:600">O'qitish, validatsiya va namunadan tashqari test</div>
+            <div style="font-size:12px;color:#94A3B8;margin-top:2px">Parametrlar faqat o'qitish davrida tanlanadi; OOS davri strategiya ko'rmagan ma'lumot</div>
+          </div>
+          <span style="font-size:12px;font-weight:600;color:{{ oosColor }}">{{ oosNote }}</span>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;padding:14px 16px">
+          <sc-for list="{{ segs }}" as="g" hint-placeholder-count="3">
+            <div style="padding:12px;border-radius:10px;background:#111827;border:1px solid #263244;border-top:3px solid {{ g.color }}">
+              <div style="display:flex;justify-content:space-between;gap:8px;font-size:12px"><span style="font-weight:600">{{ g.name }}</span><span style="color:#94A3B8">{{ g.pct }}</span></div>
+              <div style="font-size:20px;font-weight:700;margin-top:6px;color:{{ g.tone }};font-variant-numeric:tabular-nums">{{ g.ret }}</div>
+              <div style="font-size:11px;color:#94A3B8;margin-top:2px">{{ g.range }}</div>
+            </div>
+          </sc-for>
+        </div>
+      </section>
+      <section style="background:#151C2C;border:1px solid #263244;border-radius:12px">
+        <div style="display:flex;flex-wrap:wrap;gap:2px;padding:6px 8px;border-bottom:1px solid #263244">
+          <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="6">
+            <button onClick="{{ t.go }}" style="height:34px;padding:0 12px;border:0;border-bottom:2px solid {{ t.line }};background:transparent;color:{{ t.fg }};font-size:13px;font-weight:600;cursor:pointer">{{ t.label }}</button>
+          </sc-for>
+        </div>
+        <sc-if value="{{ t.chart }}" hint-placeholder-val="{{ true }}">
+          <div style="padding:10px 8px 8px 12px">
+            <div style="display:flex;gap:14px;font-size:11px;color:#94A3B8;padding:0 4px 8px"><span><b style="color:#16C784">▲ B</b> — virtual sotib olish</span><span><b style="color:#EA3943">▼ S</b> — sotish (signal, stop-loss yoki take-profit)</span><span>{{ markerNote }}</span></div>
+            <x-import component-from-global-scope="QL.Chart" candles="{{ res.candles }}" markers="{{ res.markers }}" volume="{{ true }}" name="{{ c.pair }}" data-key="{{ runKey }}" intraday="{{ true }}" bars="{{ 220 }}" height="420" hint-size="100%,420px"></x-import>
+          </div>
+        </sc-if>
+        <sc-if value="{{ t.equity }}" hint-placeholder-val="{{ false }}">
+          <div style="padding:10px 8px 8px 12px"><x-import component-from-global-scope="QL.Chart" data="{{ res.eq }}" kind="area" fmt="usd" color="#3B82F6" name="Equity" data-key="{{ runKey }}" intraday="{{ true }}" height="380" hint-size="100%,380px"></x-import></div>
+        </sc-if>
+        <sc-if value="{{ t.dd }}" hint-placeholder-val="{{ false }}">
+          <div style="padding:10px 8px 8px 12px"><x-import component-from-global-scope="QL.Chart" data="{{ res.dd }}" kind="baseline" fmt="pct" name="Pasayish" data-key="{{ runKey }}" intraday="{{ true }}" height="380" hint-size="100%,380px"></x-import></div>
+        </sc-if>
+        <sc-if value="{{ t.monthly }}" hint-placeholder-val="{{ false }}">
+          <div style="overflow-x:auto;padding:14px 16px">
+            <table style="width:100%;border-collapse:separate;border-spacing:3px;font-size:12px;font-variant-numeric:tabular-nums">
+              <thead><tr><th style="padding:4px 6px;text-align:left;font-size:11px;color:#94A3B8">Yil</th><sc-for list="{{ monNames }}" as="m" hint-placeholder-count="12"><th style="padding:4px 6px;font-size:11px;color:#94A3B8;font-weight:600">{{ m }}</th></sc-for><th style="padding:4px 6px;font-size:11px;color:#94A3B8">Yil</th></tr></thead>
+              <tbody>
+                <sc-for list="{{ heat }}" as="r" hint-placeholder-count="2">
+                  <tr>
+                    <td style="padding:6px;font-weight:700">{{ r.y }}</td>
+                    <sc-for list="{{ r.cells }}" as="x" hint-placeholder-count="12"><td title="{{ x.title }}" style="padding:9px 4px;min-width:50px;text-align:center;border-radius:5px;background:{{ x.bg }};font-weight:600;color:{{ x.fg }}">{{ x.text }}</td></sc-for>
+                    <td style="padding:9px 6px;text-align:center;font-weight:700;color:{{ r.tone }}">{{ r.total }}</td>
+                  </tr>
+                </sc-for>
+              </tbody>
+            </table>
+          </div>
+        </sc-if>
+        <sc-if value="{{ t.dist }}" hint-placeholder-val="{{ false }}">
+          <div style="display:flex;flex-wrap:wrap;gap:24px;padding:16px">
+            <div style="flex:2 1 360px;min-width:0">
+              <div style="font-size:12px;font-weight:600;margin-bottom:10px">Savdo natijalari taqsimoti (PnL %)</div>
+              <div style="height:200px;display:flex;align-items:flex-end;gap:4px;border-bottom:1px solid #334155">
+                <sc-for list="{{ dist }}" as="d" hint-placeholder-count="14"><div title="{{ d.title }}" style="flex:1;height:{{ d.h }};min-height:2px;background:{{ d.color }};border-radius:3px 3px 0 0"></div></sc-for>
+              </div>
+              <div style="display:flex;gap:4px;margin-top:6px"><sc-for list="{{ dist }}" as="d" hint-placeholder-count="14"><div style="flex:1;text-align:center;font-size:10px;color:#94A3B8">{{ d.label }}</div></sc-for></div>
+            </div>
+            <div style="flex:1 1 240px;min-width:0;display:flex;flex-direction:column;gap:14px">
+              <div style="font-size:12px;font-weight:600">Yutuqli va zararli savdolar</div>
+              <sc-for list="{{ wl }}" as="w" hint-placeholder-count="2">
+                <div>
+                  <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:6px"><span style="color:#CBD5E1">{{ w.label }}</span><span style="font-weight:700;font-variant-numeric:tabular-nums">{{ w.n }}</span></div>
+                  <div style="height:10px;border-radius:9px;background:#1B2435"><div style="height:100%;width:{{ w.w }};border-radius:9px;background:{{ w.color }}"></div></div>
+                  <div style="font-size:11px;color:#94A3B8;margin-top:5px">{{ w.sub }}</div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </sc-if>
+        <sc-if value="{{ t.trades }}" hint-placeholder-val="{{ false }}">
+          <div style="overflow-x:auto">
+            <table style="width:100%;border-collapse:collapse;font-size:12px;font-variant-numeric:tabular-nums">
+              <thead><tr>
+                <sc-for list="{{ tradeHeads }}" as="h" hint-placeholder-count="10"><th style="text-align:{{ h.a }};padding:9px 12px;font-size:11px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:#94A3B8;border-bottom:1px solid #263244;white-space:nowrap">{{ h.l }}</th></sc-for>
+              </tr></thead>
+              <tbody>
+                <sc-for list="{{ tradeRows }}" as="r" hint-placeholder-count="12">
+                  <tr style-hover="background:#1B2435">
+                    <td style="padding:8px 12px;border-bottom:1px solid #1E2738;color:#94A3B8">{{ r.n }}</td>
+                    <td style="padding:8px 12px;border-bottom:1px solid #1E2738;white-space:nowrap">{{ r.inT }}</td>
+                    <td style="padding:8px 12px;border-bottom:1px solid #1E2738;white-space:nowrap">{{ r.outT }}</td>
+                    <td style="padding:8px 12px;border-bottom:1px solid #1E2738;text-align:right">{{ r.entry }}</td>
+                    <td style="padding:8px 12px;border-bottom:1px solid #1E2738;text-align:right">{{ r.exit }}</td>
+                    <td style="padding:8px 12px;border-bottom:1px solid #1E2738;text-align:right">{{ r.fees }}</td>
+                    <td style="padding:8px 12px;border-bottom:1px solid #1E2738;text-align:right;font-weight:600;color:{{ r.tone }}">{{ r.pnl }}</td>
+                    <td style="padding:8px 12px;border-bottom:1px solid #1E2738;text-align:right;color:{{ r.tone }}">{{ r.pct }}</td>
+                    <td style="padding:8px 12px;border-bottom:1px solid #1E2738;white-space:nowrap">{{ r.dur }}</td>
+                    <td style="padding:8px 12px;border-bottom:1px solid #1E2738;white-space:nowrap;color:#CBD5E1">{{ r.why }}</td>
+                  </tr>
+                </sc-for>
+              </tbody>
+            </table>
+          </div>
+          <div style="display:flex;flex-wrap:wrap;align-items:center;gap:10px;padding:10px 16px;font-size:12px;color:#94A3B8">
+            <span style="flex:1">{{ pageLabel }}</span>
+            <button onClick="{{ prevPage }}" style="height:28px;padding:0 10px;border-radius:7px;border:1px solid #263244;background:#1B2435;color:#F1F5F9;font-size:12px;cursor:pointer">‹ Oldingi</button>
+            <button onClick="{{ nextPage }}" style="height:28px;padding:0 10px;border-radius:7px;border:1px solid #263244;background:#1B2435;color:#F1F5F9;font-size:12px;cursor:pointer">Keyingi ›</button>
+          </div>
+        </sc-if>
+      </section>
+      <sc-if value="{{ hasSaved }}" hint-placeholder-val="{{ false }}">
+        <section style="background:#151C2C;border:1px solid #263244;border-radius:12px">
+          <div style="padding:12px 16px;border-bottom:1px solid #263244;font-family:var(--font-display);font-size:14px;font-weight:600">Saqlangan natijalar (shu sessiya)</div>
+          <sc-for list="{{ saved }}" as="r" hint-placeholder-count="2">
+            <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:center;padding:10px 16px;border-bottom:1px solid #1E2738;font-size:13px;font-variant-numeric:tabular-nums">
+              <span style="font-weight:700;color:#60A5FA">{{ r.id }}</span><span style="flex:1;min-width:160px">{{ r.title }}</span><span style="font-weight:600;color:{{ r.tone }}">{{ r.ret }}</span><span style="color:#94A3B8">Sharpe {{ r.sharpe }}</span><span style="color:#94A3B8">{{ r.when }}</span>
+            </div>
+          </sc-for>
+        </section>
+      </sc-if>
+    </div>
+  </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;nav&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;function&quot;},&quot;toast&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;function&quot;},&quot;confirm&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;function&quot;},&quot;demoState&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;normal&quot;,&quot;loading&quot;,&quot;empty&quot;,&quot;error&quot;],&quot;default&quot;:&quot;normal&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;params&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;object&quot;}}">
+const STAGES = [[0, "Tarixiy shamlar yuklanmoqda (Binance Spot)"], [18, 'Indikatorlar hisoblanmoqda'], [35, 'Savdolar simulyatsiya qilinmoqda'], [88, 'Ko\'rsatkichlar va hisobot tayyorlanmoqda']];
+const TIPS = {
+  ret: "Davr oxiridagi kapitalning boshlang'ich kapitalga nisbatan o'zgarishi.", pf: 'Yalpi foyda / yalpi zarar. 1.0 dan yuqori bo\'lsa, strategiya umumiy hisobda foydali.',
+  mdd: "Equity eng yuqori nuqtasidan keyingi eng chuqur tushish. Psixologik va kapital riskining asosiy o'lchovi.",
+  sharpe: "Yillik o'rtacha daromad / daromad volatilligi. 1 dan yuqori — yaxshi, 2 dan yuqori — juda yaxshi (tarixiy).",
+  sortino: "Sharpe'ga o'xshash, lekin faqat salbiy volatillik hisobga olinadi.", win: "Foyda bilan yopilgan savdolar ulushi. Yuqori g'alaba ulushi yuqori daromadni anglatmaydi."
+};
+const pad = (n) => String(n).padStart(2, '0');
+const iso = (ts) => { const d = new Date(ts * 1000); return d.getUTCFullYear() + '-' + pad(d.getUTCMonth() + 1) + '-' + pad(d.getUTCDate()); };
+const fromIso = (s) => Math.floor(Date.parse(s + 'T00:00:00Z') / 1000);
+
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    const p = props.params || {};
+    this.state = { ready: false, cfg: null, p, res: null, running: false, progress: 0, tab: 'chart', page: 0, saved: [], prot: { daily: true, weekly: true, mdd: true, slg: true, consec: true, cool: true } };
+  }
+  componentDidMount() {
+    this._t = setInterval(() => {
+      if (!window.QL) return;
+      clearInterval(this._t);
+      const Q = window.QL, p = this.state.p, s = Q.strat(p.strat || 'rsi');
+      const cfg = Object.assign(Q.btDefaults(s), p.pair ? { pair: p.pair } : {}, p.tf ? { tf: p.tf } : {}, p.capital ? { capital: +p.capital } : {}, p.sl != null ? { sl: +p.sl } : {}, p.tp != null ? { tp: +p.tp } : {}, p.fee != null ? { fee: +p.fee } : {}, p.slip != null ? { slip: +p.slip } : {});
+      cfg.end = Q.END; cfg.from = Q.END - cfg.days * Q.DAY; cfg.label = p.name || s.name;
+      this.setState({ cfg, res: Q.runBT(cfg), runAt: Q.NOW() });
+      this._r = setTimeout(() => this.setState({ ready: true }), 420);
+    }, 30);
+  }
+  componentWillUnmount() { clearInterval(this._t); clearTimeout(this._r); clearInterval(this._run); }
+  view() {
+    const d = this.props.demoState, loading = !this.state.ready || d === 'loading';
+    return { loading, error: !loading && d === 'error', empty: !loading && d === 'empty', ok: !loading && (!d || d === 'normal') };
+  }
+  set(patch) { this.setState(s => ({ cfg: Object.assign({}, s.cfg, patch) })); }
+  run() {
+    if (this.state.running) return;
+    clearInterval(this._run);
+    this.setState({ running: true, progress: 0 });
+    this._run = setInterval(() => {
+      const p = this.state.progress + 3 + Math.random() * 5;
+      if (p < 100) { this.setState({ progress: p }); return; }
+      clearInterval(this._run);
+      const Q = window.QL, c = Object.assign({}, this.state.cfg), res = Q.runBT(c);
+      this.setState({ running: false, progress: 100, res, page: 0, runAt: Q.NOW() });
+      if (this.props.toast) this.props.toast('Backtest yakunlandi: ' + Q.fmt.pct(res.ret) + ' · ' + res.trades + ' ta savdo · Sharpe ' + res.sharpe.toFixed(2), 'ok');
+    }, 110);
+  }
+  stop() { clearInterval(this._run); this.setState({ running: false, progress: 0 }); if (this.props.toast) this.props.toast("Backtest to'xtatildi. Oldingi natija saqlanib qoldi.", 'warn'); }
+  renderVals() {
+    const v = this.view(), s = this.state;
+    const base = { v, retry: () => { this.setState({ ready: false }); setTimeout(() => this.setState({ ready: true }), 600); } };
+    if (!v.ok || !s.cfg || !s.res) return base;
+    const Q = window.QL, f = Q.fmt, c = s.cfg, r = s.res, st = Q.strat(c.strat);
+    const num = (k) => (e) => { const x = parseFloat(e.target.value); this.set({ [k]: isNaN(x) ? 0 : Math.max(0, x) }); };
+    const days = Math.round((c.end - c.from) / Q.DAY);
+    const kpis = [
+      { label: 'Umumiy daromad', value: f.pct(r.ret), color: f.tone(r.ret), tip: TIPS.ret }, { label: 'Sof foyda', value: f.susd(r.net), color: f.tone(r.net) },
+      { label: "Boshlang'ich kapital", value: f.usd(r.cap) }, { label: 'Yakuniy kapital', value: f.usd(r.final) },
+      { label: 'Jami savdolar', value: String(r.trades) }, { label: 'Yutuqli', value: String(r.wins), color: '#16C784' }, { label: 'Zararli', value: String(r.losses), color: '#EA3943' },
+      { label: "G'alaba ulushi", value: r.win.toFixed(1) + '%', tip: TIPS.win }, { label: 'Profit faktor', value: r.pf.toFixed(2), color: r.pf >= 1 ? '#F1F5F9' : '#EA3943', tip: TIPS.pf },
+      { label: 'Maksimal pasayish', value: f.pct(r.mdd), color: '#EA3943', tip: TIPS.mdd }, { label: 'Sharpe', value: r.sharpe.toFixed(2), tip: TIPS.sharpe },
+      { label: 'Sortino', value: r.sortino.toFixed(2), tip: TIPS.sortino }, { label: "O'rt. savdo davomiyligi", value: f.dur(r.avgDur) }
+    ];
+    const segs = r.segs.map(g => ({ name: g.name, pct: g.pct + '%', ret: f.pct(g.ret), tone: f.tone(g.ret), color: g.color, range: f.date(g.from) + ' – ' + f.date(g.to) }));
+    const gap = r.segs[1].ret - r.segs[2].ret;
+    const years = {}; r.monthly.forEach(m => { (years[m.y] = years[m.y] || {})[m.m] = m.ret; });
+    const heat = Object.keys(years).sort().map(y => { const row = years[y]; let tot = 1; Object.keys(row).forEach(k => { tot *= 1 + row[k] / 100; }); tot = (tot - 1) * 100; return { y, total: f.pct(tot, 1), tone: f.tone(tot), cells: Q.MON.map((mn, i) => row[i] == null ? { text: '', bg: '#111827', fg: '#475569', title: '' } : { text: f.pct(row[i], 1), bg: Q.heat(row[i], 10), fg: '#F1F5F9', title: mn + ' ' + y + ': ' + f.pct(row[i]) }) }; });
+    const bmax = Math.max(...r.dist.map(b => b.n)) || 1;
+    const dist = r.dist.map((b, i) => ({ h: (b.n / bmax * 100) + '%', color: b.lo >= 0 ? '#16C784' : '#EA3943', label: i === 0 ? '≤' + b.lo : i === r.dist.length - 1 ? '≥' + b.lo : String(b.lo), title: b.lo + '% … ' + (b.lo + 1) + '%: ' + b.n + ' ta' }));
+    const wins = r.list.filter(t => t.pnl > 0), losses = r.list.filter(t => t.pnl <= 0), mxN = Math.max(wins.length, losses.length) || 1;
+    const avgW = wins.length ? Q.avg(wins.map(t => t.pnlPct)) : 0, avgL = losses.length ? Q.avg(losses.map(t => t.pnlPct)) : 0;
+    const wl = [{ label: 'Yutuqli savdolar', n: wins.length, w: (wins.length / mxN * 100) + '%', color: '#16C784', sub: "O'rtacha " + f.pct(avgW) + ' · eng yaxshi ' + f.pct(wins.length ? Math.max(...wins.map(t => t.pnlPct)) : 0) }, { label: 'Zararli savdolar', n: losses.length, w: (losses.length / mxN * 100) + '%', color: '#EA3943', sub: "O'rtacha " + f.pct(avgL) + ' · eng yomon ' + f.pct(losses.length ? Math.min(...losses.map(t => t.pnlPct)) : 0) }];
+    const PER = 15, list = r.list.slice().reverse(), pages = Math.max(1, Math.ceil(list.length / PER)), pg = Math.min(s.page, pages - 1);
+    const tradeRows = list.slice(pg * PER, pg * PER + PER).map((t, i) => ({ n: list.length - (pg * PER + i), inT: f.dt(t.entryT), outT: f.dt(t.exitT), entry: f.price(t.entry), exit: f.price(t.exit), fees: f.usd(t.fees, 3), pnl: f.susd(t.pnl, 3), pct: f.pct(t.pnlPct), tone: f.tone(t.pnl), dur: f.dur(t.exitT - t.entryT), why: t.why }));
+    const T = [['chart', 'Grafik va signallar'], ['equity', 'Equity'], ['dd', 'Pasayish'], ['monthly', 'Oylik issiqlik xaritasi'], ['dist', 'Taqsimot'], ['trades', 'Savdolar (' + r.trades + ')']];
+    const tflags = {}; T.forEach(([id]) => { tflags[id] = s.tab === id; });
+    const P = s.prot;
+    const protections = [['daily', 'MaxDailyLoss', '5% / kun', 'Kunlik zarar 5% dan oshsa, yangi kirishlar bloklanadi'], ['weekly', 'MaxWeeklyLoss', '10% / hafta', 'Haftalik zarar chegarasi'], ['mdd', 'MaxDrawdown', '10%', "48 sham ichida pasayish 10% dan oshsa 12 sham to'xtash"], ['slg', 'StoplossGuard', '4 / 24 sham', "Ketma-ket stop-losslar ko'paysa to'xtash"], ['consec', 'ConsecutiveLossGuard', '4 ketma-ket', 'Ketma-ket zararli savdolar chegarasi'], ['cool', 'CooldownPeriod', '2 sham', 'Savdodan keyin yangi kirishgacha kutish']]
+      .map(([k, label, val, tip]) => ({ label, val, tip, on: P[k], toggle: () => this.setState(st2 => ({ prot: Object.assign({}, st2.prot, { [k]: !st2.prot[k] }) })) }));
+    const stage = (STAGES.filter(x => s.progress >= x[0]).pop() || STAGES[0])[1];
+    const runKey = s.runAt + '|' + c.pair + c.tf + c.strat;
+    return Object.assign(base, {
+      c, res: r, strats: Q.STRATS.map(x => ({ id: x.id, name: x.name })), pairs: Q.MARKETS.map(m => m.sym),
+      setStrat: (e) => { const x = Q.strat(e.target.value), d = Q.btDefaults(x); this.set({ strat: x.id, pair: x.pair, tf: x.tf, sl: d.sl, tp: d.tp, seed: x.seed, label: x.name }); },
+      setPair: (e) => this.set({ pair: e.target.value }), setTf: (e) => this.set({ tf: e.target.value }),
+      fromDate: iso(c.from), toDate: iso(c.end), maxFrom: iso(c.end - 20 * Q.DAY),
+      setFrom: (e) => { const t = fromIso(e.target.value); if (!isNaN(t)) this.set({ from: Math.min(t, c.end - 20 * Q.DAY), days: Math.round((c.end - Math.min(t, c.end - 20 * Q.DAY)) / Q.DAY) }); },
+      setTo: (e) => { const t = Math.min(fromIso(e.target.value), Q.END); if (!isNaN(t) && t > c.from + 20 * Q.DAY) this.set({ end: t, days: Math.round((t - c.from) / Q.DAY) }); },
+      rangeNote: days + ' kun · ≈ ' + f.num(Math.min(8000, Math.round(days * Q.DAY / Q.TF[c.tf]))) + ' ta ' + c.tf + ' sham' + (days * Q.DAY / Q.TF[c.tf] > 8000 ? ' (8 000 bilan cheklangan)' : ''),
+      splits: [[60, 20, 20], [70, 15, 15], [50, 25, 25]].map(sp => { const on = c.split.join() === sp.join(); return { label: sp.join('/'), bg: on ? '#263244' : 'transparent', fg: on ? '#F1F5F9' : '#94A3B8', border: on ? '#334155' : '#263244', go: () => this.set({ split: sp }) }; }),
+      splitBar: c.split.map((w, i) => ({ w: w + '%', color: ['#3B82F6', '#9747FF', '#FFA841'][i] })),
+      numFields: [["Kapital, $", 'capital', c.capital, 'Standart: $50'], ['Komissiya, %', 'fee', c.fee, 'Binance spot: 0.1%'], ['Slippage, %', 'slip', c.slip, ''], ['Pozitsiya, % balans', 'size', c.size, ''], ['Stop-loss, %', 'sl', c.sl, '0 = o\'chirilgan'], ['Take-profit, %', 'tp', c.tp, '0 = o\'chirilgan']].map(([label, k, value, tip]) => ({ label, value, tip, set: num(k) })),
+      protections, running: s.running, idle: !s.running, stage, progressW: s.progress + '%', progressLabel: Math.floor(s.progress) + '%',
+      run: () => this.run(), stop: () => this.stop(),
+      head: { color: st.color, title: (c.label || st.name) + ' · ' + c.pair + ' · ' + c.tf, sub: f.date(r.from) + ' – ' + f.date(r.to) + ' · ' + f.num(r.bars) + ' sham · kapital ' + f.usd(c.capital) + ' · komissiya ' + c.fee + '% · slippage ' + c.slip + '%', st: Q.status(s.running ? 'training' : 'done') },
+      kpis, segs, oosNote: Math.abs(gap) > 5 ? 'Validatsiya va OOS orasida katta farq (' + f.pct(gap, 1) + ') — ortiqcha moslashish xavfi' : 'Validatsiya va OOS natijalari yaqin', oosColor: Math.abs(gap) > 5 ? '#F0B90B' : '#16C784',
+      tabs: T.map(([id, label]) => ({ label, line: s.tab === id ? '#3B82F6' : 'transparent', fg: s.tab === id ? '#F1F5F9' : '#94A3B8', go: () => this.setState({ tab: id }) })), t: tflags,
+      runKey, markerNote: r.markers.length + ' ta signal belgisi · grafikni suring yoki kattalashtiring',
+      monNames: Q.MON, heat, dist, wl,
+      tradeHeads: [['#', 'left'], ['Kirish', 'left'], ['Chiqish', 'left'], ['Kirish narxi', 'right'], ['Chiqish narxi', 'right'], ['Komissiya', 'right'], ['PnL', 'right'], ['PnL %', 'right'], ['Davomiylik', 'left'], ['Sabab', 'left']].map(([l, a]) => ({ l, a })),
+      tradeRows, pageLabel: (pg + 1) + ' / ' + pages + ' sahifa · ' + list.length + ' ta savdo', prevPage: () => this.setState({ page: Math.max(0, pg - 1) }), nextPage: () => this.setState({ page: Math.min(pages - 1, pg + 1) }),
+      hasSaved: s.saved.length > 0, saved: s.saved,
+      save: () => { const id = 'BT-' + (143 + s.saved.length); this.setState(st2 => ({ saved: [{ id, title: (c.label || st.name) + ' · ' + c.pair + ' ' + c.tf + ' · ' + days + ' kun', ret: f.pct(r.ret), tone: f.tone(r.ret), sharpe: r.sharpe.toFixed(2), when: f.time(Q.NOW()) }].concat(st2.saved) })); this.props.toast && this.props.toast(id + ' natijasi saqlandi', 'ok'); },
+      compare: () => this.props.nav && this.props.nav('compare', { ids: Array.from(new Set([c.strat, 'ema', 'multi'])) }),
+      exportCsv: () => { Q.downloadCSV('backtest-' + c.strat + '-' + c.pair.replace('/', '') + '-' + c.tf + '.csv', [['#', 'Kirish vaqti (UTC)', 'Chiqish vaqti (UTC)', 'Kirish narxi', 'Chiqish narxi', 'Miqdor', 'Komissiya USDT', 'PnL USDT', 'PnL %', 'Sabab']].concat(r.list.map((t, i) => [i + 1, f.dt(t.entryT), f.dt(t.exitT), t.entry.toFixed(4), t.exit.toFixed(4), t.qty.toFixed(8), t.fees.toFixed(4), t.pnl.toFixed(4), t.pnlPct.toFixed(3), t.why]))); this.props.toast && this.props.toast('Backtest hisoboti CSV formatida yuklab olindi', 'ok'); }
+    });
+  }
+}
+</script>
+</body>
+</html>

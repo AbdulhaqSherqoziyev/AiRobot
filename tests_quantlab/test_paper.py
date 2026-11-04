@@ -221,3 +221,56 @@ def test_stop_closes_position_and_reset_restores_capital(world):
     with db.session() as s:
         ps = s.get(PaperSession, sid)
         assert ps.status == "running" and ps.portfolio.balance("USDT").free == 100.0 and s.query(PaperTrade).filter_by(session_id=sid).count() == 0
+
+
+# ---- volatility sizing across engines ----
+
+VOL_RISK = {"stoploss_pct": 0.5, "stake_pct": 0.95, "max_drawdown_pct": 90, "max_daily_loss_pct": 90, "sizing": {"mode": "vol_target", "target": 0.01}}
+
+
+@pytest.fixture
+def long_world(db, tmp_path):
+    store = CandleStore(tmp_path)
+    df = synthetic(24 * 70)
+    store.save(PAIR, TF, df)
+    return db, store, df
+
+
+def test_paper_uses_stake_decided_at_signal_and_matches_backtest(long_world):
+    from quantlab.risk.sizing import stake_series
+
+    db, store, df = long_world
+    at = 24 * 60
+    sid, _ = start(long_world, at=at, risk=VOL_RISK)
+    t = df["ts"].to_numpy()
+    Scripted.enters, Scripted.exits = {int(t[at + 5])}, {int(t[at + 20])}
+    walk(db, store, sid, df, at + 40)
+    stakes = stake_series(df, VOL_RISK)
+    assert stakes[at + 5] < 0.95  # sizing is actually active in this fixture
+    window = df[df["ts"] > t[at - 1]].iloc[:40].reset_index(drop=True)
+    idx = df.index[df["ts"] > t[at - 1]][:40]
+    out = run_on_signals(window, window["ts"].isin(Scripted.enters).to_numpy(), window["ts"].isin(Scripted.exits).to_numpy(), TF, 100.0, ExecConfig(stake_pct=0.95, stoploss_pct=0.5), stake=stakes[idx])
+    with db.session() as s:
+        tr = s.query(PaperTrade).filter_by(session_id=sid).one()
+        assert tr.qty * tr.entry_price == pytest.approx(100 * stakes[at + 5] , rel=1e-2)
+        assert s.get(PaperSession, sid).portfolio.balance("USDT").free == pytest.approx(out.equity[-1][1])
+
+
+def test_stake_survives_restart_between_signal_and_fill(long_world):
+    from quantlab.risk.sizing import stake_series
+
+    db, store, df = long_world
+    at = 24 * 60
+    sid, _ = start(long_world, at=at, risk=VOL_RISK)
+    t = df["ts"].to_numpy()
+    Scripted.enters, Scripted.exits = {int(t[at + 5])}, set()
+    walk(db, store, sid, df, at + 6)  # signal recorded, not filled yet
+    with db.session() as s:
+        ps = s.get(PaperSession, sid)
+        expected = stake_series(df, VOL_RISK)[at + 5]
+        assert ps.pending_signal["stake"] == pytest.approx(expected)
+    db2 = Database(str(db.engine.url))
+    pe.tick_session(db2, store, sid, now=int(t[at + 7]) + 1)
+    with db2.session() as s:
+        tr = s.query(PaperTrade).filter_by(session_id=sid).one()
+        assert tr.qty * tr.entry_price == pytest.approx(100 * expected, rel=1e-2)

@@ -290,3 +290,24 @@ def test_price_stream_reconnects_with_backoff(drops):
     asyncio.run(st.run(stop, sleep=nosleep))
     assert st.prices[PAIR] == 123.5 and st.reconnects == drops
     assert delays == [2.0 ** i for i in range(drops)]
+
+
+def test_paper_watch_creates_sized_sessions_once(db):
+    from quantlab.cli import paper_watch
+
+    st = Settings(watchlist=("BTC/USDT", "ETH/USDT"), secret_key="x" * 40)
+    assert paper_watch(db, st) == 2
+    assert paper_watch(db, st) == 0
+    with db.session() as s:
+        ps = s.query(PaperSession).all()
+        assert {p.pair for p in ps} == {"BTC/USDT", "ETH/USDT"} and all(p.timeframe == "4h" for p in ps)
+        assert all(p.risk["sizing"]["mode"] == "vol_target" and p.portfolio.initial_balance == 100 for p in ps)
+
+
+def test_seeded_strategies_default_to_study_settings(seeded):
+    from quantlab.models import StrategyVersion
+
+    db, _ = seeded
+    with db.session() as s:
+        v = s.get(StrategyVersion, s.query(Strategy).filter_by(engine="ema_crossover").one().current_version_id)
+        assert v.timeframe == "4h" and v.risk["sizing"]["mode"] == "vol_target"

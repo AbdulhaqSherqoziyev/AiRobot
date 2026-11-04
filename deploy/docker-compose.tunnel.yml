@@ -1,0 +1,9 @@
+# No domain needed: nothing public, the app is reached through an SSH tunnel.
+#   docker compose -f docker-compose.yml -f docker-compose.tunnel.yml up -d --build
+#   ssh -L 3100:127.0.0.1:3100 root@SERVER   then open http://127.0.0.1:3100
+# Set QL_SECURE_COOKIES=false in .env for this mode and any placeholder DOMAIN.
+services:
+  nginx:
+    profiles: [ public ]
+  web:
+    ports: [ "127.0.0.1:3100:3100" ]

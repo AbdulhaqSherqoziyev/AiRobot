@@ -67,3 +67,18 @@ Before real money, run the whole flow on Testnet with Testnet keys.
 - [ ] Reboot the VPS: everything returns; paper sessions continue
 - [ ] Backup runs and a restore works
 - [ ] Testnet drill: start, order, kill switch, restart
+
+## Without a domain: SSH tunnel
+
+Publishes nothing to the internet and uses a port nothing else should need. Check first that
+3100 is free on the server, and that the stack fits beside whatever already runs there.
+
+```sh
+docker compose -f docker-compose.yml -f docker-compose.tunnel.yml up -d --build
+docker compose exec api python -m quantlab.cli download --days 500 --timeframe 4h
+docker compose exec api python -m quantlab.cli paper-watch
+```
+
+`paper-watch` starts ATR Volatility 4h with volatility sizing, as one virtual 100 USDT session per
+pair. It places no orders. The candidate did not pass the November 2026 study, so this is
+observation on new data, not a recommendation to trade it.

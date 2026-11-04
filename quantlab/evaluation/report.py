@@ -76,7 +76,7 @@ def _oos(store: CandleStore, ver: StrategyVersion, pair: str, tf: str, started_t
     if len(df) < 500:
         return None
     start = int(df["ts"].iloc[int(len(df) * 0.7)])
-    params = {**ver.params(), **{k: v for k, v in (ver.risk or {}).items() if k in ("stake_pct", "stoploss_pct", "takeprofit_pct")}}
+    params = {**ver.params(), **{k: v for k, v in (ver.risk or {}).items() if k in ("stake_pct", "stoploss_pct", "takeprofit_pct", "sizing")}}
     m = run_backtest(get_strategy(ver.strategy.engine), df, params, tf, start_ts=start).metrics
     return {k: m[k] for k in ("total_return", "max_drawdown", "profit_factor", "total_trades", "sharpe")}
 

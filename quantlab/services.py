@@ -16,11 +16,15 @@ from quantlab.ml.training import train_version
 from quantlab.models import BacktestResult, BacktestSession, ComponentHeartbeat, Job, MarketDataset, OptimizationJob, Strategy, StrategyParameter, StrategyVersion, TradingPair, TrainingJob, utcnow
 from quantlab.notify.service import notify, syslog
 from quantlab.optimize.search import optimize
+from quantlab.risk.sizing import HISTORY_DAYS
 from quantlab.strategies.base import all_strategies, get_strategy
 
 log = logging.getLogger(__name__)
 SEED_PAIR = "BTC/USDT"
-SEED_TF = "1h"
+# From .ai/research/2026-11-strategy-optimization.md: 1h lost heavily to costs, and volatility
+# sizing helped on every timeframe. This reduces damage; it is not evidence of profit.
+SEED_TF = "4h"
+SEED_SIZING = {"mode": "vol_target", "target": 0.015}
 
 
 def seed(db: Database, settings: Settings) -> None:
@@ -35,7 +39,7 @@ def seed(db: Database, settings: Settings) -> None:
             row = Strategy(name=st.name, engine=st.key, kind=st.kind, description=st.description, color=st.color, enabled=st.kind == "technical")
             s.add(row)
             s.flush()
-            v = new_version(s, row, {k: p.default for k, p in st.params.items()}, [SEED_PAIR], SEED_TF, {"stake_pct": st.risk.stake_pct, "stoploss_pct": st.risk.stoploss_pct, "takeprofit_pct": st.risk.takeprofit_pct, "max_drawdown_pct": st.risk.max_drawdown_pct, "max_daily_loss_pct": st.risk.daily_loss_pct, "max_orders_per_hour": st.risk.max_orders_per_hour}, "initial")
+            v = new_version(s, row, {k: p.default for k, p in st.params.items()}, [SEED_PAIR], SEED_TF, {"stake_pct": st.risk.stake_pct, "stoploss_pct": st.risk.stoploss_pct, "takeprofit_pct": st.risk.takeprofit_pct, "max_drawdown_pct": st.risk.max_drawdown_pct, "max_daily_loss_pct": st.risk.daily_loss_pct, "max_orders_per_hour": st.risk.max_orders_per_hour, "sizing": SEED_SIZING}, "initial")
             row.current_version_id = v.id
 
 
@@ -170,12 +174,12 @@ class JobRunner:
             engine, params, risk = ver.strategy.engine, ver.params(), ver.risk or {}
             pair, tf, start, end, cfg, name = b.pair, b.timeframe, b.start_ts, b.end_ts, b.config, ver.strategy.name
         strat = get_strategy(engine)
-        warm = strat.warmup * TIMEFRAMES[tf]
+        warm = max(strat.warmup * TIMEFRAMES[tf], HISTORY_DAYS * 86400)
         self._ensure_data(pair, tf, start - warm, progress)
         df = self.store.load(pair, tf, start - warm, end)
         if (df["ts"] >= start).sum() < 2:
             raise ValueError(f"{pair} {tf}: bu davr uchun ma'lumot yo'q")
-        merged = {**params, **{k: v for k, v in risk.items() if k in ("stake_pct", "stoploss_pct", "takeprofit_pct")}, **cfg}
+        merged = {**params, **{k: v for k, v in risk.items() if k in ("stake_pct", "stoploss_pct", "takeprofit_pct", "sizing")}, **cfg}
         with self.db.session() as s:
             tp = s.query(TradingPair).filter_by(symbol=pair).one_or_none()
             if tp:
@@ -212,7 +216,7 @@ class JobRunner:
         start = cfg.get("start_ts") or int(time.time()) - TIMEFRAMES[tf] * int(cfg.get("candles", 6000))
         self._ensure_data(pair, tf, start, progress)
         df = self.store.load(pair, tf, start, cfg.get("end_ts"))
-        fixed = {k: v for k, v in risk.items() if k in ("stake_pct", "stoploss_pct", "takeprofit_pct")}
+        fixed = {k: v for k, v in risk.items() if k in ("stake_pct", "stoploss_pct", "takeprofit_pct", "sizing")}
         res = optimize(get_strategy(engine), df, tf, ranges=cfg.get("ranges"), trials=int(cfg.get("trials", 50)), objective=cfg.get("objective", "composite"), fixed=fixed, min_trades=int(cfg.get("min_trades", 10)), max_dd=float(cfg.get("max_dd", 25.0)), oos_frac=float(cfg.get("oos_frac", 0.3)), progress=lambda f: progress(0.05 + 0.9 * f))
         with self.db.session() as s:
             o = s.get(OptimizationJob, p["optimization_id"])

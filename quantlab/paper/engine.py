@@ -20,6 +20,7 @@ from quantlab.market.store import CandleStore
 from quantlab.models import EquitySnapshot, PaperSession, PaperTrade, RiskEvent, StrategyVersion, TradingPair, VirtualBalance, VirtualPortfolio, utcnow
 from quantlab.notify.service import notify, syslog
 from quantlab.risk.engine import RiskLimits, portfolio_breaches
+from quantlab.risk.sizing import HISTORY_DAYS, stake_series
 from quantlab.strategies.base import get_strategy
 
 log = logging.getLogger(__name__)
@@ -65,7 +66,7 @@ def load_state(s, ps: PaperSession) -> tuple[SimState, PaperTrade | None]:
     trade = s.query(PaperTrade).filter(PaperTrade.session_id == ps.id, PaperTrade.exit_ts.is_(None)).one_or_none()
     pos = Position(trade.entry_ts, trade.entry_price, trade.qty, trade.entry_fee, trade.entry_signal_ts) if trade else None
     pend = ps.pending_signal or {}
-    return SimState(usdt=usdt.free, position=pos, pending=pend.get("side"), pending_ts=pend.get("ts", 0)), trade
+    return SimState(usdt=usdt.free, position=pos, pending=pend.get("side"), pending_ts=pend.get("ts", 0), pending_stake=pend.get("stake")), trade
 
 
 def _day_start_equity(s, ps: PaperSession, ts: int) -> float:
@@ -74,10 +75,10 @@ def _day_start_equity(s, ps: PaperSession, ts: int) -> float:
     return row.equity if row else 0.0
 
 
-def _apply_candle(s, ps: PaperSession, cfg: ExecConfig, ts: int, o: float, h: float, l: float, c: float, enter: bool, exit_: bool, stale: bool) -> None:
+def _apply_candle(s, ps: PaperSession, cfg: ExecConfig, ts: int, o: float, h: float, l: float, c: float, enter: bool, exit_: bool, stale: bool, stake: float | None = None) -> None:
     state, trade = load_state(s, ps)
     allow = ps.status == "running" and not stale
-    fills = on_candle(state, cfg, ts, o, h, l, c, enter and allow, exit_, allow_entries=allow)
+    fills = on_candle(state, cfg, ts, o, h, l, c, enter and allow, exit_, allow_entries=allow, stake=stake)
     base = ps.portfolio.balance(base_asset(ps.pair))
     for f in fills:
         if f.side == "buy":
@@ -93,7 +94,8 @@ def _apply_candle(s, ps: PaperSession, cfg: ExecConfig, ts: int, o: float, h: fl
         if trade is None and f.side == "buy":
             trade = s.query(PaperTrade).filter(PaperTrade.session_id == ps.id, PaperTrade.exit_ts.is_(None)).one()
     ps.portfolio.balance("USDT").free = state.usdt
-    ps.pending_signal = {"side": state.pending, "ts": state.pending_ts} if state.pending else None
+    # The stake is stored with the signal, so a restart executes the size that was decided.
+    ps.pending_signal = {"side": state.pending, "ts": state.pending_ts, "stake": state.pending_stake} if state.pending else None
     ps.last_candle_ts = ts
     equity = state.equity(c)
     ps.portfolio.peak_equity = max(ps.portfolio.peak_equity, equity)
@@ -117,14 +119,18 @@ def tick_session(db, store: CandleStore, session_id: int, now: int | None = None
             return 0
         last, tf, pair = ps.last_candle_ts, ps.timeframe, ps.pair
         ver = s.get(StrategyVersion, ps.strategy_version_id)
-        engine, params = ver.strategy.engine, ver.params()
+        engine, params, risk = ver.strategy.engine, ver.params(), dict(ps.risk or {})
     step = TIMEFRAMES[tf]
-    df = store.load(pair, tf, start_ts=last - step * WINDOW)
+    history = step * WINDOW
+    if risk.get("sizing"):
+        history = max(history, HISTORY_DAYS * 86400)
+    df = store.load(pair, tf, start_ts=last - history)
     new = df[(df["ts"] > last) & (df["ts"] + step <= now)]
     if new.empty:
         return 0
     try:
         sig = get_strategy(engine).signals(df, params)
+        stakes = stake_series(df, risk)
     except Exception as exc:
         # A broken strategy must not take other sessions down, and must not keep trading.
         log.exception("strategy failed in session %s", session_id)
@@ -146,7 +152,7 @@ def tick_session(db, store: CandleStore, session_id: int, now: int | None = None
             ps = s.get(PaperSession, session_id)
             if ps.last_candle_ts >= ts:
                 continue  # another process applied it
-            _apply_candle(s, ps, _exec_cfg(s, ps), ts, float(row["open"]), float(row["high"]), float(row["low"]), float(row["close"]), bool(sig["enter"].iloc[i - df.index[0]]), bool(sig["exit"].iloc[i - df.index[0]]), stale)
+            _apply_candle(s, ps, _exec_cfg(s, ps), ts, float(row["open"]), float(row["high"]), float(row["low"]), float(row["close"]), bool(sig["enter"].iloc[i - df.index[0]]), bool(sig["exit"].iloc[i - df.index[0]]), stale, None if stakes is None else float(stakes[i - df.index[0]]))
         applied += 1
     return applied
 

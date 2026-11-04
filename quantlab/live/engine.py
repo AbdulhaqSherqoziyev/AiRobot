@@ -20,6 +20,7 @@ from quantlab.market.store import CandleStore
 from quantlab.models import EquitySnapshot, LiveAuthorization, LiveOrder, LivePortfolio, LiveTrade, RiskEvent, StrategyVersion, TradingPair, utcnow
 from quantlab.notify.service import notify, syslog
 from quantlab.risk.engine import RiskLimits, entry_violations, portfolio_breaches
+from quantlab.risk.sizing import HISTORY_DAYS, stake_series
 from quantlab.strategies.base import get_strategy
 
 log = logging.getLogger(__name__)
@@ -173,7 +174,7 @@ class LiveEngine:
             orders_hour = sum(1 for o in s.query(LiveOrder).filter(LiveOrder.portfolio_id == pf_id, LiveOrder.status.in_(("filled", "unknown", "pending"))) if o.created_at.timestamp() >= hour_ago)
         symbol = to_symbol(pair)
         step = TIMEFRAMES[tf]
-        df = self.store.load(pair, tf, start_ts=now - step * WINDOW)
+        df = self.store.load(pair, tf, start_ts=now - max(step * WINDOW, HISTORY_DAYS * 86400))
         stop_pct = float(risk.get("stoploss_pct", 0.03))
         price = last_price if last_price is not None else (float(df["close"].iloc[-1]) if len(df) else 0.0)
         # Stops are evaluated every cycle on the latest price, not only on closed candles.
@@ -214,7 +215,10 @@ class LiveEngine:
         if enter and not open_qty:
             if status != "running":
                 return "entry_blocked"
-            quote = round(min(limits.max_position_usdt, max_capital, free) * 0.999, 2)
+            # Same sizing as paper and backtest, always inside the authorized limits.
+            stakes = stake_series(df, risk)
+            sized = min(equity, max_capital) * float(stakes[-1]) if stakes is not None else limits.max_position_usdt
+            quote = round(min(sized, limits.max_position_usdt, max_capital, free) * 0.999, 2)
             vio = entry_violations(limits, quote=quote, equity=min(equity, max_capital), free_usdt=free, open_positions=0, orders_last_hour=orders_hour, min_notional=min_notional, stoploss_pct=stop_pct)
             if vio:
                 with self.db.session() as s:

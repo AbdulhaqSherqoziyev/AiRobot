@@ -34,6 +34,8 @@ Every technical strategy with default parameters lost between 18% and 57%, worse
 buy and hold over the same window. ML out-of-sample AUC was 0.50-0.54, which is close to chance.
 This is the current honest state. No strategy is near the live criteria.
 
+Follow-up study with a pre-registered holdout: [research/2026-11-strategy-optimization.md](../research/2026-11-strategy-optimization.md). No candidate was confirmed.
+
 ## Known gaps
 
 - Partial fills are not modelled. Order book and raw trades have client methods but are not stored.

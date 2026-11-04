@@ -70,6 +70,7 @@ export default class BacktestLive extends BacktestLab {
     return (
       <>
         {s.res?.empty && !s.running ? <div style={{ marginBottom: 12 }}><Notice tone="info">Hali natija yo'q: sozlamalarni tanlab backtestni ishga tushiring. Hozirgi nollar natija emas.</Notice></div> : null}
+        {s.cfg && window.QL.strat(s.cfg.strat)?.risk?.sizing ? <div style={{ marginBottom: 12 }}><Notice tone="info">Bu strategiya volatillik bo'yicha hajm ishlatadi: "Pozitsiya" maydoni faqat yuqori chegara.</Notice></div> : null}
         {s.runError ? <div style={{ marginBottom: 12 }}><Notice tone="err">{s.runError}</Notice></div> : null}
         {super.render()}
       </>

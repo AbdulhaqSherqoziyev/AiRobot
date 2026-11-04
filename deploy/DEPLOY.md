@@ -93,4 +93,5 @@ into it: that would remove `deploy/.env`, which holds the secret key. Copy chang
 - `api.icash.uz`: the API
 - `app.icash.uz`: another project, not part of this stack
 
-After A records for those three names point at the server: `deploy/enable-domain.sh`.
+HTTPS is on since 2026-11-04, by `deploy/enable-domain.sh`. `COMPOSE_FILE` in `deploy/.env` selects the
+tunnel and domain overrides, so plain `docker compose` commands keep the right ports.

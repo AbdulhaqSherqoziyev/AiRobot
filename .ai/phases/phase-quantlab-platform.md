@@ -26,7 +26,7 @@ Audit: [AUDIT_QUANT_PLATFORM.md](../AUDIT_QUANT_PLATFORM.md).
 | Telegram delivery | Tests | Never sent a real message |
 | Docker images, compose | Real | Running on the VPS at `/opt/quantlab`, reached by SSH tunnel |
 | PostgreSQL | Real | Migrations, sessions, backtest, backup and restore on the VPS |
-| Host Nginx, TLS, public domains | Not run | Waiting for `.uz` delegation; `deploy/enable-domain.sh` is ready |
+| Host Nginx, TLS, public domains | Real | admin.icash.uz, api.icash.uz over HTTPS; icash.uz closes connections |
 | Full VPS reboot | Not run | Shared server; container restarts were tested instead |
 | Web app | Real | 18 screens in a browser against the real API, at 390 px and in loading, empty and error states |
 

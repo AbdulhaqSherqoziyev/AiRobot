@@ -22,7 +22,13 @@ if ! nginx -t; then
   exit 1
 fi
 systemctl reload nginx
-certbot --nginx --non-interactive --redirect -d icash.uz -d admin.icash.uz -d api.icash.uz
+if ! certbot --nginx --non-interactive --redirect -d icash.uz -d admin.icash.uz -d api.icash.uz; then
+  # Never leave the login reachable without TLS.
+  rm -f "$LINK" "$SITE"
+  nginx -t && systemctl reload nginx
+  echo "Certificate failed; removed the site. Nothing is public. Retry when DNS has settled."
+  exit 1
+fi
 sed -i 's/^QL_SECURE_COOKIES=.*/QL_SECURE_COOKIES=true/' .env
 $C up -d api
 sleep 5

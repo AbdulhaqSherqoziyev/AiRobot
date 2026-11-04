@@ -4,6 +4,7 @@ recommends. It never changes a strategy, promotes a model or touches real tradin
 from __future__ import annotations
 
 import math
+import time
 from datetime import timezone
 
 import joblib
@@ -158,6 +159,29 @@ def findings(table: list[dict], models: list[dict], market: list[dict], total: i
     return out
 
 
+def daily_text(rows: list[dict], table: list[dict], summary: dict) -> str:
+    """The day in a few plain lines. Details are on the panel."""
+    pnl = sum(sum(r["pnls"]) for r in rows)
+    lines = [f"Test (virtual): {summary['sessions']} sessiya, {summary['closed_trades']} ta yopiq savdo, jami {pnl:+.2f} USDT"]
+    traded = [r for r in table if r["trades"]]
+    if traded:
+        best = max(traded, key=lambda r: r["median_return"])
+        worst = min(traded, key=lambda r: r["median_return"])
+        lines.append(f"Eng yaxshi: {best['strategy']} {best['timeframe']} ({best['median_return']:+.2f}%)")
+        if worst is not best:
+            lines.append(f"Eng yomon: {worst['strategy']} {worst['timeframe']} ({worst['median_return']:+.2f}%)")
+    if summary["halted"]:
+        lines.append(f"Risk to'xtatgan: {summary['halted']} ta")
+    if summary["promising"]:
+        lines.append(f"Umidli: {summary['promising']} ta guruh, bu hali foyda isboti emas")
+    elif summary["closed_trades"] < MIN_TRADES:
+        lines.append("Xulosa: hali erta, savdolar kam")
+    else:
+        lines.append("Xulosa: ishonchli ustunlik hali ko'rinmadi")
+    lines.append("Real savdo: o'chiq")
+    return "\n".join(lines)
+
+
 def generate(db, store: CandleStore, pairs: list[str]) -> int:
     with db.session() as s:
         cache: dict = {}
@@ -171,7 +195,7 @@ def generate(db, store: CandleStore, pairs: list[str]) -> int:
         rep = AnalysisReport(summary=summary, strategies=table, models=models, market=market, findings=found)
         s.add(rep)
         s.flush()
-        notify(s, "evaluation", "Kunlik tahlil tayyor", f"{summary['closed_trades']} ta yopiq savdo, {summary['promising']} ta umidli guruh", "info", "analysis")
+        notify(s, "evaluation", "Kunlik hisobot", daily_text(rows, table, summary), "info", "analysis")
         return rep.id
 
 
@@ -210,6 +234,10 @@ def start_challengers(db, min_auc: float = 0.0) -> tuple[int, list[int]]:
             to_stop += [p.id for p in same[CHALLENGERS_KEPT:]]
         top = max(v.id for v in new)
         s.merge(SystemSetting(key="challengers", value={"version_id": top}))
+        aucs = sorted(a for a in ((v.oos_metrics or {}).get("auc") for v in new) if a is not None)
+        median = aucs[len(aucs) // 2] if aucs else None
+        quality = "" if median is None else f"\nBashorat kuchi (AUC): {median:.2f}, 0.50 = tasodif"
+        notify(s, "ml", "AI o'qitish tugadi", f"{len(new)} ta yangi model, {created} tasi test sessiyasiga qo'yildi.{quality}\nReal savdoga ta'siri yo'q.", "info", "ml")
     return created, to_stop
 
 
@@ -220,28 +248,35 @@ def run_challengers(db, store: CandleStore) -> int:
     return created
 
 
-def paper_digest(db, max_lines: int = 15) -> int:
-    """One message for all new virtual fills, labelled as test money. Per-fill messages from
-    hundreds of sessions closing on the same candle would bury anything that matters."""
+def paper_digest(db, now: float | None = None, every_seconds: float = 12 * 3600) -> int:
+    """At most two messages a day about virtual fills, in plain totals. Test money is not urgent;
+    risk stops and real-money events are sent separately and at once."""
+    now = time.time() if now is None else now
     with db.session() as s:
         row = s.get(SystemSetting, "paper_digest")
         if row is None:
             # First run: start from now, so old history is not re-announced.
             last_id = s.query(func.max(PaperTrade.id)).scalar() or 0
             last_exit = s.query(func.max(PaperTrade.exit_ts)).scalar() or 0
-            s.add(SystemSetting(key="paper_digest", value={"id": last_id, "exit_ts": last_exit}))
+            s.add(SystemSetting(key="paper_digest", value={"id": last_id, "exit_ts": last_exit, "sent_at": 0}))
             return 0
-        last_id, last_exit = row.value.get("id", 0), row.value.get("exit_ts", 0)
-        opened = s.query(PaperTrade).filter(PaperTrade.id > last_id).order_by(PaperTrade.id).all()
-        closed = s.query(PaperTrade).filter(PaperTrade.exit_ts > last_exit).order_by(PaperTrade.exit_ts).all()
+        value = dict(row.value)
+        last_id, last_exit = value.get("id", 0), value.get("exit_ts", 0)
+        if now - value.get("sent_at", 0) < every_seconds:
+            return 0
+        opened = s.query(PaperTrade).filter(PaperTrade.id > last_id).all()
+        closed = s.query(PaperTrade).filter(PaperTrade.exit_ts > last_exit).order_by(PaperTrade.pnl).all()
         if not opened and not closed:
             return 0
         name = {p.id: p.name for p in s.query(PaperSession)}
-        lines = [f"+ {name.get(t.session_id, t.session_id)}: {t.entry_price:g}" for t in opened]
-        lines += [f"- {name.get(t.session_id, t.session_id)}: {t.pnl:+.2f} USDT ({t.exit_reason})" for t in closed]
-        more = len(lines) - max_lines
-        text = "\n".join(lines[:max_lines]) + (f"\n...yana {more} ta" if more > 0 else "")
-        title = f"TEST (virtual pul): {len(opened)} ta ochildi, {len(closed)} ta yopildi, jami {sum(t.pnl for t in closed):+.2f} USDT"
-        notify(s, "paper", title, text, "info", "trades")
-        row.value = {"id": max([last_id, *[t.id for t in opened]]), "exit_ts": max([last_exit, *[t.exit_ts for t in closed]])}
+        total = sum(t.pnl for t in closed)
+        wins = sum(1 for t in closed if t.pnl > 0)
+        lines = [f"Ochildi: {len(opened)} · Yopildi: {len(closed)}"]
+        if closed:
+            lines.append(f"Natija: {total:+.2f} USDT ({wins} foyda, {len(closed) - wins} zarar)")
+            lines.append(f"Eng yaxshi: {name.get(closed[-1].session_id, '?')} {closed[-1].pnl:+.2f}")
+            if len(closed) > 1:
+                lines.append(f"Eng yomon: {name.get(closed[0].session_id, '?')} {closed[0].pnl:+.2f}")
+        notify(s, "paper", "TEST savdolar (virtual pul)", "\n".join(lines), "info", "trades")
+        s.merge(SystemSetting(key="paper_digest", value={"id": max([last_id, *[t.id for t in opened]]), "exit_ts": max([last_exit, *[t.exit_ts for t in closed]]), "sent_at": now}))
         return len(opened) + len(closed)

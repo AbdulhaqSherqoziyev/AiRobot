@@ -1,3 +1,4 @@
+import json
 from datetime import timedelta
 
 import numpy as np
@@ -415,19 +416,79 @@ def test_paper_all_covers_every_combination_once(db):
         assert len({p.portfolio.id for p in s.query(PaperSession)}) == 40
 
 
-def test_paper_digest_sums_fills_once_and_says_test_money(seeded):
+def test_paper_digest_is_plain_rare_and_never_repeats(seeded):
     from quantlab.analysis import paper_digest
     from quantlab.models import Notification
 
     db, store = seeded
     start_run(db)
-    assert paper_digest(db) == 0  # first run only sets the starting point
+    T0 = 1_800_000_000
+    assert paper_digest(db, now=T0) == 0  # first run only sets the starting point
     with db.session() as s:
         sid = s.query(PaperSession).first().id
         s.add(PaperTrade(session_id=sid, entry_signal_ts=1, entry_ts=2, entry_price=10, qty=1, entry_fee=0))
         s.add(PaperTrade(session_id=sid, entry_signal_ts=3, entry_ts=4, entry_price=10, qty=1, entry_fee=0, exit_ts=9, exit_price=12, pnl=2.0, exit_reason="signal"))
-    assert paper_digest(db) == 3  # two entries, one exit
-    assert paper_digest(db) == 0  # never announced twice
+    assert paper_digest(db, now=T0 + 10) == 3  # two entries, one exit
+    assert paper_digest(db, now=T0 + 20) == 0  # nothing new
     with db.session() as s:
-        n = s.query(Notification).filter_by(category="paper").one()
-        assert n.title.startswith("TEST (virtual pul)") and "+2.00" in n.title
+        s.add(PaperTrade(session_id=sid, entry_signal_ts=5, entry_ts=6, entry_price=10, qty=1, entry_fee=0, exit_ts=19, exit_price=9, pnl=-1.0, exit_reason="stoploss"))
+    assert paper_digest(db, now=T0 + 30) == 0  # held back: at most every 12 hours
+    assert paper_digest(db, now=T0 + 10 + 12 * 3600) == 2
+    with db.session() as s:
+        n = s.query(Notification).filter_by(category="paper").order_by(Notification.id).first()
+        assert "virtual" in n.title and "Natija: +2.00 USDT" in n.text and "\n" in n.text
+
+
+def test_training_a_batch_sends_one_message_not_one_per_model(db, tmp_path):
+    from quantlab.analysis import run_challengers
+    from quantlab.models import Notification
+
+    seed(db, S)
+    store = CandleStore(tmp_path)
+    store.save(PAIR, "4h", synthetic(2000, step=14400))
+    for name in ("a", "b", "c"):
+        train_version(db, tmp_path, store, "lightgbm", PAIR, "4h", name=name, hyper={"n_estimators": 10}, folds=2)
+    run_challengers(db, store)
+    with db.session() as s:
+        ml = s.query(Notification).filter_by(category="ml").all()
+        assert len(ml) == 1 and "3 ta yangi model" in ml[0].text and "Real savdoga" in ml[0].text
+
+
+def test_telegram_groups_virtual_stops_but_keeps_real_money_separate(db):
+    import httpx
+
+    from quantlab.notify.service import dispatch_telegram, notify
+
+    sent = []
+    client = httpx.Client(transport=httpx.MockTransport(lambda r: (sent.append(json.loads(r.content)["text"]), httpx.Response(200))[1]))
+    with db.session() as s:
+        for i in range(5):
+            notify(s, "risk", f"Risk chegarasi: EMA {i}", "drawdown", "warn", "paper")
+        notify(s, "live", "REAL SAVDO TO'XTATILDI (live)", "sabab", "err", "live")
+        notify(s, "ml", "AI o'qitish tugadi", "x")
+    assert dispatch_telegram(db, "t", "c", client) == 3
+    assert "5 ta virtual sessiya" in sent[0] and "yana 2 ta" in sent[0] and sent[0].startswith("⚠️ TEST")
+    assert sent[1].startswith("🔴 REAL SAVDO") and sent[2].startswith("🧠")
+    assert dispatch_telegram(db, "t", "c", client) == 0
+
+
+def test_telegram_outage_keeps_messages_for_later(db):
+    import httpx
+
+    from quantlab.notify.service import dispatch_telegram, notify
+
+    with db.session() as s:
+        notify(s, "live", "REAL", "x", "err", "live")
+    down = httpx.Client(transport=httpx.MockTransport(lambda r: httpx.Response(502)))
+    assert dispatch_telegram(db, "t", "c", down) == 0
+    up = httpx.Client(transport=httpx.MockTransport(lambda r: httpx.Response(200)))
+    assert dispatch_telegram(db, "t", "c", up) == 1
+
+
+def test_daily_text_is_short_and_says_real_trading_is_off():
+    from quantlab.analysis import daily_text
+
+    rows = [{"pnls": [1.0, -0.5]}]
+    table = [{"strategy": "ATR", "timeframe": "4h", "trades": 2, "median_return": 0.5}]
+    t = daily_text(rows, table, {"sessions": 3, "closed_trades": 2, "halted": 0, "promising": 0})
+    assert "+0.50 USDT" in t and "hali erta" in t and "Real savdo: o'chiq" in t and len(t.splitlines()) <= 6

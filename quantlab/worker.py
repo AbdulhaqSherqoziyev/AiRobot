@@ -103,24 +103,11 @@ def run_paper(db: Database, settings: Settings) -> None:
     from quantlab.analysis import paper_digest
 
     store = CandleStore(settings.data_dir)
-    last_day = None
     while RUN.is_set():
         applied = _guard(lambda: paper.tick_all(db, store), "paper")
         _guard(lambda: paper_digest(db), "paper digest")
         heartbeat(db, "paper", {"applied": applied if isinstance(applied, int) else 0})
-        day = utcnow().date()
-        if last_day and day != last_day:
-            _guard(lambda: daily_summary(db, store), "daily summary")
-        last_day = day
         _wait(10)
-
-
-def daily_summary(db: Database, store: CandleStore) -> None:
-    with db.session() as s:
-        views = [paper.session_view(s, ps) for ps in s.query(PaperSession).filter(PaperSession.status.in_(paper.ACTIVE))]
-        if views:
-            text = "; ".join(f"{v['strategy']}: {v['realized']:+.2f}" for v in views)[:900]
-            notify(s, "daily", "Kunlik paper hisobot", text, "info", "portfolio")
 
 
 def run_jobs(db: Database, settings: Settings) -> None:
@@ -148,7 +135,6 @@ def run_trainer(db: Database, settings: Settings) -> None:
 
     days = float(os.environ.get("QL_RETRAIN_DAYS", "7"))
     store = CandleStore(settings.data_dir)
-    last_review = 0.0
     while RUN.is_set():
         with db.session() as s:
             row = s.get(SystemSetting, "trainer")
@@ -163,6 +149,9 @@ def run_trainer(db: Database, settings: Settings) -> None:
             pending = s.query(TrainingJob).filter(TrainingJob.status.in_(("queued", "running"))).count()
         if not pending:
             _guard(lambda: run_challengers(db, store), "challengers")
+        with db.session() as s:
+            row = s.get(SystemSetting, "review")
+            last_review = (row.value or {}).get("last", 0) if row else 0
         if time.time() - last_review >= 86400:
             def review():
                 generate(db, store, list(settings.watchlist))
@@ -171,7 +160,8 @@ def run_trainer(db: Database, settings: Settings) -> None:
                 for rid in runs:
                     generate_report(db, store, rid)
             if not isinstance(_guard(review, "daily review"), Exception):
-                last_review = time.time()
+                with db.session() as s:
+                    s.merge(SystemSetting(key="review", value={"last": int(time.time())}))
         heartbeat(db, "trainer", {"every_days": days, "pending_training": pending})
         _wait(600)
 

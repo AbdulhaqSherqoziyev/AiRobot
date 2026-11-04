@@ -224,7 +224,6 @@ class JobRunner:
         with self.db.session() as s:
             t = s.get(TrainingJob, p["training_id"])
             t.status, t.model_version_id = "done", mv
-            notify(s, "ml", "ML o'qitish yakunlandi", f"{algo} · {pair} {tf}: yangi versiya nomzod sifatida saqlandi", "ok", "ml")
         return {"model_version_id": mv}
 
     def _do_optimize(self, job_id: int, p: dict, progress) -> dict:

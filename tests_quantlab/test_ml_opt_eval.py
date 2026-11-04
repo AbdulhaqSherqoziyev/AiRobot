@@ -311,3 +311,15 @@ def test_seeded_strategies_default_to_study_settings(seeded):
     with db.session() as s:
         v = s.get(StrategyVersion, s.query(Strategy).filter_by(engine="ema_crossover").one().current_version_id)
         assert v.timeframe == "4h" and v.risk["sizing"]["mode"] == "vol_target"
+
+
+def test_concurrent_seed_on_empty_database_all_succeed(db):
+    from concurrent.futures import ThreadPoolExecutor
+
+    from quantlab.models import TradingPair
+
+    with ThreadPoolExecutor(6) as ex:
+        list(ex.map(lambda _: seed(db, S), range(6)))
+    with db.session() as s:
+        assert s.query(TradingPair).filter_by(symbol=PAIR).count() == 1
+        assert s.query(Strategy).filter_by(engine="ema_crossover").count() == 1

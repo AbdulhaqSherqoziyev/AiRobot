@@ -24,9 +24,11 @@ Audit: [AUDIT_QUANT_PLATFORM.md](../AUDIT_QUANT_PLATFORM.md).
 | Live engine, kill switch | Tests | Fake exchange only |
 | Signed Binance client, Testnet | Not run | No Testnet keys were used |
 | Telegram delivery | Tests | Never sent a real message |
-| Docker images, compose, Nginx on a VPS | Not run | `compose config` and `nginx -t` pass only |
-| PostgreSQL | Not run | All local runs used SQLite; migrations verified on SQLite only |
-| Web app | Real | 17 screens in a browser against the real API |
+| Docker images, compose | Real | Running on the VPS at `/opt/quantlab`, reached by SSH tunnel |
+| PostgreSQL | Real | Migrations, sessions, backtest, backup and restore on the VPS |
+| Host Nginx, TLS, public domains | Not run | Waiting for `.uz` delegation; `deploy/enable-domain.sh` is ready |
+| Full VPS reboot | Not run | Shared server; container restarts were tested instead |
+| Web app | Real | 18 screens in a browser against the real API, at 390 px and in loading, empty and error states |
 
 ## Results on real data (BTC/USDT 1h, about 400-500 days, fee 0.1%, slippage 0.05%)
 

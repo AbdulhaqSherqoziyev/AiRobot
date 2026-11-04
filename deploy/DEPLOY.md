@@ -70,8 +70,8 @@ Before real money, run the whole flow on Testnet with Testnet keys.
 
 ## Without a domain: SSH tunnel
 
-Publishes nothing to the internet and uses a port nothing else should need. Check first that
-3100 is free on the server, and that the stack fits beside whatever already runs there.
+Publishes nothing to the internet and uses `QL_WEB_PORT` (default 3200). Check first that
+the port is free on the server, and that the stack fits beside whatever already runs there.
 
 ```sh
 docker compose -f docker-compose.yml -f docker-compose.tunnel.yml up -d --build
@@ -82,3 +82,15 @@ docker compose exec api python -m quantlab.cli paper-watch
 `paper-watch` starts ATR Volatility 4h with volatility sizing, as one virtual 100 USDT session per
 pair. It places no orders. The candidate did not pass the November 2026 study, so this is
 observation on new data, not a recommendation to trade it.
+
+## This server: icash.uz
+
+Running at `/opt/quantlab`, compose project `quantlab`, beside other projects. Do not `rsync --delete`
+into it: that would remove `deploy/.env`, which holds the secret key. Copy changed files instead.
+
+- `admin.icash.uz`: the control centre
+- `icash.uz`: serves nothing, on purpose; connections are closed
+- `api.icash.uz`: the API
+- `app.icash.uz`: another project, not part of this stack
+
+After A records for those three names point at the server: `deploy/enable-domain.sh`.

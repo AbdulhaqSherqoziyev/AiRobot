@@ -10,7 +10,7 @@ const ENGINE = { lightgbm: 'ml_lightgbm', xgboost: 'ml_xgboost', random_forest: 
 
 function Controls({ toast, sel, selectModel }: any) {
   const Q = window.QL;
-  const [f, setF] = React.useState({ algo: 'lightgbm', pair: 'BTC/USDT', timeframe: '1h', horizon: 6 });
+  const [f, setF] = React.useState({ algo: 'lightgbm', pair: 'BTC/USDT', timeframe: '4h', horizon: 6 });
   const m = Q.MODELS.find((x) => x.id === sel) || Q.MODELS[0];
   const engine = m && Q.STRATS.find((s) => s.engine === ENGINE[m.algo]);
   return (

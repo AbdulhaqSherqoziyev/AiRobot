@@ -280,7 +280,17 @@ def test_rule_builder_strategy_roundtrip(ctx):
 def test_rule_signals_have_no_lookahead(candles):
     from quantlab.strategies.rules import RuleBuilder
 
-    rules = {"entry": [{"ind": "macd", "op": "xa", "kind": "ind", "val": "macdSig"}], "exit": [{"ind": "close", "op": "lt", "kind": "ind", "val": "bbl"}]}
+    rules = {"entry": [{"ind": "macdLine", "op": "xa", "kind": "ind", "val": "macdSig"}], "exit": [{"ind": "close", "op": "lt", "kind": "ind", "val": "bbl"}]}
     s = RuleBuilder()
     full, part = s.signals(candles, {"rules": rules}), s.signals(candles.iloc[:900].copy(), {"rules": rules})
     assert (full.iloc[:900].to_numpy() == part.to_numpy()).all()
+
+
+def test_rule_indicators_match_the_builder_labels(candles):
+    from quantlab.strategies import indicators as ind
+    from quantlab.strategies.rules import _series
+
+    hist = ind.macd(candles["close"])[2]
+    assert _series(candles, "macd", {}).equals(hist)
+    atr = _series(candles, "atr", {}).dropna()
+    assert atr.between(0, 100).all() and atr.median() < 20  # a percentage, not a price distance

@@ -9,7 +9,7 @@ export const T = { card: '#151C2C', border: '#263244', elev: '#1B2435', text: '#
 export function Page({ title, sub, actions, children }: any) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, flexWrap: 'wrap', justifyContent: 'space-between' }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, flexWrap: 'wrap', justifyContent: 'space-between', minWidth: 0 }}>
         <div>
           <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 700, letterSpacing: '-.01em' }}>{title}</h1>
           {sub ? <p style={{ margin: '4px 0 0', fontSize: 13, color: T.muted }}>{sub}</p> : null}

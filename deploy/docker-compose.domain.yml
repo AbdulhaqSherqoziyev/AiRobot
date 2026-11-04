@@ -1,0 +1,5 @@
+# Adds the API port for a host-level Nginx, on top of docker-compose.tunnel.yml.
+# Loopback only: the internet reaches it through Nginx and TLS.
+services:
+  api:
+    ports: [ "127.0.0.1:${QL_API_PORT:-8100}:8100" ]

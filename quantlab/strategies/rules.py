@@ -18,9 +18,10 @@ def _series(df: pd.DataFrame, name: str, prm: dict) -> pd.Series:
     table = {
         "close": lambda: c, "open": lambda: df["open"], "high": lambda: df["high"], "low": lambda: df["low"], "volume": lambda: df["volume"],
         "rsi": lambda: ind.rsi(c, g("rsiP", 14)), "emaF": lambda: ind.ema(c, g("emaF", 20)), "emaS": lambda: ind.ema(c, g("emaS", 50)), "ema200": lambda: ind.ema(c, 200), "sma50": lambda: ind.sma(c, 50),
-        "macd": lambda: ind.macd(c, g("macdF", 12), g("macdS", 26), g("macdSig", 9))[0], "macdSig": lambda: ind.macd(c, g("macdF", 12), g("macdS", 26), g("macdSig", 9))[1], "macdHist": lambda: ind.macd(c, g("macdF", 12), g("macdS", 26), g("macdSig", 9))[2],
+        # The builder labels `macd` as the histogram and `atr` as a percentage of price.
+        "macd": lambda: ind.macd(c, g("macdF", 12), g("macdS", 26), g("macdSig", 9))[2], "macdLine": lambda: ind.macd(c, g("macdF", 12), g("macdS", 26), g("macdSig", 9))[0], "macdSig": lambda: ind.macd(c, g("macdF", 12), g("macdS", 26), g("macdSig", 9))[1],
         "bbl": lambda: ind.bollinger(c, g("bbP", 20), float(prm.get("bbK", 2)))[0], "bbm": lambda: ind.bollinger(c, g("bbP", 20), float(prm.get("bbK", 2)))[1], "bbu": lambda: ind.bollinger(c, g("bbP", 20), float(prm.get("bbK", 2)))[2],
-        "atr": lambda: ind.atr(df, 14), "adx": lambda: ind.adx(df, 14)[0], "vwap": lambda: ind.rolling_vwap(df, 48), "vol": lambda: df["volume"], "stoch": lambda: ind.stoch_rsi(c)[0],
+        "atr": lambda: ind.atr(df, 14) / c * 100, "adx": lambda: ind.adx(df, 14)[0], "vwap": lambda: ind.rolling_vwap(df, 48), "vol": lambda: df["volume"], "stoch": lambda: ind.stoch_rsi(c)[0],
     }
     if name not in table:
         raise ValueError(f"unknown indicator {name}")

@@ -1,9 +1,23 @@
 # No domain needed: nothing public, the app is reached through an SSH tunnel.
 #   docker compose -f docker-compose.yml -f docker-compose.tunnel.yml up -d --build
-#   ssh -L 3100:127.0.0.1:3100 root@SERVER   then open http://127.0.0.1:3100
+#   ssh -L 3200:127.0.0.1:3200 root@SERVER   then open http://127.0.0.1:3200
 # Set QL_SECURE_COOKIES=false in .env for this mode and any placeholder DOMAIN.
+# Memory limits keep this stack from starving other projects on a shared server.
 services:
   nginx:
     profiles: [ public ]
   web:
-    ports: [ "127.0.0.1:3100:3100" ]
+    ports: [ "127.0.0.1:${QL_WEB_PORT:-3200}:3100" ]
+    mem_limit: 512m
+  postgres:
+    mem_limit: 512m
+  api:
+    mem_limit: 768m
+  worker-market:
+    mem_limit: 512m
+  worker-paper:
+    mem_limit: 768m
+  worker-jobs:
+    mem_limit: 1536m
+  worker-notify:
+    mem_limit: 256m

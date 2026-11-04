@@ -10,7 +10,7 @@ export default function OptimizerLive({ toast, nav }: any) {
   const Q = window.QL, [, tick] = React.useReducer((x) => x + 1, 0);
   React.useEffect(() => { window.addEventListener('ql-data', tick); return () => window.removeEventListener('ql-data', tick); }, []);
   const strategies = Q.STRATS.filter((s) => s.kind === 'technical' && s.engine !== 'rule_builder');
-  const [f, setF] = React.useState({ strategy_id: strategies[0]?.id, pair: 'BTC/USDT', timeframe: '1h', trials: 50, objective: 'composite', candles: 6000, oos_frac: 0.3, min_trades: 10, max_dd: 25 });
+  const [f, setF] = React.useState({ strategy_id: strategies[0]?.id, pair: 'BTC/USDT', timeframe: '4h', trials: 50, objective: 'composite', candles: 6000, oos_frac: 0.3, min_trades: 10, max_dd: 25 });
   const set = (k) => (e) => setF({ ...f, [k]: e.target.value });
   const st = Q.STRATS.find((s) => s.id === String(f.strategy_id));
   const list = Q.optimizations || [];

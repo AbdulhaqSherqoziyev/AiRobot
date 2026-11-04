@@ -6,6 +6,8 @@ import logging
 import time
 import traceback
 
+from sqlalchemy.exc import IntegrityError
+
 from quantlab.backtest.engine import run_backtest
 from quantlab.config import TIMEFRAMES, Settings
 from quantlab.db import Database
@@ -28,7 +30,19 @@ SEED_SIZING = {"mode": "vol_target", "target": 0.015}
 
 
 def seed(db: Database, settings: Settings) -> None:
-    """Idempotent: creates the watchlist and one row per registered strategy."""
+    """Idempotent, and safe when several processes start at once on an empty database: whoever
+    loses the race to insert a row retries and then finds it already there."""
+    for attempt in range(5):
+        try:
+            _seed_once(db, settings)
+            return
+        except IntegrityError:
+            if attempt == 4:
+                raise
+            time.sleep(0.2 * (attempt + 1))
+
+
+def _seed_once(db: Database, settings: Settings) -> None:
     with db.session() as s:
         for p in settings.watchlist:
             if not s.query(TradingPair).filter_by(symbol=p).count():

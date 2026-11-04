@@ -167,7 +167,10 @@ def run_trainer(db: Database, settings: Settings) -> None:
 
 
 def run_notify(db: Database, settings: Settings) -> None:
+    from quantlab.watchdog import check
+
     while RUN.is_set():
+        _guard(lambda: check(db, settings.data_dir), "watchdog")
         _guard(lambda: dispatch_telegram(db, settings.telegram_token, settings.telegram_chat_id), "telegram")
         heartbeat(db, "notify", {"telegram": bool(settings.telegram_token)})
         _wait(15)

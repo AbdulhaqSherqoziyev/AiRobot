@@ -14,12 +14,12 @@ function Editor({ toast }: any) {
   const { data: versions, reload } = usePoll(() => api(`/strategies/${st.id}/versions`), 30000, [st.id]);
   const [f, setF] = React.useState(null);
   React.useEffect(() => {
-    setF({ params: { ...st.params }, pair: st.pair, tf: st.tf, sl: st.sl, tp: st.tp, stake: (st.risk?.stake_pct ?? 0.95) * 100, note: '' });
+    setF({ params: { ...st.params }, pair: st.pair, tf: st.tf, sl: st.sl, tp: st.tp, stake: (st.risk?.stake_pct ?? 0.95) * 100, sizing: st.risk?.sizing?.mode === 'vol_target' ? 'vol' : 'fixed', target: (st.risk?.sizing?.target ?? 0.015) * 100, note: '' });
   }, [st.id, st.versionId]);
   if (!f) return null;
   const eng = engines?.find((e) => e.key === st.engine);
   const save = () => act(toast, 'Yangi versiya saqlandi. Eski natijalar eski versiyaga bog\'liq qoladi.', async () => {
-    await api(`/strategies/${st.id}/versions`, { body: { params: f.params, pairs: [f.pair], timeframe: f.tf, note: f.note, risk: { ...st.risk, stoploss_pct: Number(f.sl) / 100, takeprofit_pct: Number(f.tp) / 100, stake_pct: Number(f.stake) / 100 } } });
+    await api(`/strategies/${st.id}/versions`, { body: { params: f.params, pairs: [f.pair], timeframe: f.tf, note: f.note, risk: { ...st.risk, stoploss_pct: Number(f.sl) / 100, takeprofit_pct: Number(f.tp) / 100, stake_pct: Number(f.stake) / 100, sizing: f.sizing === 'vol' ? { mode: 'vol_target', target: Number(f.target) / 100 } : null } } });
     reload();
   });
   return (
@@ -32,7 +32,9 @@ function Editor({ toast }: any) {
             <Field label="Taymfreym"><Select value={f.tf} options={['1m', '5m', '15m', '30m', '1h', '4h', '1d']} onChange={(e) => setF({ ...f, tf: e.target.value })} /></Field>
             <Field label="Stop-loss, %"><Input type="number" step="0.1" value={f.sl} onChange={(e) => setF({ ...f, sl: e.target.value })} /></Field>
             <Field label="Take-profit, %"><Input type="number" step="0.1" value={f.tp} onChange={(e) => setF({ ...f, tp: e.target.value })} /></Field>
-            <Field label="Pozitsiya, % balans"><Input type="number" value={f.stake} onChange={(e) => setF({ ...f, stake: e.target.value })} /></Field>
+            <Field label="Hajm usuli"><Select value={f.sizing} options={[['vol', "Volatillik bo'yicha"], ['fixed', "Qat'iy foiz"]]} onChange={(e) => setF({ ...f, sizing: e.target.value })} /></Field>
+            {f.sizing === 'vol' ? <Field label="Kunlik volatillik maqsadi, %" hint="Tadqiqotda 1,5%"><Input type="number" step="0.1" value={f.target} onChange={(e) => setF({ ...f, target: e.target.value })} /></Field> : null}
+            <Field label={f.sizing === 'vol' ? 'Maks. pozitsiya, % balans' : 'Pozitsiya, % balans'}><Input type="number" value={f.stake} onChange={(e) => setF({ ...f, stake: e.target.value })} /></Field>
             {eng ? Object.entries(eng.params).map(([k, p]) => (
               <Field key={k} label={k} hint={`${p.low} … ${p.high}`}><Input type="number" step={p.step} value={f.params[k] ?? p.default} onChange={(e) => setF({ ...f, params: { ...f.params, [k]: Number(e.target.value) } })} /></Field>
             )) : null}

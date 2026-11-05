@@ -1,0 +1,3 @@
+# Optional. Without it sweeps run on the native engine. Adds about 800 MB to an image.
+# Licence: Apache 2.0 + Commons Clause; see .ai/integrations/INTEGRATION_REPORT.md.
+vectorbt==1.2.0

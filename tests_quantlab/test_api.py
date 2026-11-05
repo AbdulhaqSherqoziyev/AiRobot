@@ -280,7 +280,56 @@ def test_rule_builder_strategy_roundtrip(ctx):
 def test_rule_signals_have_no_lookahead(candles):
     from quantlab.strategies.rules import RuleBuilder
 
-    rules = {"entry": [{"ind": "macd", "op": "xa", "kind": "ind", "val": "macdSig"}], "exit": [{"ind": "close", "op": "lt", "kind": "ind", "val": "bbl"}]}
+    rules = {"entry": [{"ind": "macdLine", "op": "xa", "kind": "ind", "val": "macdSig"}], "exit": [{"ind": "close", "op": "lt", "kind": "ind", "val": "bbl"}]}
     s = RuleBuilder()
     full, part = s.signals(candles, {"rules": rules}), s.signals(candles.iloc[:900].copy(), {"rules": rules})
     assert (full.iloc[:900].to_numpy() == part.to_numpy()).all()
+
+
+def test_rule_indicators_match_the_builder_labels(candles):
+    from quantlab.strategies import indicators as ind
+    from quantlab.strategies.rules import _series
+
+    hist = ind.macd(candles["close"])[2]
+    assert _series(candles, "macd", {}).equals(hist)
+    atr = _series(candles, "atr", {}).dropna()
+    assert atr.between(0, 100).all() and atr.median() < 20  # a percentage, not a price distance
+
+
+def test_analysis_endpoint_is_protected_and_starts_empty(ctx):
+    c, *_ = ctx
+    assert c.get("/analysis").status_code == 401
+    login(c)
+    assert c.get("/analysis").json() == {"report": None, "history": []}
+    assert c.post("/analysis/run").json()["job_id"]
+
+
+def test_snapshot_is_cached_but_a_write_shows_at_once(ctx):
+    c, db, *_ = ctx
+    login(c)
+    from quantlab.notify.service import notify
+
+    assert c.get("/snapshot").json()["notifications"] == []
+    with db.session() as s:
+        notify(s, "system", "from a worker")
+    assert c.get("/snapshot").json()["notifications"] == []  # cached for a few seconds
+    i = sid(db)
+    assert c.post("/paper/sessions", json={"strategy_id": i, "pair": "BTC/USDT"}).status_code == 200
+    d = c.get("/snapshot").json()
+    assert len(d["sessions"]) == 1 and d["notifications"]  # the owner's write cleared it
+
+
+def test_portfolio_matches_when_only_some_sessions_have_history(ctx):
+    from quantlab.models import EquitySnapshot
+
+    c, db, *_ = ctx
+    login(c)
+    i = sid(db)
+    a = c.post("/paper/sessions", json={"strategy_id": i, "pair": "BTC/USDT", "capital": 200}).json()["id"]
+    c.post("/paper/sessions", json={"strategy_id": i, "pair": "ETH/USDT", "capital": 50})
+    with db.session() as s:
+        s.add(EquitySnapshot(scope="paper", scope_id=a, ts=1_700_000_000, equity=210.0))
+        s.add(EquitySnapshot(scope="paper", scope_id=a, ts=1_700_090_000, equity=220.0))
+    c.post("/notifications/read", json=[])  # any write refreshes the cached view
+    p = c.get("/snapshot").json()["portfolio"]
+    assert p["final"] == pytest.approx(220.0) and p["start"] == pytest.approx(200.0)  # history-less session excluded

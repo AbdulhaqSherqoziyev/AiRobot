@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import csv
 import io
+import threading
 import time
 
 from fastapi import Depends, FastAPI, HTTPException, Query, Request, Response
@@ -32,6 +33,7 @@ from quantlab.services import enqueue, new_version, seed
 from quantlab.strategies.base import get_strategy
 
 COOKIE = "ql_session"
+SNAPSHOT_TTL = 8.0
 
 
 class Login(BaseModel):
@@ -220,10 +222,30 @@ def create_app(settings: Settings | None = None, db: Database | None = None, cli
             s.query(User).filter_by(username=name).one().password_hash = A.hash_password(body.new)
         return {"ok": True}
 
+    # Costly with hundreds of sessions, and several tabs may poll it. One build serves everyone for
+    # a few seconds; any write clears it so the owner sees the result of an action at once.
+    cache = {"at": 0.0, "value": None, "gen": 0}
+    cache_lock = threading.Lock()
+
+    @app.middleware("http")
+    async def clear_snapshot(request: Request, call_next):
+        response = await call_next(request)
+        if request.method not in ("GET", "HEAD"):
+            cache["gen"] += 1
+            cache["value"] = None
+        return response
+
     @app.get("/snapshot")
     def snapshot(_: str = Depends(owner)):
-        with db.session() as s:
-            return snap.build(s, store)
+        with cache_lock:
+            if cache["value"] is not None and time.monotonic() - cache["at"] < SNAPSHOT_TTL:
+                return cache["value"]
+            gen = cache["gen"]
+            with db.session() as s:
+                value = snap.build(s, store)
+            if gen == cache["gen"]:
+                cache["value"], cache["at"] = value, time.monotonic()
+            return value
 
     # ---- market ----
     @app.get("/market/candles")
@@ -484,6 +506,21 @@ def create_app(settings: Settings | None = None, db: Database | None = None, cli
             st.current_version_id, st.enabled = v.id, True
             return {"version_id": v.id}
 
+    # ---- daily review ----
+    @app.get("/analysis")
+    def analysis(_: str = Depends(owner)):
+        from quantlab.models import AnalysisReport
+
+        with db.session() as s:
+            r = s.query(AnalysisReport).order_by(AnalysisReport.id.desc()).first()
+            history = [{"id": h.id, "created": snap.ts(h.created_at), "trades": (h.summary or {}).get("closed_trades", 0), "promising": (h.summary or {}).get("promising", 0)} for h in s.query(AnalysisReport).order_by(AnalysisReport.id.desc()).limit(30)]
+            return {"report": {"id": r.id, "created": snap.ts(r.created_at), "summary": r.summary, "strategies": r.strategies, "models": r.models, "market": r.market, "findings": r.findings} if r else None, "history": history}
+
+    @app.post("/analysis/run")
+    def analysis_run(_: str = Depends(owner)):
+        with db.session() as s:
+            return {"job_id": enqueue(s, "analyze", {}).id}
+
     # ---- optimizer ----
     @app.post("/optimizer")
     def start_optimizer(body: OptimizeCreate, _: str = Depends(owner)):
@@ -702,6 +739,9 @@ def create_app(settings: Settings | None = None, db: Database | None = None, cli
                 q = q.filter_by(level=level)
             return [{"at": snap.ts(l.created_at), "level": l.level, "component": l.component, "message": l.message} for l in q.order_by(SystemLog.id.desc()).limit(limit)]
 
+    from quantlab.api import research_api
+
+    research_api.register(app, db, settings, store, client, owner)
     return app
 
 

@@ -6,6 +6,8 @@ import logging
 import time
 import traceback
 
+from sqlalchemy.exc import IntegrityError
+
 from quantlab.backtest.engine import run_backtest
 from quantlab.config import TIMEFRAMES, Settings
 from quantlab.db import Database
@@ -13,18 +15,34 @@ from quantlab.market.binance import BinancePublic, parse_filters
 from quantlab.market.store import CandleStore
 from quantlab.market.universe import UniverseRules, scan
 from quantlab.ml.training import train_version
-from quantlab.models import BacktestResult, BacktestSession, ComponentHeartbeat, Job, MarketDataset, OptimizationJob, Strategy, StrategyParameter, StrategyVersion, TradingPair, TrainingJob, utcnow
+from quantlab.models import AiReport, BacktestResult, BacktestSession, ComponentHeartbeat, Experiment, ExperimentResult, Job, MarketDataset, OptimizationJob, Strategy, StrategyParameter, StrategyVersion, TradingPair, TrainingJob, utcnow
 from quantlab.notify.service import notify, syslog
 from quantlab.optimize.search import optimize
+from quantlab.risk.sizing import HISTORY_DAYS
 from quantlab.strategies.base import all_strategies, get_strategy
 
 log = logging.getLogger(__name__)
 SEED_PAIR = "BTC/USDT"
-SEED_TF = "1h"
+# From .ai/research/2026-11-strategy-optimization.md: 1h lost heavily to costs, and volatility
+# sizing helped on every timeframe. This reduces damage; it is not evidence of profit.
+SEED_TF = "4h"
+SEED_SIZING = {"mode": "vol_target", "target": 0.015}
 
 
 def seed(db: Database, settings: Settings) -> None:
-    """Idempotent: creates the watchlist and one row per registered strategy."""
+    """Idempotent, and safe when several processes start at once on an empty database: whoever
+    loses the race to insert a row retries and then finds it already there."""
+    for attempt in range(5):
+        try:
+            _seed_once(db, settings)
+            return
+        except IntegrityError:
+            if attempt == 4:
+                raise
+            time.sleep(0.2 * (attempt + 1))
+
+
+def _seed_once(db: Database, settings: Settings) -> None:
     with db.session() as s:
         for p in settings.watchlist:
             if not s.query(TradingPair).filter_by(symbol=p).count():
@@ -35,7 +53,7 @@ def seed(db: Database, settings: Settings) -> None:
             row = Strategy(name=st.name, engine=st.key, kind=st.kind, description=st.description, color=st.color, enabled=st.kind == "technical")
             s.add(row)
             s.flush()
-            v = new_version(s, row, {k: p.default for k, p in st.params.items()}, [SEED_PAIR], SEED_TF, {"stake_pct": st.risk.stake_pct, "stoploss_pct": st.risk.stoploss_pct, "takeprofit_pct": st.risk.takeprofit_pct, "max_drawdown_pct": st.risk.max_drawdown_pct, "max_daily_loss_pct": st.risk.daily_loss_pct, "max_orders_per_hour": st.risk.max_orders_per_hour}, "initial")
+            v = new_version(s, row, {k: p.default for k, p in st.params.items()}, [SEED_PAIR], SEED_TF, {"stake_pct": st.risk.stake_pct, "stoploss_pct": st.risk.stoploss_pct, "takeprofit_pct": st.risk.takeprofit_pct, "max_drawdown_pct": st.risk.max_drawdown_pct, "max_daily_loss_pct": st.risk.daily_loss_pct, "max_orders_per_hour": st.risk.max_orders_per_hour, "sizing": SEED_SIZING}, "initial")
             row.current_version_id = v.id
 
 
@@ -150,6 +168,8 @@ class JobRunner:
             o.status = status
         if kind == "train" and (t := s.get(TrainingJob, payload["training_id"])):
             t.status = status
+        if kind == "sweep" and (e := s.get(Experiment, payload["experiment_id"])):
+            e.status, e.error = status, error[:2000]
 
     def _ensure_data(self, pair: str, tf: str, since: int | None, progress=None) -> None:
         if self.store.client is None:
@@ -157,6 +177,13 @@ class JobRunner:
         if progress:
             progress(0.02, "bozor ma'lumoti sinxronlanmoqda")
         sync_dataset(self.db, self.store, pair, tf, since)
+
+    def _do_analyze(self, job_id: int, p: dict, progress) -> dict:
+        from quantlab.analysis import generate
+
+        with self.db.session() as s:
+            pairs = [t.symbol for t in s.query(TradingPair).filter_by(enabled=True)]
+        return {"report_id": generate(self.db, self.store, pairs)}
 
     def _do_sync(self, job_id: int, p: dict, progress) -> dict:
         rep = sync_dataset(self.db, self.store, p["pair"], p["timeframe"], p.get("since"))
@@ -170,12 +197,12 @@ class JobRunner:
             engine, params, risk = ver.strategy.engine, ver.params(), ver.risk or {}
             pair, tf, start, end, cfg, name = b.pair, b.timeframe, b.start_ts, b.end_ts, b.config, ver.strategy.name
         strat = get_strategy(engine)
-        warm = strat.warmup * TIMEFRAMES[tf]
+        warm = max(strat.warmup * TIMEFRAMES[tf], HISTORY_DAYS * 86400)
         self._ensure_data(pair, tf, start - warm, progress)
         df = self.store.load(pair, tf, start - warm, end)
         if (df["ts"] >= start).sum() < 2:
             raise ValueError(f"{pair} {tf}: bu davr uchun ma'lumot yo'q")
-        merged = {**params, **{k: v for k, v in risk.items() if k in ("stake_pct", "stoploss_pct", "takeprofit_pct")}, **cfg}
+        merged = {**params, **{k: v for k, v in risk.items() if k in ("stake_pct", "stoploss_pct", "takeprofit_pct", "sizing")}, **cfg}
         with self.db.session() as s:
             tp = s.query(TradingPair).filter_by(symbol=pair).one_or_none()
             if tp:
@@ -199,7 +226,6 @@ class JobRunner:
         with self.db.session() as s:
             t = s.get(TrainingJob, p["training_id"])
             t.status, t.model_version_id = "done", mv
-            notify(s, "ml", "ML o'qitish yakunlandi", f"{algo} · {pair} {tf}: yangi versiya nomzod sifatida saqlandi", "ok", "ml")
         return {"model_version_id": mv}
 
     def _do_optimize(self, job_id: int, p: dict, progress) -> dict:
@@ -212,7 +238,7 @@ class JobRunner:
         start = cfg.get("start_ts") or int(time.time()) - TIMEFRAMES[tf] * int(cfg.get("candles", 6000))
         self._ensure_data(pair, tf, start, progress)
         df = self.store.load(pair, tf, start, cfg.get("end_ts"))
-        fixed = {k: v for k, v in risk.items() if k in ("stake_pct", "stoploss_pct", "takeprofit_pct")}
+        fixed = {k: v for k, v in risk.items() if k in ("stake_pct", "stoploss_pct", "takeprofit_pct", "sizing")}
         res = optimize(get_strategy(engine), df, tf, ranges=cfg.get("ranges"), trials=int(cfg.get("trials", 50)), objective=cfg.get("objective", "composite"), fixed=fixed, min_trades=int(cfg.get("min_trades", 10)), max_dd=float(cfg.get("max_dd", 25.0)), oos_frac=float(cfg.get("oos_frac", 0.3)), progress=lambda f: progress(0.05 + 0.9 * f))
         with self.db.session() as s:
             o = s.get(OptimizationJob, p["optimization_id"])
@@ -220,6 +246,51 @@ class JobRunner:
             o.config = {**o.config, "history": res["history"], "oos_start": res["oos_start"]}
             notify(s, "optimizer", "Optimizatsiya yakunlandi", f"{pair} {tf}: {res['trials']} sinov, OOS'dan o'tganlar {sum(1 for t in res['top'] if t['eligible'])} ta", "ok", "optimizer")
         return {"trials": res["trials"]}
+
+
+    def _do_sweep(self, job_id: int, p: dict, progress) -> dict:
+        from quantlab.backtest.core import Filters
+        from quantlab.research.sweep import SweepConfig, run_sweep
+
+        with self.db.session() as s:
+            e = s.get(Experiment, p["experiment_id"])
+            e.status = "running"
+            key, pairs, tf, start, end, grid, cfg = e.strategy_key, list(e.pairs), e.timeframe, e.start_ts, e.end_ts, dict(e.grid), SweepConfig(**e.config)
+            filters = {t.symbol: Filters(t.min_notional, t.step_size, 0.0) for t in s.query(TradingPair).filter(TradingPair.symbol.in_(pairs))}
+        strat = get_strategy(key)
+        warm = strat.warmup * TIMEFRAMES[tf]
+        frames = {}
+        for pair in pairs:
+            self._ensure_data(pair, tf, start - warm, progress)
+            frames[pair] = self.store.load(pair, tf, start - warm, end)
+        out = run_sweep(frames, strat, grid, tf, start, cfg, filters, progress)
+        with self.db.session() as s:
+            e = s.get(Experiment, p["experiment_id"])
+            e.status, e.n_combos, e.runtime_s, e.repro, e.summary = "done", len(out["rows"]), out["runtime_s"], out["repro"], out["summary"]
+            s.add_all([ExperimentResult(experiment_id=e.id, rank=r["rank"], selected=r["selected"], params=r["params"], train=r["train"], validation=r["validation"], per_pair=r["per_pair"]) for r in out["rows"]])
+            elig = out["summary"]["eligibility"]["status"]
+            syslog(s, "INFO", "vectorbt" if cfg.backend == "vectorbt" else "jobs", f"experiment {e.id}: {len(out['rows'])} sets in {out['runtime_s']}s, {elig}")
+            notify(s, "backtest", "Tajriba yakunlandi", f"{key} · {tf}: {len(out['rows'])} to'plam, holat: {elig}", "ok" if elig == "paper_candidate" else "info", "experiments")
+        return {"experiment_id": p["experiment_id"], "eligibility": elig}
+
+    def _do_ai_report(self, job_id: int, p: dict, progress) -> dict:
+        from quantlab.ai_analysis.service import run_report
+
+        self._ensure_data(p["pair"], p["timeframe"], int(time.time()) - TIMEFRAMES[p["timeframe"]] * 400, progress)
+        rid = run_report(self.db, self.store, self.settings, p["pair"], p["timeframe"], p["engine"], p.get("micro"))
+        with self.db.session() as s:
+            r = s.get(AiReport, rid)
+            syslog(s, "INFO" if r.status == "ok" else "ERROR", "ai", f"report {rid} {r.engine} {r.pair}: {r.status} {r.error[:200]}")
+        return {"report_id": rid}
+
+    def _do_ai_outcomes(self, job_id: int, p: dict, progress) -> dict:
+        from quantlab.ai_analysis.service import evaluate_outcomes
+
+        with self.db.session() as s:
+            rows = {(r.pair, r.timeframe) for r in s.query(AiReport).filter(AiReport.status == "ok", AiReport.outcome_at.is_(None))}
+        for pair, tf in rows:
+            self._ensure_data(pair, tf, None, progress)
+        return {"scored": evaluate_outcomes(self.db, self.store)}
 
 
 def sync_dataset(db: Database, store: CandleStore, pair: str, tf: str, since: int | None = None):

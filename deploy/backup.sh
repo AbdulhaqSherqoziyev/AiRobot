@@ -7,8 +7,8 @@ cd "$(dirname "$0")"
 DEST="${BACKUP_DIR:-/var/backups/quantlab}"
 STAMP="$(date -u +%Y%m%dT%H%M%SZ)"
 mkdir -p "$DEST"
-docker compose exec -T postgres pg_dump -U quantlab -d quantlab -Fc > "$DEST/db-$STAMP.dump"
-docker compose run --rm --no-deps -T --entrypoint tar api -C /data -czf - models > "$DEST/models-$STAMP.tgz"
+docker compose -f docker-compose.yml -f docker-compose.tunnel.yml exec -T postgres pg_dump -U quantlab -d quantlab -Fc > "$DEST/db-$STAMP.dump"
+docker compose -f docker-compose.yml -f docker-compose.tunnel.yml run --rm --no-deps -T --entrypoint tar api -C /data -czf - --ignore-failed-read models > "$DEST/models-$STAMP.tgz"
 find "$DEST" -type f -mtime +"${KEEP_DAYS:-14}" -delete
 # Candles are not backed up: `python -m quantlab.cli download` can restore them from Binance.
 echo "backup ok: $STAMP"

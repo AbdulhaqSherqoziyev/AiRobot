@@ -9,7 +9,7 @@ export const T = { card: '#151C2C', border: '#263244', elev: '#1B2435', text: '#
 export function Page({ title, sub, actions, children }: any) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, flexWrap: 'wrap', justifyContent: 'space-between' }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 12, flexWrap: 'wrap', justifyContent: 'space-between', minWidth: 0 }}>
         <div>
           <h1 style={{ fontFamily: 'var(--font-display)', fontSize: 22, fontWeight: 700, letterSpacing: '-.01em' }}>{title}</h1>
           {sub ? <p style={{ margin: '4px 0 0', fontSize: 13, color: T.muted }}>{sub}</p> : null}
@@ -102,12 +102,17 @@ export const Icon = (p: any) => <QL.Icon {...p} />;
 export function usePoll(fn: () => Promise<any>, ms: number, deps: any[] = []) {
   const [data, setData] = React.useState<any>(null);
   const [error, setError] = React.useState<string>('');
+  const fails = React.useRef(0);
   const load = React.useCallback(async () => {
     try {
       setData(await fn());
+      fails.current = 0;
       setError('');
     } catch (e: any) {
-      setError(e.message || 'Xato');
+      // One failed poll is usually a restart. Keep showing the last good data; report it only
+      // if it continues, and a refused request (4xx) straight away.
+      fails.current += 1;
+      if (fails.current >= 3 || (e.status >= 400 && e.status < 500)) setError(e.message || 'Xato');
     }
   }, deps);
   React.useEffect(() => {

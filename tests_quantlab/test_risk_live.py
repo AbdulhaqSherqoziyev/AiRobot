@@ -294,3 +294,42 @@ def test_kill_switch_halts_even_when_exchange_is_down(world):
     assert out["halted"] and not out["closed"] and out["error"]
     with db.session() as s:
         assert le.get_portfolio(s, "live").status == "halted"
+
+
+def test_live_entry_uses_volatility_stake_within_limits(db, tmp_path):
+    from quantlab.risk.sizing import stake_series
+
+    store = CandleStore(tmp_path)
+    df = synthetic(24 * 70)
+    store.save(PAIR, TF, df)
+    risk = {"stoploss_pct": 0.03, "sizing": {"mode": "vol_target", "target": 0.005}}
+    with db.session() as s:
+        v = version(s, risk=risk)
+        run = EvaluationRun(duration_days=30, status="finished")
+        s.add(run)
+        s.flush()
+        rep = EvaluationReport(run_id=run.id, is_final=True, rows=[{"strategy_version_id": v.id, "eligible": True, "fails": []}])
+        s.add(rep)
+        s.add(ExchangeConnection(environment="live", api_key_enc="x", api_secret_enc="y"))
+        s.flush()
+        vid, rid = v.id, rep.id
+    approval.authorize(db, **auth_args(vid, rid, max_position=90.0))
+    le.start(db, ON, "live")
+    ex = FakeExchange()
+    t = df["ts"].to_numpy()
+    Scripted.enters, Scripted.exits = {int(t[-1])}, set()
+    assert le.LiveEngine(db, ON, store, ex).tick(now=int(t[-1]) + 3605, last_price=100) == "entry"
+    stake = stake_series(df[df["ts"] >= int(t[-1]) + 3605 - 40 * 86400].reset_index(drop=True), risk)[-1]
+    assert stake < 0.9 and ex.calls[0][1] == pytest.approx(100 * stake * 0.999, abs=0.02)
+
+
+def test_notifications_name_the_money_type(world):
+    from quantlab.models import Notification
+
+    db, _, df, *_ = world
+    live_ready(world)
+    t = df["ts"].to_numpy()
+    Scripted.enters, Scripted.exits = {int(t[299])}, set()
+    engine(world, FakeExchange()).tick(now=int(t[299]) + 3605, last_price=100)
+    with db.session() as s:
+        assert s.query(Notification).filter_by(category="trade").one().title.startswith("REAL PUL:")

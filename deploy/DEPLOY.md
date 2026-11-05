@@ -43,6 +43,17 @@ Test a restore before relying on it.
 
 Evaluation Center, then "30 kunlik sinovni boshlash". Criteria freeze at that moment.
 
+## Optional research integrations
+
+Sweeps, order-book metrics and the rule baseline need no extra install, only migration 0003, which
+adds tables. Before 2026-12-04 do not deploy this over the running paper test without deciding to.
+
+- VectorBT: `docker compose build --build-arg INSTALL_VECTORBT=1 api worker-jobs`. Large sweeps need
+  several GB of memory, so it is not recommended on a shared server.
+- Claude reports: build with `--build-arg INSTALL_AI=1`, set `QL_AI_API_KEY` in `.env`, then switch
+  TradingAgents/AI on in the web app. Every call costs money and is limited by `QL_AI_DAILY_*`.
+- TradingAgents: separate venv, then `QL_TRADINGAGENTS_PYTHON`. Not exercised end to end yet.
+
 ## Live trading: the order of gates
 
 All of these must be true, and none happens automatically:
@@ -67,3 +78,31 @@ Before real money, run the whole flow on Testnet with Testnet keys.
 - [ ] Reboot the VPS: everything returns; paper sessions continue
 - [ ] Backup runs and a restore works
 - [ ] Testnet drill: start, order, kill switch, restart
+
+## Without a domain: SSH tunnel
+
+Publishes nothing to the internet and uses `QL_WEB_PORT` (default 3200). Check first that
+the port is free on the server, and that the stack fits beside whatever already runs there.
+
+```sh
+docker compose -f docker-compose.yml -f docker-compose.tunnel.yml up -d --build
+docker compose exec api python -m quantlab.cli download --days 500 --timeframe 4h
+docker compose exec api python -m quantlab.cli paper-watch
+```
+
+`paper-watch` starts ATR Volatility 4h with volatility sizing, as one virtual 100 USDT session per
+pair. It places no orders. The candidate did not pass the November 2026 study, so this is
+observation on new data, not a recommendation to trade it.
+
+## This server: icash.uz
+
+Running at `/opt/quantlab`, compose project `quantlab`, beside other projects. Do not `rsync --delete`
+into it: that would remove `deploy/.env`, which holds the secret key. Copy changed files instead.
+
+- `admin.icash.uz`: the control centre
+- `icash.uz`: serves nothing, on purpose; connections are closed
+- `api.icash.uz`: the API
+- `app.icash.uz`: another project, not part of this stack
+
+HTTPS is on since 2026-11-04, by `deploy/enable-domain.sh`. `COMPOSE_FILE` in `deploy/.env` selects the
+tunnel and domain overrides, so plain `docker compose` commands keep the right ports.

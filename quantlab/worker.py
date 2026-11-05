@@ -1,6 +1,6 @@
 """Background processes. Each role runs separately so one can restart without the others:
 
-    python -m quantlab.worker market|paper|jobs|notify|live
+    python -m quantlab.worker market|paper|jobs|notify|live|trainer
 """
 
 from __future__ import annotations
@@ -100,24 +100,14 @@ def run_market(db: Database, settings: Settings) -> None:
 
 
 def run_paper(db: Database, settings: Settings) -> None:
+    from quantlab.analysis import paper_digest
+
     store = CandleStore(settings.data_dir)
-    last_day = None
     while RUN.is_set():
         applied = _guard(lambda: paper.tick_all(db, store), "paper")
+        _guard(lambda: paper_digest(db), "paper digest")
         heartbeat(db, "paper", {"applied": applied if isinstance(applied, int) else 0})
-        day = utcnow().date()
-        if last_day and day != last_day:
-            _guard(lambda: daily_summary(db, store), "daily summary")
-        last_day = day
         _wait(10)
-
-
-def daily_summary(db: Database, store: CandleStore) -> None:
-    with db.session() as s:
-        views = [paper.session_view(s, ps) for ps in s.query(PaperSession).filter(PaperSession.status.in_(paper.ACTIVE))]
-        if views:
-            text = "; ".join(f"{v['strategy']}: {v['realized']:+.2f}" for v in views)[:900]
-            notify(s, "daily", "Kunlik paper hisobot", text, "info", "portfolio")
 
 
 def run_jobs(db: Database, settings: Settings) -> None:
@@ -132,8 +122,55 @@ def run_jobs(db: Database, settings: Settings) -> None:
             _wait(2)
 
 
-def run_notify(db: Database, settings: Settings) -> None:
+def run_trainer(db: Database, settings: Settings) -> None:
+    """Scheduled learning loop: retrain, try the best new models in virtual challenger sessions, review
+    results daily, and keep the evaluation report current. New versions stay candidates, and nothing
+    here touches real trading. The 30-day report can finish a run; only the owner can authorize."""
+    import os
+
+    from quantlab.analysis import generate, run_challengers
+    from quantlab.evaluation.report import generate_report
+    from quantlab.ml.plan import enqueue_training
+    from quantlab.models import EvaluationRun, TrainingJob
+
+    days = float(os.environ.get("QL_RETRAIN_DAYS", "7"))
+    store = CandleStore(settings.data_dir)
     while RUN.is_set():
+        with db.session() as s:
+            row = s.get(SystemSetting, "trainer")
+            last = (row.value or {}).get("last", 0) if row else 0
+        if time.time() - last >= days * 86400:
+            n = _guard(lambda: enqueue_training(db, list(settings.watchlist)), "trainer")
+            if isinstance(n, int):
+                with db.session() as s:
+                    s.merge(SystemSetting(key="trainer", value={"last": int(time.time()), "queued": n}))
+                    syslog(s, "INFO", "trainer", f"queued {n} training jobs")
+        with db.session() as s:
+            pending = s.query(TrainingJob).filter(TrainingJob.status.in_(("queued", "running"))).count()
+        if not pending:
+            _guard(lambda: run_challengers(db, store), "challengers")
+        with db.session() as s:
+            row = s.get(SystemSetting, "review")
+            last_review = (row.value or {}).get("last", 0) if row else 0
+        if time.time() - last_review >= 86400:
+            def review():
+                generate(db, store, list(settings.watchlist))
+                with db.session() as s:
+                    runs = [r.id for r in s.query(EvaluationRun).filter_by(status="running")]
+                for rid in runs:
+                    generate_report(db, store, rid)
+            if not isinstance(_guard(review, "daily review"), Exception):
+                with db.session() as s:
+                    s.merge(SystemSetting(key="review", value={"last": int(time.time())}))
+        heartbeat(db, "trainer", {"every_days": days, "pending_training": pending})
+        _wait(600)
+
+
+def run_notify(db: Database, settings: Settings) -> None:
+    from quantlab.watchdog import check
+
+    while RUN.is_set():
+        _guard(lambda: check(db, settings.data_dir), "watchdog")
         _guard(lambda: dispatch_telegram(db, settings.telegram_token, settings.telegram_chat_id), "telegram")
         heartbeat(db, "notify", {"telegram": bool(settings.telegram_token)})
         _wait(15)
@@ -191,7 +228,7 @@ def run_live(db: Database, settings: Settings) -> None:
         _wait(10)
 
 
-ROLES = {"market": run_market, "paper": run_paper, "jobs": run_jobs, "notify": run_notify, "live": run_live}
+ROLES = {"market": run_market, "paper": run_paper, "jobs": run_jobs, "notify": run_notify, "live": run_live, "trainer": run_trainer}
 
 
 def main() -> None:

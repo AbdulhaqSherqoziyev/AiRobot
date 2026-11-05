@@ -25,15 +25,17 @@ const VOID = new Set(['input', 'br', 'hr', 'img', 'meta', 'link']);
 const OVERRIDE = {
   Dashboard: '@/screens/live/DashboardLive', MarketExplorer: '@/screens/live/MarketExplorerLive', Strategies: '@/screens/live/StrategiesLive', StrategyBuilder: '@/screens/live/StrategyBuilderLive',
   BacktestLab: '@/screens/live/BacktestLive', PaperTrading: '@/screens/live/PaperLive', MLLab: '@/screens/live/MLLive', Optimizer: '@/screens/OptimizerLive', Settings: '@/screens/SettingsLive', Integrations: '@/screens/MonitoringScreen',
-  Evaluation: '@/screens/EvaluationScreen', LiveCenter: '@/screens/LiveScreen', Monitoring: '@/screens/MonitoringScreen',
+  Analysis: '@/screens/AnalysisScreen', Evaluation: '@/screens/EvaluationScreen', LiveCenter: '@/screens/LiveScreen', Monitoring: '@/screens/MonitoringScreen',
+  IntegrationsHub: '@/screens/IntegrationsHub', ExperimentLab: '@/screens/ExperimentLab', Microstructure: '@/screens/MicrostructureScreen', AiReports: '@/screens/AiReportsScreen', StrategyEval: '@/screens/StrategyEvalScreen',
 };
 const PATCH = {
   Integrations: [['<label style="display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:500;color:#94A3B8">API kalit',
     '<div style="padding:8px 10px;border-radius:8px;background:rgba(240,185,11,.12);border:1px solid rgba(240,185,11,.3);color:#F0B90B;font-size:12px;line-height:17px">Demo forma: kalit saqlanmaydi va hech qayerga yuborilmaydi. Haqiqiy kalitni bu yerga kiritmang.</div><label style="display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:500;color:#94A3B8">API kalit']],
   MarketExplorer: [[" · demo narxlar", ""]],
+  PaperTrading: [["Masalan: RSI Reversal · BTC/USDT · $50.", "Masalan: RSI Reversal · BTC/USDT · $100."]],
   Dashboard: [
+    ["Oxirgi backtest natijalari · $50 boshlang'ich kapital · ", "Oxirgi backtest natijalari · "],
     [" Barcha ko'rsatkichlar namunaviy (demo) ma'lumotlarga asoslangan.", " Virtual va real hisoblar alohida."],
-    [/\$50 boshlang'ich kapital · /, ''],
     ["const board = S.slice().sort(", "const board = (tested.length ? tested : S).slice().sort("],
     ["cmpSeries: Q.STRATS.map(s => ({ name: s.name, color: s.color, data: s.curve })), cmpLegend: Q.STRATS.map(", "cmpSeries: Q.STRATS.filter(x => x.hasBacktest).map(s => ({ name: s.name, color: s.color, data: s.curve })), cmpLegend: Q.STRATS.filter(x => x.hasBacktest).map("],
     ["sub: '1 ta pauzada · ' +", "sub: live.filter(x => x.s.status !== 'running').length + ' ta pauzada · ' +"],
@@ -43,7 +45,24 @@ const PATCH = {
     ["sub: 'Chegara: −10% (MaxDrawdown)'", "sub: 'Virtual hisob · chegara har sessiyada alohida'"],
     ["value: '142', sub: 'Shu oy: 23 · 1 ta xato bilan'", "value: String(Q.BACKTESTS.filter(b => b.status === 'done').length), sub: Q.BACKTESTS.filter(b => b.status === 'error').length + ' ta xato bilan · oxirgi 30 tadan'"],
   ],
-  MLLab: [["value: '0.62'", "value: '0.55'"]],
+  MLLab: [
+    ["value: '0.62'", "value: '0.55'"],
+    ["const N = 4000, P = Math.round(N * 0.44), tp = isRl ? 0 : Math.round(P * m.rec / 100), predPos = isRl ? 0 : Math.round(tp / (m.prec / 100)),", "const N = m.samples || 0, P = Math.round(N * (m.baseRate || 0) / 100), tp = isRl ? 0 : Math.round(P * m.rec / 100), predPos = isRl || !m.prec ? 0 : Math.round(tp / (m.prec / 100)),"],
+    [" · FreqAI asosida", ""],
+    [/const pipeline = \[\[[\s\S]*?bajaradi"\]\]/, `const pipeline = [['Xususiyatlar', "Faqat yopilgan shamlardan hisoblanadi"], ['Model ehtimoli', "Tasdiqlangan versiya: 0.55 dan yuqori kirish, 0.48 dan past chiqish"], ['Bajarish', "Keyingi sham ochilishida, komissiya va slippage bilan"], ['Risk chegaralari', "Stop-loss, hajm, kunlik zarar va pasayish"], ['Egasi tasdig\\'i', "Yangi model faqat siz tasdiqlab bog'laganingizda ishlatiladi"]]`],
+    [/<section[^>]*>\s*<div[^>]*>\s*<div[^>]*>Xususiyatlar konfiguratsiyasi[\s\S]*?<\/section>/, ''],
+    [/dataset: \[\['Juftliklar'[\s\S]*?'Har 24 soatda'\]\]/, `dataset: [['Juftlik', m.pair], ['Taymfreym', m.tf], ["O'qitish davri", f.date(m.trainStart) + ' – ' + f.date(m.trainEnd)], ['Validatsiya', 'Walk-forward, xronologik'], ['OOS test', "Oxirgi 20%, o'qitishda ishlatilmaydi"], ['OOS namunalar', f.num(m.samples || 0)], ['Xususiyatlar', String(m.features)], ['Dataset xeshi', String(m.dataset || '').slice(0, 12)]]`],
+  ],
+  StrategyBuilder: [
+    ["[['visual', 'Vizual', 'blocks'], ['code', 'Kod', 'code']]", "[['visual', 'Vizual', 'blocks']]"],
+    [", ['ml', 'ML ehtimoli (LGBM-Trend)', 'df[\"&-up_prob\"]']", ""],
+  ],
+  Strategies: [
+    [/\s*\(\$50 boshlang\\'ich kapital\)/, ''],
+    ["Jamlangan daromad, % · $50 kapital", "Jamlangan daromad, %"],
+    ["bt: f.dt(x.bt), st:", "bt: x.bt ? f.dt(x.bt) : \"yo'q\", st:"],
+    [/versions: \[\s*\['v1\.3'[\s\S]*?\]\.map\(\(\[ver, text, t, r\]\) => \(\{ ver, text, when: f\.dt\(t\),/, `versions: [['v' + dx.version, "Joriy · stop-loss " + (dx.sl || 0) + '%, take-profit ' + (dx.tp ? dx.tp + '%' : "o'chirilgan") + ' · to\\'liq tarix pastdagi tahrirlash bo\\'limida', dx.bt, dx.ret]].map(([ver, text, t, r]) => ({ ver, text, when: t ? f.dt(t) : "yo'q",`],
+  ],
   WhatIf: [
     ["$50 backtest egri chizig'i", "Backtest egri chizig'i"],
     ["k = s.cap / 50", "k = s.cap / (x.dailyEq[0] || 100)"],
@@ -51,8 +70,8 @@ const PATCH = {
   ],
   Comparison: [["|| ['rsi', 'ema', 'multi', 'macd']", "|| window.QL.STRATS.filter(x => x.hasBacktest).slice(0, 4).map(x => x.id)"], ["'Sof foyda ($50 dan)'", "'Sof foyda'"], ["Bir xil shartlarda: $50 kapital, 0.1% komissiya, 0.05% slippage · demo tarixiy ma'lumot", "Har bir strategiyaning oxirgi saqlangan backtesti asosida"]],
   // These toggles were decorative in the design: the engine uses the strategy's stop and fees.
-  BacktestLab: [[/<div>\s*<div[^>]*>Risk himoyalari<\/div>[\s\S]*?<\/sc-for>\s*<\/div>\s*<\/div>/, ''], [/ · simulyatsiya brauzerda demo shamlar asosida bajarilad[^<]*/, " · hisob serverda real shamlar bilan bajariladi"]],
-  Reports: [["f = Q.fmt, S = Q.STRATS, P = Q.portfolio", "f = Q.fmt, S = (Q.STRATS.some(x => x.hasBacktest) ? Q.STRATS.filter(x => x.hasBacktest) : Q.STRATS), P = Q.portfolio"], ["DEMO MA'LUMOT</sp", "VIRTUAL HISOB</sp"], ["oxirgi backtestlar · $50 boshlang\\'ich", "oxirgi backtestlar"], ["'Bir xil sharoit: $50, 0.1% komissiya, 0.05% slippage'", "'Oxirgi saqlangan backtestlar asosida'"]],
+  BacktestLab: [["'Standart: $50'", "'Standart: $100'"], [/<div>\s*<div[^>]*>Risk himoyalari<\/div>[\s\S]*?<\/sc-for>\s*<\/div>\s*<\/div>/, ''], [/ · simulyatsiya brauzerda demo shamlar asosida bajarilad[^<]*/, " · hisob serverda real shamlar bilan bajariladi"]],
+  Reports: [["f = Q.fmt, S = Q.STRATS, P = Q.portfolio", "f = Q.fmt, S = (Q.STRATS.some(x => x.hasBacktest) ? Q.STRATS.filter(x => x.hasBacktest) : Q.STRATS), P = Q.portfolio"], ["DEMO MA'LUMOT</sp", "VIRTUAL HISOB</sp"], ["oxirgi backtestlar · $50 boshlang\\'ich", "oxirgi backtestlar"], ["'Bir xil sharoit: $50, 0.1% komissiya, 0.05% slippage'", "'Oxirgi saqlangan backtestlar asosida'"], ["'Virtual hisob 01.05.2026 da $2,000 bilan ochilgan'", "'Virtual hisob: alohida paper sessiyalar yig\\'indisi'"], [/archive: s\.archive\.concat\(\[[\s\S]*?\]\),/, 'archive: s.archive,']],
   Portfolio: [["Virtual hisob · 01.05.2026 – 04.11.2026 · BTC buy &amp; hold bilan solishtirish · demo ma'lumot", "Virtual hisob: alohida paper sessiyalar yig'indisi · BTC buy &amp; hold bilan solishtirish"]],
   TradeHistory: [
     ["kind: t.kind === 'paper' ? 'Paper' : 'Backtest', kindBg: t.kind === 'paper' ? 'rgba(240,185,11,.12)' : 'rgba(59,130,246,.14)', kindFg: t.kind === 'paper' ? '#F0B90B' : '#60A5FA'", "kind: t.kind === 'paper' ? 'Paper' : t.kind === 'live' ? 'REAL' : 'Backtest', kindBg: t.kind === 'paper' ? 'rgba(240,185,11,.12)' : t.kind === 'live' ? '#DC2F3A' : 'rgba(59,130,246,.14)', kindFg: t.kind === 'paper' ? '#F0B90B' : t.kind === 'live' ? '#FFFFFF' : '#60A5FA'"],
@@ -64,9 +83,10 @@ const PATCH = {
       '<div title="{{ badge.title }}" style="display:inline-flex;align-items:center;gap:6px;height:26px;padding:0 9px;border-radius:6px;background:{{ badge.bg }};border:1px solid {{ badge.border }};color:{{ badge.fg }};font-size:11px;font-weight:700;letter-spacing:.05em;white-space:nowrap">{{ badge.label }}</div>'],
     ['{{ latency }} ms', '{{ latencyText }}'],
     ['Tadqiqotchi · Demo hisob', 'Egasi'],
+    ["['optimizer', 'Optimizator', 'sliders-horizontal']] },\n", "['optimizer', 'Optimizator', 'sliders-horizontal'], ['analysis', 'Kunlik tahlil', 'activity']] },\n  { group: 'Kengaytirilgan tadqiqot', icon: 'layers', items: [['experiments', 'Tajriba laboratoriyasi', 'flask-conical'], ['strategyeval', 'Strategiya baholash', 'clipboard-check'], ['microstructure', 'Bozor mikrostrukturasi', 'layers'], ['aireports', 'AI hisobotlar', 'brain'], ['researchhub', 'Tadqiqot integratsiyalari', 'plug']] },\n"],
     ['Xush kelibsiz! Demo hisobga kirdingiz.', 'Xush kelibsiz!'],
     ["{ group: 'Tizim', icon: 'settings', items: [['notifications', 'Bildirishnomalar', 'bell'], ['integrations', 'Integratsiyalar', 'plug'], ['settings', 'Sozlamalar', 'settings']] }", "{ group: 'Savdo nazorati', icon: 'shield-check', items: [['evaluation', 'Baholash markazi', 'clipboard-check'], ['live', 'Live savdo', 'siren']] },\n  { group: 'Tizim', icon: 'settings', items: [['notifications', 'Bildirishnomalar', 'bell'], ['monitoring', 'Monitoring', 'activity'], ['settings', 'Sozlamalar', 'settings']] }"],
-    [/<sc-if value="\{\{ r\.integrations \}\}"[\s\S]*?<\/sc-if>/, '<sc-if value="{{ r.monitoring }}" hint-placeholder-val="{{ false }}"><dc-import name="Monitoring"></dc-import></sc-if><sc-if value="{{ r.evaluation }}" hint-placeholder-val="{{ false }}"><dc-import name="Evaluation" nav="{{ nav }}" toast="{{ toast }}" confirm="{{ confirm }}"></dc-import></sc-if><sc-if value="{{ r.live }}" hint-placeholder-val="{{ false }}"><dc-import name="LiveCenter" nav="{{ nav }}" toast="{{ toast }}" confirm="{{ confirm }}"></dc-import></sc-if>'],
+    [/<sc-if value="\{\{ r\.integrations \}\}"[\s\S]*?<\/sc-if>/, '<sc-if value="{{ r.analysis }}" hint-placeholder-val="{{ false }}"><dc-import name="Analysis" toast="{{ toast }}"></dc-import></sc-if><sc-if value="{{ r.experiments }}" hint-placeholder-val="{{ false }}"><dc-import name="ExperimentLab" toast="{{ toast }}"></dc-import></sc-if><sc-if value="{{ r.strategyeval }}" hint-placeholder-val="{{ false }}"><dc-import name="StrategyEval"></dc-import></sc-if><sc-if value="{{ r.microstructure }}" hint-placeholder-val="{{ false }}"><dc-import name="Microstructure"></dc-import></sc-if><sc-if value="{{ r.aireports }}" hint-placeholder-val="{{ false }}"><dc-import name="AiReports" toast="{{ toast }}"></dc-import></sc-if><sc-if value="{{ r.researchhub }}" hint-placeholder-val="{{ false }}"><dc-import name="IntegrationsHub" toast="{{ toast }}"></dc-import></sc-if><sc-if value="{{ r.monitoring }}" hint-placeholder-val="{{ false }}"><dc-import name="Monitoring"></dc-import></sc-if><sc-if value="{{ r.evaluation }}" hint-placeholder-val="{{ false }}"><dc-import name="Evaluation" nav="{{ nav }}" toast="{{ toast }}" confirm="{{ confirm }}"></dc-import></sc-if><sc-if value="{{ r.live }}" hint-placeholder-val="{{ false }}"><dc-import name="LiveCenter" nav="{{ nav }}" toast="{{ toast }}" confirm="{{ confirm }}"></dc-import></sc-if>'],
     [/<sc-if value="\{\{ isAuth \}\}"[\s\S]*?<\/sc-if>\s*/, ''],
     ["['Telegram botni ulash', 'send', 'integrations', null]", "['Tizim monitoringi', 'activity', 'monitoring', null]"],
     ["goIntegrations: () => this.nav('integrations')", "goIntegrations: () => this.nav('monitoring')"],

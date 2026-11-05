@@ -115,3 +115,15 @@
 - **Current behaviour:** ML strategies trade only on paper unless their model was explicitly promoted
   and attached. The authorization code does not exclude them from live; if the owner keeps ADR-0006,
   that restriction still has to be added.
+
+## ADR-0010 — External quant and AI projects stay outside the core
+- **Status:** accepted (2026-11-05). Audit and measurements: `.ai/integrations/INTEGRATION_REPORT.md`.
+- **Context:** The owner's spec asks to evaluate Jesse, Hummingbot, VectorBT and TradingAgents,
+  and to keep Freqtrade as the core. The deployed core is `quantlab` (ADR-0007), not Freqtrade.
+- **Decision:** `quantlab/backtest/core.py` stays authoritative. Jesse and Hummingbot contribute
+  concepts only, because their runtimes conflict or would duplicate execution. VectorBT is an
+  optional sweep backend; a final candidate is always re-run on the native engine. Analysts,
+  including TradingAgents in a separate process, only write to `ai_reports`. External code has no
+  path to paper, risk or live, and tests enforce that.
+- **Consequences:** Native is the default backend, as VectorBT was 2-3x faster for about 15x the
+  memory. A `paper_candidate` status starts nothing and never affects live eligibility.

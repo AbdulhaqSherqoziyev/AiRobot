@@ -26,7 +26,9 @@ class _MLStrategy(Strategy):
             # No trained version selected: the safe behaviour is to never trade.
             none = np.zeros(len(df), dtype=bool)
             return pd.DataFrame({"enter": none, "exit": none}, index=df.index)
-        bundle = self._cache.setdefault(path, joblib.load(path))
+        if path not in self._cache:  # a pinned version never changes on disk
+            self._cache[path] = joblib.load(path)
+        bundle = self._cache[path]
         X = build_features(df)[bundle["features"]]
         ok = X.notna().all(axis=1).to_numpy()
         proba = np.full(len(df), 0.5)

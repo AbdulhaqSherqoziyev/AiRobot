@@ -4,6 +4,8 @@ import { NextRequest, NextResponse } from 'next/server';
 // SameSite=Strict. It adds no credentials of its own: the API authenticates each request.
 const BASE = process.env.QL_API_URL || 'http://127.0.0.1:8100';
 const FORWARD = ['cookie', 'content-type', 'x-ql'];
+const RETRIES = 6;
+const RETRY_MS = 2000;
 
 async function handle(req: NextRequest, ctx: { params: Promise<{ path: string[] }> }) {
   const path = (await ctx.params).path.map(encodeURIComponent).join('/');
@@ -13,11 +15,16 @@ async function handle(req: NextRequest, ctx: { params: Promise<{ path: string[] 
     if (v) headers[h] = v;
   }
   const hasBody = !['GET', 'HEAD'].includes(req.method);
+  // The API is briefly down during a restart. Reads wait it out. Writes are never retried here:
+  // a repeat could act twice, and the caller must see the real outcome.
+  const attempts = hasBody ? 1 : RETRIES + 1;
+  const body = hasBody ? await req.text() : undefined;
+  for (let attempt = 1; ; attempt++) {
   try {
     const res = await fetch(`${BASE}/${path}${req.nextUrl.search}`, {
       method: req.method,
       headers,
-      body: hasBody ? await req.text() : undefined,
+      body,
       cache: 'no-store',
       signal: AbortSignal.timeout(30000),
     });
@@ -28,7 +35,9 @@ async function handle(req: NextRequest, ctx: { params: Promise<{ path: string[] 
     }
     return out;
   } catch {
-    return NextResponse.json({ detail: 'backend ulanmagan' }, { status: 502 });
+    if (attempt >= attempts) return NextResponse.json({ detail: 'backend ulanmagan' }, { status: 502 });
+    await new Promise((r) => setTimeout(r, RETRY_MS));
+  }
   }
 }
 

@@ -61,6 +61,7 @@ class SimState:
     position: Position | None = None
     pending: str | None = None  # 'enter' | 'exit', to execute at the next open
     pending_ts: int = 0
+    pending_stake: float | None = None  # size decided at signal time, from data known then
     rejected: list[str] = field(default_factory=list)
 
     def equity(self, price: float) -> float:
@@ -72,7 +73,8 @@ class SimState:
 
 def _buy(state: SimState, cfg: ExecConfig, ts: int, open_price: float, signal_ts: int) -> Fill | None:
     price = open_price * (1 + cfg.slippage)
-    quote = state.equity(open_price) * cfg.stake_pct
+    stake = state.pending_stake if state.pending_stake is not None else cfg.stake_pct
+    quote = state.equity(open_price) * stake
     quote = min(quote, state.usdt)
     # Fee is taken from the spend, so the balance can never go negative.
     qty = cfg.filters.round_qty(quote / (price * (1 + cfg.fee)))
@@ -99,7 +101,7 @@ def _sell(state: SimState, cfg: ExecConfig, ts: int, raw_price: float, reason: s
     return Fill("sell", ts, price, pos.qty, fee, reason, pos.signal_ts, pnl, pnl / basis * 100 if basis else 0.0)
 
 
-def on_candle(state: SimState, cfg: ExecConfig, ts: int, o: float, h: float, l: float, c: float, enter: bool, exit_: bool, allow_entries: bool = True) -> list[Fill]:
+def on_candle(state: SimState, cfg: ExecConfig, ts: int, o: float, h: float, l: float, c: float, enter: bool, exit_: bool, allow_entries: bool = True, stake: float | None = None) -> list[Fill]:
     """Advance one closed candle: execute last candle's signal at this open, check stops,
     then record this candle's signal for the next open."""
     fills: list[Fill] = []
@@ -121,7 +123,7 @@ def on_candle(state: SimState, cfg: ExecConfig, ts: int, o: float, h: float, l: 
             fills.append(_sell(state, cfg, ts, max(tp, o), "takeprofit"))
 
     if state.position is None and enter:
-        state.pending, state.pending_ts = "enter", ts
+        state.pending, state.pending_ts, state.pending_stake = "enter", ts, stake
     elif state.position is not None and exit_:
         state.pending, state.pending_ts = "exit", ts
     return fills

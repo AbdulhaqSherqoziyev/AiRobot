@@ -41,7 +41,7 @@ class Component extends DCLogic {
     return [
       ['rsi', 'RSI(' + p.rsiP + ')', 'df["rsi"]'], ['emaF', 'EMA(' + p.emaF + ')', 'df["ema_fast"]'], ['emaS', 'EMA(' + p.emaS + ')', 'df["ema_slow"]'], ['ema200', 'EMA(200)', 'df["ema_200"]'],
       ['macd', 'MACD gistogramma', 'df["macdhist"]'], ['bbl', 'Bollinger pastki', 'df["bb_lower"]'], ['bbm', "Bollinger o'rta", 'df["bb_mid"]'], ['bbu', 'Bollinger yuqori', 'df["bb_upper"]'],
-      ['close', 'Narx (close)', 'df["close"]'], ['vol', 'Hajm', 'df["volume"]'], ['atr', 'ATR(14) %', 'df["atr_pct"]'], ['ml', 'ML ehtimoli (LGBM-Trend)', 'df["&-up_prob"]']
+      ['close', 'Narx (close)', 'df["close"]'], ['vol', 'Hajm', 'df["volume"]'], ['atr', 'ATR(14) %', 'df["atr_pct"]']
     ];
   }
   upd(block, id, patch) { this.setState(s => ({ [block]: s[block].map(r => r.id === id ? Object.assign({}, r, patch) : r), code: s.code })); }
@@ -151,7 +151,7 @@ class Component extends DCLogic {
     const stake = s.sizing === 'pct' ? s.capital * s.size / 100 / Math.max(1, s.maxOpen) : s.size;
     return Object.assign(base, {
       s, pairs: Q.MARKETS.map(m => m.sym), tfs: ['5m', '15m', '1h', '4h', '1d'].map(t => ({ id: t, sel: t === s.tf })),
-      modes: [['visual', 'Vizual', 'blocks'], ['code', 'Kod', 'code']].map(([id, label, icon]) => ({ label, icon, bg: s.mode === id ? '#263244' : 'transparent', fg: s.mode === id ? '#F1F5F9' : '#94A3B8', go: () => this.setState({ mode: id }) })),
+      modes: [['visual', 'Vizual', 'blocks']].map(([id, label, icon]) => ({ label, icon, bg: s.mode === id ? '#263244' : 'transparent', fg: s.mode === id ? '#F1F5F9' : '#94A3B8', go: () => this.setState({ mode: id }) })),
       isVisual: s.mode === 'visual', isCode: s.mode === 'code',
       setName: (e) => this.setState({ name: e.target.value }), setPair: (e) => this.setState({ pair: e.target.value }), setTf: (e) => this.setState({ tf: e.target.value }), setCapital: num('capital', 0),
       setSizing: (e) => this.setState({ sizing: e.target.value, size: e.target.value === 'pct' ? 100 : 25 }), toggleTrailing: () => this.setState(st => ({ trailing: !st.trailing })),

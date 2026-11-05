@@ -13,6 +13,16 @@ describe('generated screens', () => {
   it('uses no hard-coded dashboard figures', () => {
     expect(gen('Dashboard')).not.toContain("value: '142'");
   });
+  it('contains no invented history or figures', () => {
+    expect(gen('Strategies')).not.toContain('CooldownPeriod');
+    expect(gen('Strategies')).not.toContain("'v1.2'");
+    expect(gen('Reports')).not.toContain('01.05.2026');
+    expect(gen('Reports')).not.toContain('Oylik hisobot · Okt 2026');
+    expect(gen('MLLab')).not.toContain('Har 24 soatda');
+    expect(gen('MLLab')).not.toContain('LGBM-Trend ehtimol');
+    expect(gen('StrategyBuilder')).not.toContain('up_prob"]\\u0027');
+    for (const n of ['Dashboard', 'Strategies', 'Reports', 'WhatIf', 'Comparison']) expect(gen(n), n).not.toContain('$50');
+  });
   it('labels real trades as real', () => {
     expect(gen('TradeHistory')).toContain("t.kind === 'live' ? 'REAL'");
   });
@@ -22,6 +32,6 @@ describe('generated screens', () => {
   });
   it('adds the control screens to the shell', () => {
     const q = gen('QuantLab');
-    for (const s of ['DC_Evaluation', 'DC_LiveCenter', 'DC_Monitoring']) expect(q).toContain(s);
+    for (const s of ['DC_Evaluation', 'DC_LiveCenter', 'DC_Monitoring', 'DC_ExperimentLab', 'DC_StrategyEval', 'DC_Microstructure', 'DC_AiReports', 'DC_IntegrationsHub']) expect(q).toContain(s);
   });
 });

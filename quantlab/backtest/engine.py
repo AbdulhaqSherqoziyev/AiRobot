@@ -10,6 +10,7 @@ import pandas as pd
 from quantlab.backtest.core import ExecConfig, Filters, SimState, on_candle
 from quantlab.backtest.metrics import compute, monthly_returns
 from quantlab.config import TIMEFRAMES
+from quantlab.risk.sizing import stake_series
 from quantlab.strategies.base import Strategy
 
 
@@ -33,7 +34,7 @@ def exec_config(params: dict) -> ExecConfig:
     )
 
 
-def run_on_signals(df: pd.DataFrame, enter, exit_, timeframe: str, initial: float, cfg: ExecConfig, on_progress: Callable[[float], None] | None = None, start_ts: int | None = None) -> BacktestOutput:
+def run_on_signals(df: pd.DataFrame, enter, exit_, timeframe: str, initial: float, cfg: ExecConfig, on_progress: Callable[[float], None] | None = None, start_ts: int | None = None, stake=None) -> BacktestOutput:
     state = SimState(usdt=initial)
     trades: list[dict] = []
     equity: list[tuple[int, float]] = []
@@ -44,7 +45,7 @@ def run_on_signals(df: pd.DataFrame, enter, exit_, timeframe: str, initial: floa
         ts = int(ts_a[i])
         if start_ts is not None and ts < start_ts:
             continue  # warm-up candles feed the indicators but never trade
-        fills = on_candle(state, cfg, ts, float(o_a[i]), float(h_a[i]), float(l_a[i]), float(c_a[i]), bool(enter[i]), bool(exit_[i]))
+        fills = on_candle(state, cfg, ts, float(o_a[i]), float(h_a[i]), float(l_a[i]), float(c_a[i]), bool(enter[i]), bool(exit_[i]), stake=None if stake is None else float(stake[i]))
         for f in fills:
             if f.side == "buy":
                 open_buy = f
@@ -61,4 +62,4 @@ def run_on_signals(df: pd.DataFrame, enter, exit_, timeframe: str, initial: floa
 
 def run_backtest(strategy: Strategy, df: pd.DataFrame, params: dict, timeframe: str, initial: float = 100.0, cfg: ExecConfig | None = None, start_ts: int | None = None, on_progress=None) -> BacktestOutput:
     sig = strategy.signals(df, params)
-    return run_on_signals(df, sig["enter"].to_numpy(), sig["exit"].to_numpy(), timeframe, initial, cfg or exec_config(params), on_progress, start_ts)
+    return run_on_signals(df, sig["enter"].to_numpy(), sig["exit"].to_numpy(), timeframe, initial, cfg or exec_config(params), on_progress, start_ts, stake_series(df, params))

@@ -1,6 +1,8 @@
 /* Global rules from QuantLab.dc.html <helmet>. */
 html,body{margin:0;background:#0B0F19;color:#F1F5F9;font-family:"Inter Tight",system-ui,sans-serif;-webkit-font-smoothing:antialiased}
 *{box-sizing:border-box}
+input,select,textarea{min-width:0;max-width:100%}
+label{min-width:0}
 h1,h2,h3,h4,h5,p{color:inherit;margin:0}
 a{color:#60A5FA;text-decoration:none}
 a:hover{color:#93C5FD;text-decoration:underline}

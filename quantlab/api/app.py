@@ -739,6 +739,9 @@ def create_app(settings: Settings | None = None, db: Database | None = None, cli
                 q = q.filter_by(level=level)
             return [{"at": snap.ts(l.created_at), "level": l.level, "component": l.component, "message": l.message} for l in q.order_by(SystemLog.id.desc()).limit(limit)]
 
+    from quantlab.api import research_api
+
+    research_api.register(app, db, settings, store, client, owner)
     return app
 
 

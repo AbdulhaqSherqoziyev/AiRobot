@@ -8,6 +8,12 @@ RUN pip install --no-cache-dir -r quantlab-requirements.txt
 RUN pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu
 # Only the screening helper is used from Freqtrade, loaded by file path.
 COPY quantlab quantlab
+# Both off by default. VectorBT adds about 800 MB to the image and needs several GB of memory on
+# large sweeps; sweeps run on the native engine without it. The AI SDK is needed only for Claude reports.
+ARG INSTALL_VECTORBT=0
+ARG INSTALL_AI=0
+RUN if [ "$INSTALL_VECTORBT" = "1" ]; then pip install --no-cache-dir -r quantlab/requirements-research.txt; fi
+RUN if [ "$INSTALL_AI" = "1" ]; then pip install --no-cache-dir -r quantlab/requirements-ai.txt; fi
 COPY freqtrade/islamic/screening.py freqtrade/islamic/screening.py
 RUN useradd -m -u 1000 app && mkdir -p /data && chown app /data
 USER app

@@ -32,6 +32,6 @@ describe('generated screens', () => {
   });
   it('adds the control screens to the shell', () => {
     const q = gen('QuantLab');
-    for (const s of ['DC_Evaluation', 'DC_LiveCenter', 'DC_Monitoring']) expect(q).toContain(s);
+    for (const s of ['DC_Evaluation', 'DC_LiveCenter', 'DC_Monitoring', 'DC_ExperimentLab', 'DC_StrategyEval', 'DC_Microstructure', 'DC_AiReports', 'DC_IntegrationsHub']) expect(q).toContain(s);
   });
 });

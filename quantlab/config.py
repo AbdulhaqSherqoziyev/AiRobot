@@ -31,6 +31,15 @@ class Settings:
     telegram_token: str = field(default_factory=lambda: os.environ.get("QL_TELEGRAM_TOKEN", ""))
     telegram_chat_id: str = field(default_factory=lambda: os.environ.get("QL_TELEGRAM_CHAT_ID", ""))
     secure_cookies: bool = field(default_factory=lambda: _bool("QL_SECURE_COOKIES", True))
+    # Optional AI research. Every value here limits spend; nothing here touches trading.
+    ai_api_key: str = field(default_factory=lambda: os.environ.get("QL_AI_API_KEY", ""))
+    ai_model: str = field(default_factory=lambda: os.environ.get("QL_AI_MODEL", "claude-opus-5-5"))
+    ai_max_tokens: int = field(default_factory=lambda: int(os.environ.get("QL_AI_MAX_TOKENS", "8000")))
+    ai_timeout_s: float = field(default_factory=lambda: float(os.environ.get("QL_AI_TIMEOUT_S", "120")))
+    ai_daily_calls: int = field(default_factory=lambda: int(os.environ.get("QL_AI_DAILY_CALLS", "5")))
+    ai_daily_usd: float = field(default_factory=lambda: float(os.environ.get("QL_AI_DAILY_USD", "1.0")))
+    tradingagents_python: str = field(default_factory=lambda: os.environ.get("QL_TRADINGAGENTS_PYTHON", ""))
+    tradingagents_timeout_s: float = field(default_factory=lambda: float(os.environ.get("QL_TRADINGAGENTS_TIMEOUT_S", "900")))
     default_fee: float = 0.001
     default_slippage: float = 0.0005
     evaluation_days: int = 30

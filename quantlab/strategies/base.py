@@ -81,6 +81,7 @@ class Strategy(ABC):
 
 def get_strategy(key: str) -> Strategy:
     import quantlab.ml.strategy  # noqa: F401  registers ML strategies
+    import quantlab.strategies.interop  # noqa: F401
     import quantlab.strategies.rules  # noqa: F401
     import quantlab.strategies.technical  # noqa: F401
 
@@ -89,6 +90,7 @@ def get_strategy(key: str) -> Strategy:
 
 def all_strategies() -> list[Strategy]:
     import quantlab.ml.strategy  # noqa: F401
+    import quantlab.strategies.interop  # noqa: F401
     import quantlab.strategies.rules  # noqa: F401
     import quantlab.strategies.technical  # noqa: F401
 

@@ -22,6 +22,8 @@ for r in market paper jobs notify; do .venv/bin/python -m quantlab.worker $r & d
 .venv/bin/python -m pytest tests_quantlab -c /dev/null --rootdir=. -p no:asyncio
 ```
 
+External integrations, optional installs and API: `.ai/integrations/INTEGRATION_REPORT.md`.
+
 | Module | Purpose |
 | --- | --- |
 | `market/` | Binance public client, Parquet candles, universe scan, WebSocket prices |

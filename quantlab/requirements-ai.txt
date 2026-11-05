@@ -1,0 +1,2 @@
+# Optional. Without it only the rule baseline analyst runs.
+anthropic==2.5.0

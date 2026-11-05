@@ -43,6 +43,17 @@ Test a restore before relying on it.
 
 Evaluation Center, then "30 kunlik sinovni boshlash". Criteria freeze at that moment.
 
+## Optional research integrations
+
+Sweeps, order-book metrics and the rule baseline need no extra install, only migration 0003, which
+adds tables. Before 2026-12-04 do not deploy this over the running paper test without deciding to.
+
+- VectorBT: `docker compose build --build-arg INSTALL_VECTORBT=1 api worker-jobs`. Large sweeps need
+  several GB of memory, so it is not recommended on a shared server.
+- Claude reports: build with `--build-arg INSTALL_AI=1`, set `QL_AI_API_KEY` in `.env`, then switch
+  TradingAgents/AI on in the web app. Every call costs money and is limited by `QL_AI_DAILY_*`.
+- TradingAgents: separate venv, then `QL_TRADINGAGENTS_PYTHON`. Not exercised end to end yet.
+
 ## Live trading: the order of gates
 
 All of these must be true, and none happens automatically:

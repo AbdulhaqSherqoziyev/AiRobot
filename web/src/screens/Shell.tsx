@@ -14,7 +14,7 @@ const MODE = {
   live: { label: 'REAL PUL · LIVE', title: 'Haqiqiy pul bilan savdo', fg: '#FFFFFF', bg: '#DC2F3A', border: '#DC2F3A' },
   research: { label: 'TADQIQOT', title: "Tadqiqot muhiti. Bu sahifa buyurtma yubormaydi", fg: '#94A3B8', bg: 'rgba(148,163,184,.12)', border: 'rgba(148,163,184,.3)' },
 };
-const ROUTE_MODE = { analysis: 'paper', backtest: 'backtest', builder: 'backtest', optimizer: 'backtest', compare: 'backtest', paper: 'paper', evaluation: 'paper', trades: 'paper', portfolio: 'paper', live: 'live' };
+const ROUTE_MODE = { experiments: 'research', strategyeval: 'research', microstructure: 'research', aireports: 'research', researchhub: 'research', analysis: 'paper', backtest: 'backtest', builder: 'backtest', optimizer: 'backtest', compare: 'backtest', paper: 'paper', evaluation: 'paper', trades: 'paper', portfolio: 'paper', live: 'live' };
 
 class App extends QuantLab {
   constructor(props) {

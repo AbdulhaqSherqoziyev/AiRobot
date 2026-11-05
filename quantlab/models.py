@@ -385,6 +385,69 @@ class AnalysisReport(Base, Stamped):
     findings: Mapped[list] = mapped_column(JSON, default=list)
 
 
+class Experiment(Base, Stamped):
+    """One parameter sweep. Failed and rejected runs stay: the record of what did not work is
+    part of the result."""
+
+    __tablename__ = "experiments"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    job_id: Mapped[int] = mapped_column(ForeignKey("jobs.id"), index=True)
+    name: Mapped[str] = mapped_column(String(128), default="")
+    strategy_key: Mapped[str] = mapped_column(String(64), index=True)
+    strategy_version: Mapped[str] = mapped_column(String(16), default="1")
+    pairs: Mapped[list] = mapped_column(JSON, default=list)
+    timeframe: Mapped[str] = mapped_column(String(8))
+    start_ts: Mapped[int] = mapped_column(Integer)
+    end_ts: Mapped[int] = mapped_column(Integer)
+    backend: Mapped[str] = mapped_column(String(16), index=True)
+    grid: Mapped[dict] = mapped_column(JSON, default=dict)
+    config: Mapped[dict] = mapped_column(JSON, default=dict)
+    status: Mapped[str] = mapped_column(String(16), default="queued", index=True)
+    error: Mapped[str] = mapped_column(Text, default="")
+    n_combos: Mapped[int] = mapped_column(Integer, default=0)
+    runtime_s: Mapped[float | None] = mapped_column(Float, nullable=True)
+    repro: Mapped[dict] = mapped_column(JSON, default=dict)
+    summary: Mapped[dict] = mapped_column(JSON, default=dict)
+
+
+class ExperimentResult(Base):
+    """Train and validation results of one parameter set. The test segment is in the summary,
+    only for the chosen set."""
+
+    __tablename__ = "experiment_results"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    experiment_id: Mapped[int] = mapped_column(ForeignKey("experiments.id"), index=True)
+    rank: Mapped[int] = mapped_column(Integer)
+    selected: Mapped[bool] = mapped_column(Boolean, default=False)
+    params: Mapped[dict] = mapped_column(JSON, default=dict)
+    train: Mapped[dict] = mapped_column(JSON, default=dict)
+    validation: Mapped[dict] = mapped_column(JSON, default=dict)
+    per_pair: Mapped[dict] = mapped_column(JSON, default=dict)
+
+
+class AiReport(Base, Stamped):
+    """One analyst run: inputs, output, cost and later what the market did. Only a record: no
+    code path reads this table to trade."""
+
+    __tablename__ = "ai_reports"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    pair: Mapped[str] = mapped_column(String(32), index=True)
+    timeframe: Mapped[str] = mapped_column(String(8))
+    engine: Mapped[str] = mapped_column(String(24), index=True)
+    model: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    status: Mapped[str] = mapped_column(String(16), default="error", index=True)
+    error: Mapped[str] = mapped_column(Text, default="")
+    data_pack: Mapped[dict] = mapped_column(JSON, default=dict)
+    recommendation: Mapped[dict] = mapped_column(JSON, default=dict)
+    raw: Mapped[str] = mapped_column(Text, default="")
+    usage: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    latency_s: Mapped[float | None] = mapped_column(Float, nullable=True)
+    last_candle_ts: Mapped[int] = mapped_column(Integer)
+    reference_price: Mapped[float] = mapped_column(Float)
+    outcome: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    outcome_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+
+
 class RiskEvent(Base, Stamped):
     __tablename__ = "risk_events"
     id: Mapped[int] = mapped_column(primary_key=True)

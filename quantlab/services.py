@@ -15,7 +15,7 @@ from quantlab.market.binance import BinancePublic, parse_filters
 from quantlab.market.store import CandleStore
 from quantlab.market.universe import UniverseRules, scan
 from quantlab.ml.training import train_version
-from quantlab.models import BacktestResult, BacktestSession, ComponentHeartbeat, Job, MarketDataset, OptimizationJob, Strategy, StrategyParameter, StrategyVersion, TradingPair, TrainingJob, utcnow
+from quantlab.models import AiReport, BacktestResult, BacktestSession, ComponentHeartbeat, Experiment, ExperimentResult, Job, MarketDataset, OptimizationJob, Strategy, StrategyParameter, StrategyVersion, TradingPair, TrainingJob, utcnow
 from quantlab.notify.service import notify, syslog
 from quantlab.optimize.search import optimize
 from quantlab.risk.sizing import HISTORY_DAYS
@@ -168,6 +168,8 @@ class JobRunner:
             o.status = status
         if kind == "train" and (t := s.get(TrainingJob, payload["training_id"])):
             t.status = status
+        if kind == "sweep" and (e := s.get(Experiment, payload["experiment_id"])):
+            e.status, e.error = status, error[:2000]
 
     def _ensure_data(self, pair: str, tf: str, since: int | None, progress=None) -> None:
         if self.store.client is None:
@@ -244,6 +246,51 @@ class JobRunner:
             o.config = {**o.config, "history": res["history"], "oos_start": res["oos_start"]}
             notify(s, "optimizer", "Optimizatsiya yakunlandi", f"{pair} {tf}: {res['trials']} sinov, OOS'dan o'tganlar {sum(1 for t in res['top'] if t['eligible'])} ta", "ok", "optimizer")
         return {"trials": res["trials"]}
+
+
+    def _do_sweep(self, job_id: int, p: dict, progress) -> dict:
+        from quantlab.backtest.core import Filters
+        from quantlab.research.sweep import SweepConfig, run_sweep
+
+        with self.db.session() as s:
+            e = s.get(Experiment, p["experiment_id"])
+            e.status = "running"
+            key, pairs, tf, start, end, grid, cfg = e.strategy_key, list(e.pairs), e.timeframe, e.start_ts, e.end_ts, dict(e.grid), SweepConfig(**e.config)
+            filters = {t.symbol: Filters(t.min_notional, t.step_size, 0.0) for t in s.query(TradingPair).filter(TradingPair.symbol.in_(pairs))}
+        strat = get_strategy(key)
+        warm = strat.warmup * TIMEFRAMES[tf]
+        frames = {}
+        for pair in pairs:
+            self._ensure_data(pair, tf, start - warm, progress)
+            frames[pair] = self.store.load(pair, tf, start - warm, end)
+        out = run_sweep(frames, strat, grid, tf, start, cfg, filters, progress)
+        with self.db.session() as s:
+            e = s.get(Experiment, p["experiment_id"])
+            e.status, e.n_combos, e.runtime_s, e.repro, e.summary = "done", len(out["rows"]), out["runtime_s"], out["repro"], out["summary"]
+            s.add_all([ExperimentResult(experiment_id=e.id, rank=r["rank"], selected=r["selected"], params=r["params"], train=r["train"], validation=r["validation"], per_pair=r["per_pair"]) for r in out["rows"]])
+            elig = out["summary"]["eligibility"]["status"]
+            syslog(s, "INFO", "vectorbt" if cfg.backend == "vectorbt" else "jobs", f"experiment {e.id}: {len(out['rows'])} sets in {out['runtime_s']}s, {elig}")
+            notify(s, "backtest", "Tajriba yakunlandi", f"{key} · {tf}: {len(out['rows'])} to'plam, holat: {elig}", "ok" if elig == "paper_candidate" else "info", "experiments")
+        return {"experiment_id": p["experiment_id"], "eligibility": elig}
+
+    def _do_ai_report(self, job_id: int, p: dict, progress) -> dict:
+        from quantlab.ai_analysis.service import run_report
+
+        self._ensure_data(p["pair"], p["timeframe"], int(time.time()) - TIMEFRAMES[p["timeframe"]] * 400, progress)
+        rid = run_report(self.db, self.store, self.settings, p["pair"], p["timeframe"], p["engine"], p.get("micro"))
+        with self.db.session() as s:
+            r = s.get(AiReport, rid)
+            syslog(s, "INFO" if r.status == "ok" else "ERROR", "ai", f"report {rid} {r.engine} {r.pair}: {r.status} {r.error[:200]}")
+        return {"report_id": rid}
+
+    def _do_ai_outcomes(self, job_id: int, p: dict, progress) -> dict:
+        from quantlab.ai_analysis.service import evaluate_outcomes
+
+        with self.db.session() as s:
+            rows = {(r.pair, r.timeframe) for r in s.query(AiReport).filter(AiReport.status == "ok", AiReport.outcome_at.is_(None))}
+        for pair, tf in rows:
+            self._ensure_data(pair, tf, None, progress)
+        return {"scored": evaluate_outcomes(self.db, self.store)}
 
 
 def sync_dataset(db: Database, store: CandleStore, pair: str, tf: str, since: int | None = None):
